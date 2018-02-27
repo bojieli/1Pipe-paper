@@ -1,0 +1,111 @@
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Total-order multicast.}
+Efficiency and scalability is a fundamental trade-off for general total-order multicast algorithms~\cite{defago2004total}.
+For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
+Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate the history during message delivery~\cite{chandra1996unreliable} or run a consensus protocol among receivers~\cite{lamport1978time}. 
+Deterministic merge~\cite{aguilera2000efficient} is similar to our design, but in-network reordering is beyond the capacity of existing network switches. So we propose the principle of separating ordering information from message forwarding.
+
+\textbf{Transaction processing.}
+Recent years there is rich literature in the importance and difficulties in achieving strong consistency efficiently in distributed systems~\cite{lloyd2011don,lloyd2013stronger,mu2014extracting,zhang2016operation,lu2015existential,ajoux2015challenges,mu2016consolidating,lu2016snow,kallman2008h,zhang2015building}.
+One line of research uses lock-based concurrency control. Most of the recent works~\cite{dragojevic2014farm,kalia2016fasst,kaminsky2016design,dragojevic2015no} use RDMA to offload network processing and lock handling to NICs.
+The other line of research use timestamp-based optimistic concurrency control (OCC).
+At the core, the operations should be received by shards in monotonic timestamp order.
+Mostly-Ordered Multicast~\cite{ports2015designing}, NOPaxos~\cite{li2016just} and Eris~\cite{eris} co-design distributed systems with programmable network switches to ensure total ordering of message timestamps. However, these designs require a centralized sequencer, which has limited scalability.
+
+\textbf{In-network computation.}
+In-network computation flourishes with the trend of programmable switches~\cite{lu2011serverswitch,tofino,bosshart2013forwarding} and NICs~\cite{kaufmann2016high,clicknp}.
+Programmable switches can cache frequently accessed data in key-value stores~\cite{li2016fast,netcache-sosp17,kv-direct} and network infrastructure services~\cite{fayazbakhsh2013less,liu2017incbricks,miao2017silkroad}.
+The wide visibility of programmable switches make them a better place to implement consensus protocols~\cite{dang2016network,dang2016paxos,dang2015netpaxos}.
+
+\textbf{Bounded delay.}
+A network with bounded delay can lead to accurate clock synchronization and total ordering of network messages.
+Achieving bounded delay requires not only the queue length to be bounded, but also the network to be lossless.
+Recent years see a lot of progress in lossless data center networks~\cite{calder2013don,cheng2014catch,handley2017re} or fast detection of packet losses~\cite{li2016lossradar}.
+Bounded queuing delay is also implemented with centralized controller~\cite{perry2015fastpass} or fully end-to-end~\cite{cho2017credit}.
+However, bounded delay in network requires reserved bandwidth, which is not economic in data center networks with background traffic.
+
+
+
+
+
+\iffalse
+
+
+Spanner: Google’s globally distributed database (OSDI\'12)~\cite{corbett2013spanner},
+Linearizabiliy: A correctness condition for concurrent objects (ACM Trans, 1990),~\cite{herlihy1990linearizability}
+Low overhead concurrency control for partitioned main memory databases (SIGMOD\'10),~\cite{jones2010low}
+H-Store: a highperformance,
+distributed main memory transaction processing
+system (VLDB\'08),~\cite{kallman2008h}
+MDCC: multi-data center consistency (Eurosys\'13),~\cite{kraska2013mdcc}
+Calvin: Fast distributed transactions for
+partitioned database systems~\cite{thomson2012calvin}
+Fast Distributed Transactions and Strongly Consistent Replication
+for OLTP Database Systems (Calvin'14),~\cite{thomson2014fast}
+Transaction Processing Performance Council. TPC
+Benchmark C.~\cite{council2005transaction}
+
+Receiver time synchronization with MIN:
+Fine-Grained Network Time Synchronization using Reference
+Broadcasts, OSDI'02.~\cite{elson2002fine}
+Virtual time, 1985.~\cite{jefferson1985virtual}
+
+
+Zookeeper: A simple totally ordered broadcast protocol
+
+Raft
+
+The End of an Architectural Era
+(It’s Time for a Complete Rewrite)
+
+OLTP through the looking glass, and what we found there
+
+The VoltDB Main Memory DBMS
+
+Viewstamped Replication [19] and Raft [20], ZAB [16], and Multi-Paxos [3]
+
+In modern distributed databases, consensus is often used as the basis for replication, to ensure replicas apply updates in the same order, an instance of state-machine replication (see Schneider’s tutorial Schneider, F.B. Implementing fault-tolerant services using the state machine approach: A tutorial).
+
+We solve locking (2PL): Jim Gray, Raymond A. Lorie, Gianfranco R. Putzolu, Irving L. Traiger. Granularity of Locks and Degrees of Consistency in a Shared Data Base. , IBM, September, 1975.
+
+Stonebraker: My current best guess is that nobody will use traditional two phase locking. Techniques based on timestamp ordering or multiple versions are likely to prevail. The third paper in this section discusses Hekaton, which implements a state-of-the art MVCC scheme.
+
+Cristian Diaconu, Craig Freedman, Erik Ismert, Per-Ake Larson, Pravin Mittal, Ryan Stonecipher, Nitin Verma, Mike Zwilling. Hekaton: SQL Server's Memory-optimized OLTP Engine. SIGMOD, 2013.
+
+
+
+Orthogonal to 2PC (Two phase commit):
+Lampson, B. and Sturgis, H. Crash recovery in a distributed data storage system. Xerox PARC Technical Report. 1979.
+
+On Interprocess Communication, Lamport, regular register
+
+Linearizability: A Correctness Condition for
+Concurrent Objects, Jennette Wing
+
+The serializability of concurrent database updates, 1979
+
+Useless Actions Make a Difference:
+Strict Serializability of Database Updates
+
+Berkeley algorithm (average):
+The accuracy of the clock synchronization achieved by TEMPO in Berkeley UNIX 4.3BSD
+
+SRM (Scalable Reliable Multicast):
+A Reliable Multicast Framework for Light-weight Sessions
+and Application Level Framing
+
+Scalable multicast:
+Hierarchical feedback 
+
+The Implementation of Reliable Distributed Multiprocess Systems
+
+control~\cite{tanenbaum2007distributed}
+
+
+Physical clock synchronization: Fault-Tolerant Clock Synchronization, 
+Optimal clock synchronization
+
+Sync to fastest clock: Clock synchronization algorithm for address independent networks (patent),
+\fi

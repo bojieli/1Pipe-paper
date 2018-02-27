@@ -1,0 +1,25 @@
+\subsection*{Abstract}
+
+The ability to have total ordering of events and messages can simplify and accelerate many distributed applications. Traditional approaches to achieve total ordering either employs centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which is inefficient due to bandwidth and latency overheads.
+
+In this paper, we propose Total-Order Message Scattering (TOMS), an efficient and scalable solution to address this problem. At its core, TOMS separates the bookkeeping of order information from message forwarding. On the control plane, \sys aggregates order information using in-network computation at the network switches. On the data plane, \sys forwards messages as usual in the network and reorders them at the receiver-end based on the order information. \sys is scalable as it distributes the work to each switch and end host. To achieve high efficiency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization, and in-network loss detection in order to reduce CPU and network overhead, and to minimize message reordering latency.
+
+%The ability to have total ordering of events and messages can simplify and accelerate many distributed applications. Traditional approaches to achieve total ordering either employs centralized sequencers or tokens with limited scalability, or use fully distributed consensus protocols with bandwidth and latency overheads.
+
+%In this paper, we propose Total-Order Message Scattering (TOMS), an efficient and scalable solution to address this problem. Driven by recent progress in programmable networks, we leverage in-network computation at the switches to provide order information, while use end hosts to buffer and reorder messages and achieve in-order message delivery. Due to this clear separation of control and data plane, \sys is scalable as it distributes the work to distributed end hosts and switches. In addition, we also make various efforts, such as hierarchical barrier merging and minimax clock synchronization, to ensure \sys's efficiency. \textcolor{red}{I am not sure whether the last sentence is correct}  
+
+
+%Totally ordered events and messages can simplify and accelerate many distributed applications. To achieve this, existing approaches either leverages centralized sequencers or tokens, suffering from limited scalability, or use distributed consensus protocols, which is inefficient due to bandwidth and latency overheads. 
+
+%In this paper, we propose Total-Order Message Scattering (TOMS), an efficient and scalable solution to address this problem. Driven by recent progress in programmable networks, we leverage in-network computation at the switch to provide necessary order information. With the order information, the receiver can efficiently reorder and process buffered messages. \sys is scalable as it distributes the work to distributed end hosts and switches. In addition, we also make various efforts, such as hierarchical barrier merging and minimax clock synchronization, to ensure \sys's efficiency. \textcolor{red}{I am not sure whether the last sentence is correct}  
+
+%to efficiently derive timestamp barriers, we propose hierarchical barrier merging, and sending beacons on idle links. To minimize reordering delay, we propose a minimax clock synchronization scheme to assign timestamps.   
+
+%The ability to have total ordering of events and messages can simplify and accelerate many distributed applications. Traditional approaches to achieve total ordering either employs centralized sequencers or tokens with limited scalability, or use fully distributed consensus protocols with bandwidth and latency overheads. Recent availabilities of programmable datacenter networks give rise to proposals to co-designing network and distributed systems together. This paper follows this trend and proposes an efficient and scalable Total-Order Message Scattering (TOMS) solution using in-network computation.
+
+%Due to limited buffering in network switches, TOMS separates the control plane that keeps ordering information from the data forwarding plane. Messages are timestamped on the senders and buffered and reordered in end-host receivers. The control plane provides a barrier (lower bound) of future timestamps to each receiver.
+%To efficiently derive timestamp barriers, we propose hierarchical barrier merging, and sending beacons on idle links.
+%To minimize reordering delay, we propose a minimax clock synchronization scheme to assign timestamps.
+
+%TOMS achieves high performance, low network and CPU overhead, scalability, fault tolerance and incremental deploy-ability using commodity hardware in datacenter networks.
+We have implemented a TOMS prototype using commodity hardware. Our evaluation demonstrates that TOMS can achieve high performance with low CPU and network overheads. For example, TOMS improves a transactional key-value store throughput by 10x under skewed workload, compared to lock or OCC-based designs.

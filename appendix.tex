@@ -1,0 +1,208 @@
+\section{Appendix}
+\newtheorem{theorem}{Theorem}[subsection]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[subsection]
+\newtheorem{property}{Property}[subsection]
+\newtheorem*{assump}{Assumption}
+\newtheorem*{notation}{Notation}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+\newtheorem*{conclusion}{Conclusion}
+\newtheorem*{note}{Note}
+\subsection{Proof of hierarchical merge}
+\label{appx:hierarchical_merge}
+In Sec.~\ref{sec:ideal}, we have pointed out the property of barrier timestamp and how we merge barriers hierarchically. Here we prove that the way we merge barriers does maintain its property.
+Let's rewrite the property and formula:
+\begin{property}\label{prop:barrier}
+	Take any network link $L$, if a packet with barrier timestamp $B$ is on the $L$, then for any following packet carrying (barrier or data) timestamp $T$, there must be $B \le T$.
+\end{property}
+\begin{theorem}
+	If we derive barriers following (\ref{equ:derive_barriers}), then the barrier timestamp $B$ determined for egress port $E$ still has the above property as long as the barrier from every ingress port does.
+\end{theorem}
+\begin{proof}
+	We reuse notation $\mathcal{I}_E$ and $R_i$ defined in (\ref{equ:derive_barriers}).
+	After barrier timestamp $B$ is sent through egress port $E$, all following packets are either data packets from a certain ingress port or barrier packets determined in the future.
+
+	For a following data packet carrying timestamp $T$, let's assume it comes from ingress link $I \in \mathcal{I}$. Because all received barrier timestamps from $I$ have the Property~\ref{prop:barrier}, we have $B \le R_I \le T$.
+
+	For a following barrier timestamp $T$, let's assume it is determined by newer register value $R'_I$.
+	$$T:=\min\{R'_I|I \in \mathcal{I}_E\}$$
+	
+	Because of Property~\ref{prop:barrier}, $\forall I \in \mathcal{I}_E:R_I \le R'_I$, which implies $B \le T$.
+
+	So, we can conclude that the newly determined barrier timestamp $B$ still has the Property~\ref{prop:barrier}.
+\end{proof}
+
+Besides, an endhost sender assigns barrier timestamps to be the same as data timestamps, which follows Property~\ref{prop:barrier} trivially, so hierarchical merge can maintain barrier's property properly.
+\subsection{Proof of Minimax Synchronization}
+\label{appx:minimax}
+
+\begin{notation}
+	Each sender $i\in\mathcal{S}$ has a logical timestamp $T_i$, which consists of physical clock $Phy$, physical clock skew $s_i$ and logical timestamp offset $O_i$ ($T_i = Phy+s_i+O_i$). Each receiver $j \in \mathcal{R}$ also has physical clock skew $s_j$.
+\end{notation}\begin{notation}
+	One-way delay from sender $i \in \mathcal{S}$ to receiver $j \in \mathcal{R}$ is $d_{ij}$. $d_{ij}$ is unmeasurable.
+\end{notation}
+\begin{notation}
+	One-way delay from receiver $j \in \mathcal{R}$ to sender $i \in \mathcal{S}$ is $r_{ji}$. $r_{ji}$ is unmeasurable.
+\end{notation}
+\begin{notation}
+	Round trip delay between sender $i \in \mathcal{S}$ and receiver $j \in \mathcal{R}$ is $RTT_{ij}( = RTT_{ji} = d_{ij} + r_{ji})$. $RTT_{ij}$ is measurable.
+\end{notation}
+\begin{note}
+	A common endhost functions as both sender and receiver. So the delay between its two parts is $0$.
+\end{note}
+\begin{assump}
+	There are no switches.
+\end{assump}
+\begin{assump}
+	Senders and receivers are fully connected. The delay between physically unconnected sender and receiver is $+\infty$.
+\end{assump}
+\begin{assump}
+	Delay is invariant during the synchronization.
+\end{assump}
+\begin{lemma}\label{proof:ts2offset}
+	In the above model, logical timestamp offset is equivalent to logical timestamp.
+\end{lemma}
+\begin{proof}
+	With linear time assumption, receiver $j$ will receive timestamp $(Phy+O_i-d_{ij}+s_i-s_j)$ from sender $i$ at physical time $Phy$.
+	The receiver to sender direction is similar.
+	We can count clock skew into link delay, which will make logical timestamp to only consist of physical time, timestamp offset and link delay.
+	Besides, $Phy$ is the same for every sender and receiver, so we can treat logical timestamp offset $O_i$ equivalent to logical timestamp $T_i$.
+\end{proof}
+Now we prove several good mathematical properties assuming $\texttt{FwdFunc} =$ \textbf{max} and $\texttt{BackFunc} =$ \textbf{min}.
+\theoremstyle{definition}
+\begin{definition}{Let $O'_i$ be the new value of $O_i$}\label{proof:NextO_i}
+\begin{equation*}
+\begin{aligned}
+O_i' &= \min\limits_{\forall j \in \mathcal{R}}\left[\max\limits_{\forall k \in \mathcal{S}}\left(O_k - d_{kj}\right) - r_{ji} + RTT_{ij}\right] \\
+     &= \min\limits_{\forall j \in \mathcal{R}}\left[\max\limits_{\forall k \in \mathcal{S}}\left(O_k - d_{kj}\right) + d_{ij}\right] \\
+     &=\min_{\forall  j \in \mathcal{R}}\left[\max_{\forall k \in \mathcal{S}}\left(O_k - d_{kj} + d_{ij}\right)\right]
+\end{aligned}
+\end{equation*}
+\end{definition}
+\newcommand{\FM}[1]{{\mathcal{M}_{#1}}}
+\newcommand{\FMGEN}[2]{{O_{#1}-d_{{#1}{#2}}}}
+\newcommand{\Fm}[1]{{m_{#1}}}
+\newcommand{\FmGEN}[2]{\FMGEN{\FM{#1}}{#1}+ d_{{#2}{#1}}}
+\newcommand{\NEXTT}[1]{{\FmGEN{\Fm{#1}}{#1}}}
+\begin{definition} $\FM{j} \in \mathcal{S} (j \in \mathcal{R})$
+\begin{equation} \label{proof:FMdef}
+\forall j \in \mathcal{R}, \forall k \in \mathcal{S}:\FMGEN{\FM{j}}{j} \ge \FMGEN{k}{j}
+\end{equation}
+\end{definition}
+\begin{definition} $\Fm{i} \in \mathcal{R} (i \in \mathcal{S})$
+\begin{multline} \label{proof:Fmdef}
+\forall i \in \mathcal{S}, \forall j \in \mathcal{R}:\\
+(\FmGEN{\Fm{i}}{i}) \le (\FmGEN{j}{i})
+\end{multline}
+\end{definition}
+\begin{note}
+	The Definition~\ref{proof:NextO_i} can then be rewritten as
+	\begin{equation}\label{proof:NextO_i2}
+	O_i' \triangleq \NEXTT{i}
+	\end{equation}
+\end{note}
+\begin{note}
+	From (\ref{proof:Fmdef}) and (\ref{proof:NextO_i2}), we have
+	\begin{equation}\label{proof:FMnewOle}
+		\forall j \in \mathcal{R} : O'_i - d_{ij} \le \FMGEN{\FM{j}}{j}
+	\end{equation}
+	
+	Which means
+	\begin{equation}\label{proof:unchanged_FM}
+		\forall j \in \mathcal{R}:O'_{\FM{j}} = O_{\FM{j}}
+	\end{equation}
+\end{note}
+\begin{theorem}\label{thm:someO_unchanged}
+	$\exists i \in \mathcal{S}:O'_i=O_i$
+\end{theorem}
+\begin{proof}
+Let $k=i$ in (\ref{proof:FMdef}), we have
+\begin{equation*}\begin{split}
+\forall i \in \mathcal{S}, \forall j \in \mathcal{R} : \FMGEN{\FM{j}}{j} \ge O_i - d_{ij}\\
+\Leftrightarrow\hspace{1em} \FmGEN{j}{i} \ge O_i
+\end{split}\end{equation*}
+With (\ref{proof:NextO_i2}), we have
+\begin{equation} \label{proof:newOge}
+\forall i \in \mathcal{S}: O'_i \ge O_i
+\end{equation}
+With (\ref{proof:Fmdef}) and (\ref{proof:NextO_i2}), we have
+\begin{equation} \label{proof:newOle}
+\forall i \in \{i \in \mathcal{S}| \exists j \in \mathcal{R}:\FM{j}=i\}:O'_i \le O_i
+\end{equation}
+With (\ref{proof:newOge}) and (\ref{proof:newOle}), we conclude
+\begin{equation}\label{proof:O_i_unchanged}
+\forall i \in \{i \in \mathcal{S}| \exists j \in \mathcal{R}:\FM{j}=i\}:O'_i = O_i
+\end{equation}
+\end{proof}
+\begin{theorem}\label{thm:allnewO_unchanged}
+	$\forall i \in \mathcal{S}: O''_i = O'_i$, where $O''_i$ is the new value of $O'_i$
+\end{theorem}
+\begin{proof}
+From (\ref{proof:Fmdef}) and (\ref{proof:NextO_i2}), let $m_i = j$, we have
+
+\begin{equation}\label{proof:newnewO1}
+	\forall i,k \in \mathcal{S}: O'_k\le(\FmGEN{\Fm{i}}{k})
+\end{equation}
+Substitute the definition of $O_i'$ from (\ref{proof:NextO_i2}), we have
+\begin{equation}\label{proof:newnewO2}
+	\forall i,k \in \mathcal{S}: O'_k\le (O'_i + d_{k\Fm{i}} - d_{i\Fm{i}})
+\end{equation}
+From (\ref{proof:newnewO1}) and (\ref{proof:newnewO2}), we have
+\begin{equation*}
+	\forall i \in \mathcal{S}, \exists j \in \mathcal{R}, \forall k \in \mathcal{S}: (O'_k-d_{kj}+d_{ij}) \le O'_i
+\end{equation*}
+So by the Definition~\ref{proof:NextO_i}
+\begin{equation} \label{proof:newnewOle}
+O''_i = \min_{\forall  j \in \mathcal{R}}\left[\max_{\forall k \in \mathcal{S}}\left(O'_k - d_{kj} + d_{ij}\right)\right]\le O'_i
+\end{equation}
+Similar to (\ref{proof:newOge}), we can prove
+\begin{equation}\label{proof:newnewOge}
+	\forall i \in \mathcal{S}:O''_i \ge O'_i
+\end{equation}
+From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in \mathcal{S}: O''_i=O'_i$
+\end{proof}
+\begin{definition}
+	The reorder delay $D$ of overall system is the maximum timestamp skew among all receivers.
+	\begin{equation*}
+		D:=\max_{\substack{\forall j \in \mathcal{R}\\\forall k \in \mathcal{S}}}\left[\left(\FMGEN{\FM{j}}{j}\right)-\left(\FMGEN{k}{j}\right)\right]
+	\end{equation*}
+\end{definition}
+\begin{theorem}\label{thm:reorder_delay_decline}
+	With arbitrary initial $O_i(i\in \mathcal{S})$, the initial reorder delay $D$ $\ge$ the reorder delay $D'$ after Minimax Synchronization.
+\end{theorem}
+\begin{proof}
+		Take any receiver $r \in \mathcal{R}$ and any sender $s \in \mathcal{S}$, let's consider the reorder delay before ($d$) and after ($d'$) synchronization between them. Use (\ref{proof:unchanged_FM}), we have
+	\begin{equation*}\begin{split}
+		 d &=\left(\FMGEN{\FM{r}}{r}\right)-\left(\FMGEN{s}{r}\right) \ge 0\\ d'&=|\left(\FMGEN{\FM{r}}{r}\right)-\left(O'_s - d_{sr}\right)| \ge 0
+	\end{split}\end{equation*}
+	
+	If $O_s = O'_s$, apparently $d'=d$.
+	
+	If $O_s \neq O'_s$, from (\ref{proof:newOle}), we have
+	$$\forall i \in \mathcal{S}, O_i \neq O'_i, \forall j \in \mathcal{R}:\FMGEN{\FM{j}}{j} > \FMGEN{i}{j}$$
+	
+	With (\ref{proof:FMnewOle}) and (\ref{proof:newOge}), we have $d' \le d \Rightarrow D' \le D$.
+	
+	In conclusion, the reorder delay between any pair of sender-receiver won't be worse after minimax synchronization, so will the reorder delay of overall system.
+\end{proof}
+\begin{rem}
+	From Theorem~\ref{thm:someO_unchanged},~\ref{thm:allnewO_unchanged} and~\ref{thm:reorder_delay_decline}, we proved several important properties of our Minimax Synchronization:
+	timestamp will converge in at most one rtt; reorder delay may decline (won't increase) after synchronization.
+\end{rem}
+\begin{note}
+	If there are switches, the above proof still holds. Because the \textbf{min} and \textbf{max} are aggregate operations having associative property. So switches introduced in Algorithm~\ref{alg:minimax} don't affect the results.
+\end{note}
+
+\begin{note}
+	If consider delay variance, above proof shows the minimax synchronization can converge to a new balance in a single rtt.
+\end{note}
+
+\begin{note}
+	We give but won't prove the drawbacks of choosing \textbf{max} or \textbf{avg} as $\texttt{BackFunc}$.
+	If choose \textbf{max}, there exists conditions where logical timestamps may grow faster than physical clock.
+	What worse is that the growth rate isn't constant, so we can't compensate link delay well without a steady clock.
+	If choose \textbf{avg}, several faster timestamp may be held by many slower timestamp for a very long time.
+	This is unacceptable when merging two established clusters.
+\end{note}
