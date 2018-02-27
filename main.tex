@@ -20,8 +20,10 @@
 % usepackage command, below.
 
 % This version uses the latex2e styles, not the very ancient 2.09 stuff.
-\documentclass[preprint,10pt]{sigplanconf}
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix}
 \usepackage{epsfig}
+\usepackage{endnotes}
 \usepackage{amsfonts}
 \usepackage{mathrsfs}
 \usepackage{balance}
@@ -56,8 +58,7 @@
 %don't want date printed
 \date{}
 
-%make title bold and 14 pt font (Latex default is non-bold, 16 pt)
-\title{Efficient and Scalable Total-Order Message Scattering in Data Center Networks\vspace{-0.1in}}
+\title{Efficient and Scalable Total-Order Message Scattering\\ in Data Center Networks\vspace{-0.1in}}
 
 %for single author (just remove % characters)
 %\author{
@@ -71,7 +72,7 @@
 % {\rm Name}\\
 %Name Institution
 %} % end author
-\authorinfo{Paper \#254, 12 pages\vspace{-0.1in}}{}{}
+\author{{\rm OSDI'18 submission}\vspace{-0.1in}}
 
 \maketitle
 
