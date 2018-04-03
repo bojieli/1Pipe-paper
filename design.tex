@@ -1,5 +1,4 @@
-\section{Design}
-\label{sec:design}
+\section{Unreliable \sys Design}
 
 \begin{figure}[t]
 \centering
@@ -9,26 +8,27 @@
 \vspace{-1em}
 \end{figure}
 
-In Figure~\ref{fig:barrier}, let's reconsider the example in Sec.\ref{sec:toms}.
-When shard($a$) receives both messages $R_a$ and $W_a$, due to monotonic timestamp assignment on both sender and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from both $R$ and $W$.
-If there are no other senders, shard($a$) can safely process messages with $T \leq \min(T_R, T_W)$.%\RED{\sout{, \textit{i.e.}, the lower timestamp one between messages $R_a$ and $W_a$}}.
-%$min(T_R, T_W)$ is the lower bound of timestamps $A$ may ever receive in the future, we call it a \textit{barrier}.
+Let's reconsider the example in Sec.\ref{sec:toms} in Figure~\ref{fig:barrier}.
+When shard($a$) receives both messages $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from neither $R$ nor $W$.
+Because $R$ and $W$ are the only two senders, shard($a$) can safely process messages with $T \leq \min(T_R, T_W)$.
 
-Several challenges arise:
+Following above observation, several challenges arise:
 
 \textbf{Liveness}.
-In above example, if one of $R$ and $W$ stops sending messages, shard($a$) can not deliver messages with timestamps higher than $\min(T_R,T_W)$, causing a livelock.
-To ensure liveness, each sender needs to send \textit{beacon} messages to each receiver  periodically when it has no data to send.
+In above example, if either $R$ or $W$ stops sending messages, shard($a$) can not deliver messages with timestamps higher than $\min(T_R,T_W)$, causing a livelock.
+To ensure liveness, sender needs to send \textit{beacon} messages to receiver  periodically when it has no data to send.
 This is covered in Sec.\ref{sec:beacon}.
 
 \textbf{Scalability}.
-If there are $N$ senders and $N$ receivers, it requires $N^2$ messages per beacon interval.
+If there are $N$ senders and $N$ receivers, \REDBLU{the complexity of communication is $N^2$.}{it requires $N^2$ messages per beacon interval.}
 Sec.\ref{sec:ideal} leverages network switches to merge beacons hierarchically and reduce the beacon message complexity to $O(N)$.
 
-\textbf{Reordering delay}. To minimize reordering delay, which is the delay between receiving and delivering the message, we need to synchronize the clocks at senders, as in Sec.\ref{sec:sync}.
+\textbf{Reordering delay}. To minimize reordering delay, which is the delay between receiving and delivering a message, we need to synchronize the clocks at senders, which is covered in Sec.\ref{sec:sync}.
 
 \textbf{Packet loss}.
-If a packet is lost, the receivers will observe different orderings of events. Simply retransmit the packet with same timestamp violates the monotonic property of timestamps. The detection and recovery of packet losses are discussed in Sec.\ref{sec:lossy}.
+If a packet is lost, the receivers will observe \REDBLU{an incomplete ordering of events.}{different orderings of events.}
+Simple retransmission with same timestamp violates the monotonic property of timestamps.
+The detection and recovery of packet losses are discussed in Sec.\ref{sec:reliable}.
 
 \textbf{Fault tolerance and incremental deployment}.
 Sec.\ref{sec:incremental} discusses how to add end hosts, switches and links on the fly, with minimal impact on system performance, and how to merge two existing \sys systems.
@@ -40,12 +40,13 @@ Sec.\ref{sec:incremental} discusses how to add end hosts, switches and links on 
 \subsection{Hierarchical Merge of Barriers}
 \label{sec:ideal}
 
-A classical method of merging multiple ordered streams of packets into one ordered stream of packets is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}. It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
+A classical method of merging multiple ordered streams of packets into one ordered stream of packets is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
+It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
 Unfortunately, when any input stream is empty, the switch needs to wait and buffer the other streams in memory.
 %The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets. 
 The buffer size in commodity switches is one order of magnitude lower than the requirement~\cite{bai2017congestion}.
 Furthermore, the deterministic merge scheduling policy is not supported in commodity switches~\cite{sivaraman2015towards,sivaraman2016programmable}.
-
+                                                                     
 
 \begin{figure}[t]
 \centering
@@ -55,20 +56,25 @@ Furthermore, the deterministic merge scheduling policy is not supported in commo
 \vspace{-0.9em}
 \end{figure}
 
-Our solution is to \textit{separate the control plane from the data plane}. In this case, the control plane is the ordering information, and the data plane is the messages. Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet. Thus, each packet contains two timestamp fields: a \textit{message timestamp} used by end hosts, and a \textit{barrier timestamp} used by both end hosts and switches. At begining, a packet is formed by an end host which fills the same timestamp value in both fields. As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged. The meaning of a barrier timestamp is as follows: 
+Our solution is to \textit{separate the control plane from the data plane}.
+\REDBLU{Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
+We attach two fields to each packet.
+The first is a \textit{message timestamp} field, which is only used by end-hosts and won't change once assigned.
+The second is a \textit{barrier timestamp} field, which is initialized by end-hosts but will be modified by switches as the packets moving.
+}
+{In this case, the control plane is the ordering information, and the data plane is the messages.
+Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet.
+Thus, each packet contains two timestamp fields: a \textit{message timestamp} used by end hosts, and a \textit{barrier timestamp} used by both end hosts and switches. 
+At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
+As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.}
 
-\emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message or barrier timestamps than $B$.}
+The property of a barrier timestamp is: 
 
-%\RED{The barrier timestamp should have the following properties:}
-%\begin{enumerate}
-%\item The barrier timestamp $B$ on a network link $L$ indicates the \textit{lower bound of future message timestamps} %that travel through $L$ after $B$.
-%\item \RED{(This point is included by the above property, barrier is lower bound of future data message timestamps \textbf{and} future barriers)}An additional property of the barrier timestamps is that it is \textit{non-decreasing on each network link}, so streams of barrier timestamps can be merged hierarchically.
-%\end{enumerate}
+\emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message \REDBLU{and}{or} barrier timestamps than $B$.}
 
-%A packet on link $L$ sent earlier than barrier $B$ may still have message timestamp $M > B$. %It should be buffered in the switch in the deterministic merge approach, but in our approach 
-%it is forwarded as normal and arrive at the reordering buffer on the receiver end host.
-
-To derive barriers, a network switch maintains a register $R_i$ per ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports. After routing a packet with barrier timestamp $B$ from ingress port $i$ to the egress port $E$, the switch updates register $R_i := B$, and modifies the barrier timestamp of the packet to a new value $B_{new}$:
+To derive barriers, \REDBLU{senders assign the same value to both fields.
+And}{} a network switch maintains a register $R_i$ per ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
+After routing a packet with barrier timestamp $B$ from ingress port $i$ to the egress port $E$, the switch updates register $R_i := B$, and modifies the barrier timestamp of the packet to a new value $B_{new}$:
 
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
 \begin{equation}\label{equ:derive_barriers}
@@ -82,20 +88,21 @@ Where
 \mathcal{I}_E =\{i| i\rightarrow E, i \in \mathcal{I} \}
 \end{equation}
 
-Here $\rightarrow$ means \textit{can be routed to}. So $\mathcal{I}_E$ is a subset of $\mathcal{I}$ that contains all ingress ports with a route to egress port $E$. $\mathcal{I}_E$ can be predetermined at route configuration time.
+Here $\rightarrow$ means \textit{can be routed to}.
+$\mathcal{I}_E$ can be predetermined at route configuration time.
 %Note that the switches do not read or modify message timestamps. 
 In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge described in (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}) maintains the property of barrier timestamps.
-%Appendix~\ref{appx:hierarchical_merge} proves \RED{(not several, only one)}several properties of barrier timestamps. \RED{(The only property is: any barrier timestamp or message timestamp is greater or equal to previous barrier timestamp.)}In particular, a property is that for a given packet\RED{(a given data? beacon? packet)}, its barrier timestamp is \textit{non-decreasing on each network link}.
 
-When a receiver receives a packet with message timestamp $M$ and barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
-There may be some delay between receiving a message and receiving the corresponding barrier timestamp that allows its delivery. This delay is called \textit{reordering delay}. %\RED{\sout{Our goal is to minimize reordering delay.
-%Appendix B\RED{(not proved)} proves that the reordering delay of our approach is identical to deterministic merge.}}
-
-The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:goals}). If there is a routing loop of links $L_1 \rightarrow \ldots \rightarrow L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$, so the barrier timestamps cannot increase. This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps. When the routing loop is removed, the barrier timestamps will start increasing again.
+\REDBLU{One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).}
+{The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
+If there is a routing loop of links $L_1, \ldots , L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$
+\REDBLU{. So we can't increase the barrier timestamp because a packet may be forwarded in this routing loop indefinitely.}
+{, so the barrier timestamps cannot increase.
+This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
+When the routing loop is removed, barrier timestamps will start increasing again.
 
 Although the design above works on a P4 programmable switch, many commodity switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
-To address this, we apply the principle of control and data plane separation again, and offload the control plane entirely to the CPU on switches.
-Because the CPU on a switch has far less processing capacity than switching chips, we use beacon packets as \textit{slacked barriers} of data packets. This will be discussed in Sec.~\ref{sec:commodity}.
+By using beacon packets as \textit{slacked barriers} of data packets, we can still offload the control plane entirely to the CPU on switches. This will be discussed in Sec.~\ref{sec:commodity}.
 
 \subsection{Beacons on Idle Links}
 \label{sec:beacon}
@@ -159,6 +166,10 @@ To minimize reordering delay, we hope to synchronize the beacons at different ne
 
 \subsection{Minimax Clock Synchronization}
 \label{sec:sync}
+
+\RED{Should talk about reorder delay in this section}
+When a receiver receives a packet with message timestamp $M$ and barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
+There may be some delay between receiving a message and receiving the corresponding barrier timestamp that allows its delivery. This delay is called \textit{reordering delay}.
 
 %\RED{\sout{People perceive two events as simultaneous when observing their effects at the same time.}}
 %Due to different propagation delays from the origin of events to the observers, simultaneity of events is relative to observers.
@@ -290,8 +301,8 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 %One may ask why we use physical clock instead of Lamport clock (cite) or vector clock (cite) to measure intervals. A clock measures an interval by counting repetitive events. A good clock source should generate a roughly same number of repetitive events when our measurement object is stable, as well have a granularity finer than the intervals to measure.
 %If we use packet counter as clock source, the RTT measurement will vary with network throughput. If we use received timestamps as clock source, it is unable to measure a tiny interval if no packet is received during the interval. Physical clocks driven by crystal oscillators and CPU instruction counters are accurate enough to measure short intervals, because their relative error is less than $10^{-5}$ (cite) and the granularity is as fine as a nanosecond.
 
-\subsection{Reliable \sys in Lossy Networks}
-\label{sec:lossy}
+\section{Reliable \sys Design}
+\label{sec:reliable}
 
 Above design only provides ordered but unreliable delivery.
 In practice, network links typically experience one packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
