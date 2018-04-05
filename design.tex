@@ -46,7 +46,7 @@ Unfortunately, when any input stream is empty, the switch needs to wait and buff
 %The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets. 
 The buffer size in commodity switches is one order of magnitude lower than the requirement~\cite{bai2017congestion}.
 Furthermore, the deterministic merge scheduling policy is not supported in commodity switches~\cite{sivaraman2015towards,sivaraman2016programmable}.
-                                                                     
+
 
 \begin{figure}[t]
 \centering
@@ -68,7 +68,7 @@ Thus, each packet contains two timestamp fields: a \textit{message timestamp} us
 At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
 As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.}
 
-The property of a barrier timestamp is: 
+The property of a barrier timestamp is:
 
 \emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message \REDBLU{and}{or} barrier timestamps than $B$.}
 
@@ -92,6 +92,8 @@ Here $\rightarrow$ means \textit{can be routed to}.
 $\mathcal{I}_E$ can be predetermined at route configuration time.
 %Note that the switches do not read or modify message timestamps. 
 In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge described in (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}) maintains the property of barrier timestamps.
+
+When a receiver receives a packet with barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
 
 \REDBLU{One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).}
 {The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
@@ -166,10 +168,6 @@ To minimize reordering delay, we hope to synchronize the beacons at different ne
 
 \subsection{Minimax Clock Synchronization}
 \label{sec:sync}
-
-\RED{Should talk about reorder delay in this section}
-When a receiver receives a packet with message timestamp $M$ and barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
-There may be some delay between receiving a message and receiving the corresponding barrier timestamp that allows its delivery. This delay is called \textit{reordering delay}.
 
 %\RED{\sout{People perceive two events as simultaneous when observing their effects at the same time.}}
 %Due to different propagation delays from the origin of events to the observers, simultaneity of events is relative to observers.
