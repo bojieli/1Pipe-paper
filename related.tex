@@ -1,11 +1,23 @@
 \section{Related Work}
 \label{sec:related}
 
+\RED{Related work was written in a rush. Need to revisit.}
+\RED{Machine-aware Atomic Broadcast Trees for Multicores, OSDI'16.}
+\RED{NetChain: Scale-Free Sub-RTT Coordination (key-value store + scalable)
+Exploiting a Natural Network Effect for Scalable, Fine-grained Clock Synchronization (background for clock synchronization algorithm)}
+\RED{PLOVER: Fast, Multi-core Scalable Virtual Machine Fault-tolerance (application of TOMS)}
+
 \textbf{Total-order multicast.}
 Efficiency and scalability is a fundamental trade-off for general total-order multicast algorithms~\cite{defago2004total}.
 For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
-Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate the history during message delivery~\cite{chandra1996unreliable} or run a consensus protocol among receivers~\cite{lamport1978time}. 
-Deterministic merge~\cite{aguilera2000efficient} is similar to our design, but in-network reordering is beyond the capacity of existing network switches. So we propose the principle of separating ordering information from message forwarding.
+Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate the history during message delivery~\cite{chandra1996unreliable} or run a consensus protocol among receivers~\cite{lamport1978time}.
+
+A classical method of merging multiple ordered streams of packets into one ordered stream of packets is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
+It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
+Unfortunately, when any input stream is empty, the switch needs to wait and buffer the other streams in memory.
+%The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets. 
+The buffer size in commodity switches is one order of magnitude lower than the requirement~\cite{bai2017congestion}.
+Furthermore, the deterministic merge scheduling policy is not supported in commodity switches~\cite{sivaraman2015towards,sivaraman2016programmable}. In light of this, we propose the principle of separating ordering information from message forwarding.
 
 \textbf{Transaction processing.}
 Recent years there is rich literature in the importance and difficulties in achieving strong consistency efficiently in distributed systems~\cite{lloyd2011don,lloyd2013stronger,mu2014extracting,zhang2016operation,lu2015existential,ajoux2015challenges,mu2016consolidating,lu2016snow,kallman2008h,zhang2015building}.

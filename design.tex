@@ -1,4 +1,4 @@
-\section{Unreliable \sys Design}
+\section{\sys in a Reliable Network}
 
 \begin{figure}[t]
 \centering
@@ -39,14 +39,6 @@ Sec.\ref{sec:incremental} discusses how to add end hosts, switches and links on 
 
 \subsection{Hierarchical Merge of Barriers}
 \label{sec:ideal}
-
-A classical method of merging multiple ordered streams of packets into one ordered stream of packets is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
-It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
-Unfortunately, when any input stream is empty, the switch needs to wait and buffer the other streams in memory.
-%The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets. 
-The buffer size in commodity switches is one order of magnitude lower than the requirement~\cite{bai2017congestion}.
-Furthermore, the deterministic merge scheduling policy is not supported in commodity switches~\cite{sivaraman2015towards,sivaraman2016programmable}.
-
 
 \begin{figure}[t]
 \centering
@@ -168,6 +160,8 @@ To minimize reordering delay, we hope to synchronize the beacons at different ne
 
 \subsection{Minimax Clock Synchronization}
 \label{sec:sync}
+
+\RED{This section needs review.}
 
 %\RED{\sout{People perceive two events as simultaneous when observing their effects at the same time.}}
 %Due to different propagation delays from the origin of events to the observers, simultaneity of events is relative to observers.
@@ -299,8 +293,15 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 %One may ask why we use physical clock instead of Lamport clock (cite) or vector clock (cite) to measure intervals. A clock measures an interval by counting repetitive events. A good clock source should generate a roughly same number of repetitive events when our measurement object is stable, as well have a granularity finer than the intervals to measure.
 %If we use packet counter as clock source, the RTT measurement will vary with network throughput. If we use received timestamps as clock source, it is unable to measure a tiny interval if no packet is received during the interval. Physical clocks driven by crystal oscillators and CPU instruction counters are accurate enough to measure short intervals, because their relative error is less than $10^{-5}$ (cite) and the granularity is as fine as a nanosecond.
 
-\section{Reliable \sys Design}
+
+
+\section{\sys in an Unreliable Network}
 \label{sec:reliable}
+
+\RED{Leading paragraph: packet loss and node failure.}
+
+\subsection{Packet Loss Detection and Recovery}
+\label{subsec:loss-recovery}
 
 Above design only provides ordered but unreliable delivery.
 In practice, network links typically experience one packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
@@ -371,6 +372,10 @@ As shown in Algorithm~\ref{alg:loss-detection}, the switch records the unreliabl
 
 \subsection{Fault Tolerance and Incremental Deployment}
 \label{sec:incremental}
+
+\RED{Need to discuss atomic message scattering based on 2PC, improvement (fast commit when no loss), recalling messages on node failure.}
+
+\RED{Discuss the difference of switch failure and host failure. Switch failure, sender can resend. Node failure, may need recall. Difference from consensus: all or nothing, quorum includes all nodes. Cannot recover from permanent host failure. Leave persistence, replication and failure recovery to the application.}
 
 Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
 Upon detection of failure, it will install a firewall rule to block data packets from the corresponding port and excludes the port from barrier aggregation and clock synchronization.

@@ -1,6 +1,8 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
+\RED{Evaluation was written in a rush. Need rewrite.}
+
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
 In this section, we focus on the efficiency of \sys.
 %First, we evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions. Then we deep dive into the behavior of \sys under abnormal conditions, including new node joining, failure, route change, packet loss and inter-datacenter topology.
@@ -46,6 +48,15 @@ Topologies in Table~\ref{tab:eval-topology}.
 For large-scale experiments, we use NS-3~\cite{henderson2008network} for simulation. The link bandwidth, link delay and processing delay are extracted from three-layer testbed experiments. To make simulations faster, each sender only sends one message to a randomly chosen receiver.
 
 \subsection{Efficiency}
+
+\RED{
+\begin{enumerate}
+\item Compare with hierarchical merge using end hosts only (validate our principle of ordering/forwarding separation).
+\item Fault tolerance, failure recovery and incremental deployment 
+\item Reordering delay with background traffic (DCTCP + ECN) 
+\item minimax clock synchronization (compare reordering delay with physical clock synchronization)
+\end{enumerate}
+}
 
 
 \begin{figure}[t]
