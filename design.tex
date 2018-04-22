@@ -47,7 +47,7 @@ When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assign
 \vspace{-0.9em}
 \end{figure}
 
-In the Lamport-like~\cite{lamport1978time} approach above, with $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.
+In the Lamport-style~\cite{lamport1978time} approach above, with $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.
 Our solution is to \textit{separate the control plane from the data plane}.
 Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
 We attach two fields to each packet.
@@ -105,8 +105,12 @@ The liveness of the system requires information from every network link. The rec
 
 %The first solution requires the sender to rejoin the receiver when it has another packet to send, which requires at least a single-hop RTT to re-sync the timestamps (Sec.\ref{sec:failure}). Therefore, this solution is applicable when the sender knows it would not send any packet during a relatively long period, \textit{e.g.}, when the application closes.
 
-Beacons not only introduce network and CPU overhead, but also affects reordering delay. The receiver of an idle link can only increase its barrier timestamp every time it receives a beacon. We further synchronize beacons at different network links, so that reordering delay overhead is the beacon interval regardless of number of hops in network path. As shown in Algorithm~\ref{alg:beacon}, a switch broadcasts beacons when it receives beacons or the timer fires. The network/CPU overhead and reordering delay is a trade-off to choose a proper beacon interval.
+Beacons not only introduce network and CPU overhead, but also affects reordering delay. The receiver of an idle link can only increase its barrier timestamp every time it receives a beacon. We further synchronize beacons at different network links, so that reordering delay overhead is the beacon interval regardless of number of hops in network path. To this end, we introduce two beacon intervals $B_{min}$ and $B_{max}$. A switch broadcasts beacons as soon as it receives a beacon and have not sent beacons for at least $B_{min}$ time. A switch also broadcasts beacons when it has not received a beacon for $B_{max}$ time. $B_{min}$ is set to the estimated maximum path delay variance, while $B_{max}$ is the desired beacon interval. The network/CPU overhead and reordering delay is a trade-off to choose $B_{max}$.
 
+When a sender is idle for a timeout significantly longer than RTT, it notifies the switch and stops sending beacons. When it sends messages via \sys again, it can rejoin within an RTT (Sec.\ref{sec:failure}).
+
+\iffalse
+%Remove the algorithm because it does not contain much information and takes too much space.
 \setlength{\textfloatsep}{1em}
 \begin{algorithm}[t]
  \DontPrintSemicolon
@@ -153,6 +157,7 @@ Beacons not only introduce network and CPU overhead, but also affects reordering
  \caption{Timestamp processing with beacons.}
  \label{alg:beacon}
 \end{algorithm}
+\fi
 
 %In order to detect failures, each switch has a timeout timer per ingress port. If no beacon or data packet is received for three max beacon intervals, the ingress port is considered to be dead and removed from the ingress port list. When the failed link, host or switch recovers, it needs to rejoin (Sec.\ref{sec:incremental}).
 

@@ -9,7 +9,7 @@ In this section, we first evaluate the reordering delay, CPU overhead and networ
 \subsection{Methodology}
 \label{sec:testbed}
 
-We use two testbeds with different programming capabilities. The first  includes three servers and one Tofino~\cite{tofino} 100G P4 programmable switch. The second includes 32 servers and 10 Arista 100G Ethernet switches in fat-tree topology~\cite{arista}. Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC.
+We use two testbeds with different programming capabilities. The first  includes three servers and one Tofino 100G P4 programmable switch~\cite{tofino}. The second includes 32 servers and 10 Arista 100G Ethernet switches~\cite{arista} in fat-tree topology. Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC.
 
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
@@ -49,15 +49,32 @@ Topologies in Table~\ref{tab:eval-topology}.
 For large-scale experiments, we use NS-3~\cite{henderson2008network} for simulation. The link bandwidth, link delay and processing delay are extracted from three-layer testbed experiments. To make simulations faster, each sender only sends one message to a randomly chosen receiver.
 \fi
 
-\RED{In the evaluation about beacon overhead, we should not simply show a line chart of reordering delay and beacon overhead. We should show the impact on application performance with different reorder delays.}
+
+
 
 \subsection{Efficiency}
 
-Figure X compares the throughput with hierarchical merge using end hosts only.
 
-Figure X shows the reordering delay with background traffic. 
 
-Figure X compares reordering delay of minimax clock synchronization with physical clock synchronization.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
+\caption{[Testbed] Throughput comparison with hierarchical merge using end hosts only.}
+\label{fig:hierarchical-merge}
+\end{figure}
+
+Figure~\ref{fig:hierarchical-merge} compares the throughput and latency using P4 programmable switch, commodity switch, end host barrier and hierarchical merge. \RED{Bojie will fill in the figure.}
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
+\caption{[Testbed] Reordering delay with different clock synchronization methods.}
+\label{fig:clock-sync}
+\end{figure}
+
+Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization. \RED{Bojie will fill in the figure.}
 
 
 \begin{figure}[t]
@@ -77,7 +94,7 @@ Figure X compares reordering delay of minimax clock synchronization with physica
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay in different system scales. Because the beacon interval is 100~$\mu$s, the average reordering delay to wait for the next beacon is 50~$\mu$s. Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives. As the number of network layers increase, the reordering delay increase, due to beacon processing delay at each switch. The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
 
-Figure~\ref{fig:reorder-simulation} compares how minimax clock synchronization adapts to imbalanced link or host delays. We simulate two senders and two receivers connected via 4 links. When one sender $S_1$ has 100~$\mu$s more delay, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays. When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay. When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\mu$s more delay, minimax clock synchronization can compensate the change.
+Figure~\ref{fig:reorder-simulation} compares how minimax clock synchronization adapts to imbalanced link or host delays. We simulate two senders and two receivers connected via 4 links. When one sender $S_1$ has 100~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays. When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay. When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
 
@@ -105,6 +122,8 @@ Figure~\ref{fig:reorder-simulation} compares how minimax clock synchronization a
 \label{sec:eval-overhead}
 
 
+\RED{In the evaluation about beacon overhead, we should not simply show a line chart of reordering delay and beacon overhead. This figure is trivial and should be removed.}
+
 Beacons are network packets that consume bandwidth.
 As shown in Figure~\ref{fig:network-overhead}, under high speed networks and a reasonable beacon interval, the beacon traffic is a tiny portion of available link bandwidth. Because beacons are hop-by-hop, the overhead is only related to beacon interval and does not change with system scale.
 
@@ -117,42 +136,50 @@ Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon proc
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.35\textwidth]{gnuplot/reorder_receiver.pdf}
+\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.pdf}
 \caption{[Testbed] Reordering overhead on receivers.}
 \label{fig:reorder-overhead}
 \end{figure}
 
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
-\iffalse
 \subsection{Deep Dive}
 
-\subsubsection{Fault Tolerance}
-\label{sec:eval-fault-tolerance}
-
-\textbf{Failure.}
-When a host or switch or link fails, its adjacent switch will detect the failure after beacon timeout.
-
-\textbf{Failure recovery / New node joining.}
-After a host recovers from failure, the 
-
-\textbf{Route Change.}
-
-\begin{figure}[t]
+\begin{table}
 \centering
-	\subfloat[Normal host.\label{fig:failure-normal}]
-	{\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
-	\hspace{0.01\textwidth}
-	\subfloat[Failure host.\label{fig:failure-failed}]
-	{\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
-	\caption{[Simulation] Throughput and latency during a host failure and its recovery.}
-	\label{fig:failure}
-    \vspace{-15pt}
-\end{figure}
+\scalebox{0.9}{
+\begin{tabular}{l|l|l|l|l}
+	\hline
+	 & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
+    \hline
+    \hline
+    $S_1$ fail & & & & \\
+    \hline
+    $S_1$ recover & & & & \\
+    \hline
+    $R_1$ fail & & & & \\
+    \hline
+    $R_1$ fail & & & & \\
+    \hline
+    $L$ fail & & & & \\
+    \hline
+    $L$ recover & & & & \\
+    \hline
+    $SW_1$ fail & & & & \\
+    \hline
+    $SW_1$ recover & & & & \\
+    \hline
+\end{tabular}
+}
+\caption{Convergence time of failure and recovery of host, link and switch. $L$ is the link from $S_1$ to $SW_1$. Convergence time is the time since the event occurs until end-to-end delay recovers to normal.}
+\label{tab:failure}
+\end{table}
 
-Figure~\ref{fig:failure}, time graph. X axis: time, Y axis: throughput and latency (on left and right side)
-\fi
+We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ interconnected via two switches $SW_1, SW_2$. Each switch is connected to all four hosts for redundancy.
+Table~\ref{tab:failure} shows the how long a failure or recovery would impact the system.
+\RED{Bojie will fill the table.}
 
+\iffalse
 \subsubsection{Incremental Deployment}
 \label{sec:eval-incremental}
 
@@ -172,7 +199,7 @@ Figure~\ref{fig:clock-convergence} shows
 Converge time graph, compare with physical time synchronization solution
 
 Figure~\ref{fig:incremental-delay} shows the reordering delay. (spike then fall back)
-
+\fi
 
 
 

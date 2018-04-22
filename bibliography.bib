@@ -21,6 +21,15 @@ url = {https://www.usenix.org/conference/nsdi18/presentation/wang},
 publisher = {{USENIX} Association},
 }
 
+@book{birman1985replication,
+  title={Replication and fault-tolerance in the ISIS system},
+  author={Birman, Kenneth P},
+  volume={19},
+  number={5},
+  year={1985},
+  publisher={ACM}
+}
+
 @inproceedings{raft,
   title={In search of an understandable consensus algorithm.},
   author={Ongaro, Diego and Ousterhout, John K},
@@ -149,6 +158,32 @@ deployment/benchmarks/smallbank/}
   organization={USENIX}
 }
 
+@inproceedings{kaestle2016machine,
+  title={Machine-Aware Atomic Broadcast Trees for Multicores.},
+  author={Kaestle, Stefan and Achermann, Reto and Haecki, Roni and Hoffmann, Moritz and Ramos, Sabela and Roscoe, Timothy},
+  booktitle={OSDI},
+  volume={16},
+  pages={33--48},
+  year={2016}
+}
+
+@inproceedings{jin2018netchain,
+  title={NetChain: Scale-Free Sub-RTT Coordination},
+  author={Jin, Xin and Li, Xiaozhou and Zhang, Haoyu and Foster, Nate and Lee, Jeongkeun and Soul{\'e}, Robert and Kim, Changhoon and Stoica, Ion},
+  booktitle={15th {USENIX} Symposium on Networked Systems Design and Implementation ({NSDI} 18)},
+  pages={35--49},
+  year={2018},
+  organization={USENIX Association}
+}
+
+@inproceedings{geng2018exploiting,
+  title={Exploiting a Natural Network Effect for Scalable, Fine-grained Clock Synchronization},
+  author={Geng, Yilong and Liu, Shiyu and Yin, Zi and Naik, Ashish and Prabhakar, Balaji and Rosenblum, Mendel and Vahdat, Amin},
+  booktitle={15th {USENIX} Symposium on Networked Systems Design and Implementation ({NSDI} 18)},
+  pages={81--94},
+  year={2018},
+  organization={USENIX Association}
+}
 
 @article{bosshart2014p4,
   title={P4: Programming protocol-independent packet processors},
@@ -305,6 +340,26 @@ deployment/benchmarks/smallbank/}
   volume={13},
   pages={313--328},
   year={2013}
+}
+
+@inproceedings{li2012making,
+  title={Making Geo-Replicated Systems Fast as Possible, Consistent when Necessary.},
+  author={Li, Cheng and Porto, Daniel and Clement, Allen and Gehrke, Johannes and Pregui{\c{c}}a, Nuno M and Rodrigues, Rodrigo},
+  booktitle={OSDI},
+  volume={12},
+  pages={265--278},
+  year={2012}
+}
+
+@article{thomas1979majority,
+  title={A majority consensus approach to concurrency control for multiple copy databases},
+  author={Thomas, Robert H},
+  journal={ACM Transactions on Database Systems (TODS)},
+  volume={4},
+  number={2},
+  pages={180--209},
+  year={1979},
+  publisher={ACM}
 }
 
 @inproceedings{cho2017credit,
@@ -862,6 +917,52 @@ deployment/benchmarks/smallbank/}
   organization={ACM}
 }
 
+@book{terry1995managing,
+  title={Managing update conflicts in Bayou, a weakly connected replicated storage system},
+  author={Terry, Douglas B and Theimer, Marvin M and Petersen, Karin and Demers, Alan J and Spreitzer, Mike J and Hauser, Carl H},
+  volume={29},
+  number={5},
+  year={1995},
+  publisher={ACM}
+}
+
+@inproceedings{petersen1997flexible,
+  title={Flexible update propagation for weakly consistent replication},
+  author={Petersen, Karin and Spreitzer, Mike J and Terry, Douglas B and Theimer, Marvin M and Demers, Alan J},
+  booktitle={ACM SIGOPS Operating Systems Review},
+  volume={31},
+  number={5},
+  pages={288--301},
+  year={1997},
+  organization={ACM}
+}
+
+@book{gharachorloo1990memory,
+  title={Memory consistency and event ordering in scalable shared-memory multiprocessors},
+  author={Gharachorloo, Kourosh and Lenoski, Daniel and Laudon, James and Gibbons, Phillip and Gupta, Anoop and Hennessy, John},
+  volume={18},
+  number={2SI},
+  year={1990},
+  publisher={ACM}
+}
+
+@inproceedings{lu2016snow,
+  title={The SNOW Theorem and Latency-Optimal Read-Only Transactions.},
+  author={Lu, Haonan and Hodsdon, Christopher and Ngo, Khiem and Mu, Shuai and Lloyd, Wyatt},
+  booktitle={OSDI},
+  pages={135--150},
+  year={2016}
+}
+
+@inproceedings{belaramani2006practi,
+  title={PRACTI Replication.},
+  author={Belaramani, Nalini Moti and Dahlin, Michael and Gao, Lei and Nayate, Amol and Venkataramani, Arun and Yalagandula, Praveen and Zheng, Jiandan},
+  booktitle={NSDI},
+  volume={6},
+  pages={5--5},
+  year={2006}
+}
+
 @article{kallman2008h,
   title={H-store: a high-performance, distributed main memory transaction processing system},
   author={Kallman, Robert and Kimura, Hideaki and Natkins, Jonathan and Pavlo, Andrew and Rasin, Alexander and Zdonik, Stanley and Jones, Evan PC and Madden, Samuel and Stonebraker, Michael and Zhang, Yang and others},
@@ -871,6 +972,28 @@ deployment/benchmarks/smallbank/}
   pages={1496--1499},
   year={2008},
   publisher={VLDB Endowment}
+}
+
+@inproceedings{morrison2013fast,
+  title={Fast concurrent queues for x86 processors},
+  author={Morrison, Adam and Afek, Yehuda},
+  booktitle={ACM SIGPLAN Notices},
+  volume={48},
+  number={8},
+  pages={103--112},
+  year={2013},
+  organization={ACM}
+}
+
+@inproceedings{tassarotti2015verifying,
+  title={Verifying read-copy-update in a logic for weak memory},
+  author={Tassarotti, Joseph and Dreyer, Derek and Vafeiadis, Viktor},
+  booktitle={ACM SIGPLAN Notices},
+  volume={50},
+  number={6},
+  pages={110--120},
+  year={2015},
+  organization={ACM}
 }
 
 @inproceedings{greenberg2009vl2,
