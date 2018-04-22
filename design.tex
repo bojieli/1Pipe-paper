@@ -1,4 +1,5 @@
-\section{\sys in a Reliable Network}
+\section{\sys in Reliable Networks}
+\label{sec:design-reliable}
 
 \begin{figure}[t]
 \centering
@@ -8,30 +9,28 @@
 \vspace{-1em}
 \end{figure}
 
-Let's reconsider the example in Sec.\ref{sec:toms} in Figure~\ref{fig:barrier}.
-When shard($a$) receives both messages $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from neither $R$ nor $W$.
-Because $R$ and $W$ are the only two senders, shard($a$) can safely process messages with $T \leq \min(T_R, T_W)$.
+In this section, we assume that all hosts, network switches and links are reliable.
+Figure~\ref{fig:barrier} shows an IRIW example where reader $R$ sends $R_a$ and $R_b$ to shard($a$), while writer $W$ sends $W_a$ and $W_b$ to shard($b$).
+When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from either $R$ or $W$, so it can safely process messages with $T \leq \min(T_R, T_W)$.
 
-Following above observation, several challenges arise:
+%\textbf{Scalability}.
+%If there are $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.
+%Sec.\ref{sec:ideal} leverages network switches to merge beacons hierarchically and reduce the beacon message complexity to $O(N)$.
 
-\textbf{Liveness}.
-In above example, if either $R$ or $W$ stops sending messages, shard($a$) can not deliver messages with timestamps higher than $\min(T_R,T_W)$, causing a livelock.
-To ensure liveness, sender needs to send \textit{beacon} messages to receiver  periodically when it has no data to send.
-This is covered in Sec.\ref{sec:beacon}.
+%\textbf{Liveness}.
+%If either $R$ or $W$ stops sending messages, shard($a$) can not deliver messages with timestamps higher than $\min(T_R,T_W)$, causing a livelock.
+%To ensure liveness, each network link sends \textit{beacon} messages periodically (Sec.\ref{sec:beacon}).
 
-\textbf{Scalability}.
-If there are $N$ senders and $N$ receivers, \REDBLU{the complexity of communication is $N^2$.}{it requires $N^2$ messages per beacon interval.}
-Sec.\ref{sec:ideal} leverages network switches to merge beacons hierarchically and reduce the beacon message complexity to $O(N)$.
+%\textbf{Reordering delay}.
+%To minimize \textit{reordering delay}, which is the delay between receiving and delivering a message, Sec.\ref{sec:sync} synchronizes clocks at senders.
 
-\textbf{Reordering delay}. To minimize reordering delay, which is the delay between receiving and delivering a message, we need to synchronize the clocks at senders, which is covered in Sec.\ref{sec:sync}.
+%\textbf{Packet loss}.
+%If a packet is lost, the receivers will observe an incomplete ordering of events.
+%Simple retransmission with same timestamp violates the monotonic property of timestamps.
+%The detection and recovery of packet losses are discussed in Sec.\ref{sec:lossy}.
 
-\textbf{Packet loss}.
-If a packet is lost, the receivers will observe \REDBLU{an incomplete ordering of events.}{different orderings of events.}
-Simple retransmission with same timestamp violates the monotonic property of timestamps.
-The detection and recovery of packet losses are discussed in Sec.\ref{sec:reliable}.
-
-\textbf{Fault tolerance and incremental deployment}.
-Sec.\ref{sec:incremental} discusses how to add end hosts, switches and links on the fly, with minimal impact on system performance, and how to merge two existing \sys systems.
+%\textbf{Fault tolerance}.
+%Sec.\ref{sec:failure} discusses how to add end hosts, switches and links on the fly, with minimal impact on system performance, and how to merge two existing \sys systems.
 
 %\textbf{Inter-DC topology}.
 %Sec.\ref{sec:inter-dc} extends the design to inter-DC topology where routing paths are not loop-free.
@@ -42,30 +41,31 @@ Sec.\ref{sec:incremental} discusses how to add end hosts, switches and links on 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{images/hierarchical_merge.pdf}
+\includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
 \caption{Hierarchical aggregation of timestamp barriers.}
 \label{fig:hierarchical_merge}
 \vspace{-0.9em}
 \end{figure}
 
+In the Lamport-like~\cite{lamport1978time} approach above, with $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.
 Our solution is to \textit{separate the control plane from the data plane}.
-\REDBLU{Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
+Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
 We attach two fields to each packet.
 The first is a \textit{message timestamp} field, which is only used by end-hosts and won't change once assigned.
-The second is a \textit{barrier timestamp} field, which is initialized by end-hosts but will be modified by switches as the packets moving.
-}
-{In this case, the control plane is the ordering information, and the data plane is the messages.
-Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet.
-Thus, each packet contains two timestamp fields: a \textit{message timestamp} used by end hosts, and a \textit{barrier timestamp} used by both end hosts and switches. 
-At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
-As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.}
+The second is a \textit{barrier timestamp} field, which is initialized by end-hosts but will be modified by switches.
 
-The property of a barrier timestamp is:
+%In this case, the control plane is the ordering information, and the data plane is the messages.
+%Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet.
+%Thus, each packet contains two timestamp fields: a \textit{message timestamp} used by end hosts, and a \textit{barrier timestamp} used by both end hosts and switches. 
+%At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
+%As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.
 
-\emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message \REDBLU{and}{or} barrier timestamps than $B$.}
+The property of the barrier timestamp is:
 
-To derive barriers, \REDBLU{senders assign the same value to both fields.
-And}{} a network switch maintains a register $R_i$ per ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
+\emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message and barrier timestamps than $B$.}
+
+To derive barriers, senders assign the same value to both fields.
+A network switch maintains a register $R_i$ per ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
 After routing a packet with barrier timestamp $B$ from ingress port $i$ to the egress port $E$, the switch updates register $R_i := B$, and modifies the barrier timestamp of the packet to a new value $B_{new}$:
 
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
@@ -87,12 +87,11 @@ In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge 
 
 When a receiver receives a packet with barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
 
-\REDBLU{One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).}
-{The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
-If there is a routing loop of links $L_1, \ldots , L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$
-\REDBLU{. So we can't increase the barrier timestamp because a packet may be forwarded in this routing loop indefinitely.}
-{, so the barrier timestamps cannot increase.
-This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
+One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).
+%{The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
+If there is a routing loop of links $L_1, \ldots , L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$. So we can't increase the barrier timestamp because a packet may be forwarded in this routing loop indefinitely.
+%{, so the barrier timestamps cannot increase.
+%This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
 When the routing loop is removed, barrier timestamps will start increasing again.
 
 Although the design above works on a P4 programmable switch, many commodity switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
@@ -101,13 +100,12 @@ By using beacon packets as \textit{slacked barriers} of data packets, we can sti
 \subsection{Beacons on Idle Links}
 \label{sec:beacon}
 
-The liveness of the system requires knowledge from every network link. If a link is idle, the receiver cannot distinguish if it is really idle or there is excessive delay on the link, or worse, the sender or link has a failure. There are two ways to resolve the idle link problem: (1) let the sender send a signal packet to shutdown the link temporarily; (2) ensure the link is always busy by sending periodic \textit{beacons}.
+The liveness of the system requires information from every network link. The receiver cannot distinguish between an idle link or excessive delay on the link. We send periodic \textit{beacons} to ensure the link is always busy.
+%There are two ways: (1) let the sender send a signal packet to shutdown the link temporarily; (2) ensure the link is always busy by sending periodic \textit{beacons}.
 
-The first solution requires the sender to rejoin the receiver when it has another packet to send, which requires at least a single-hop RTT to re-sync the timestamps (Sec.\ref{sec:incremental}). Therefore, this solution is applicable when the sender knows it would not send any packet during a relatively long period, \textit{e.g.}, when the application closes.
+%The first solution requires the sender to rejoin the receiver when it has another packet to send, which requires at least a single-hop RTT to re-sync the timestamps (Sec.\ref{sec:failure}). Therefore, this solution is applicable when the sender knows it would not send any packet during a relatively long period, \textit{e.g.}, when the application closes.
 
-The second solution adds network and CPU overhead for the beacons. The beacon interval $\mathcal{B}$ affects the reordering delay of the whole system. The receiver side of an idle link can only increase its barrier timestamp every time it receives a beacon, so the maximum reordering delay added by beacons is $\mathcal{B} \cdot h$, where $h$ is the number of network hops. The network/CPU overhead and reordering delay is a trade-off to choose a proper beacon interval.
-
-To minimize reordering delay, we hope to synchronize the beacons at different network links, so the reordering delay can be reduced to $\mathcal{B}$ regardless of network hops. This requires a network switch to send a beacon as soon as it receives a beacon from ingress links. So we introduce \textit{min beacon interval} and \textit{max beacon interval}, in Algorithm~\ref{alg:beacon}.
+Beacons not only introduce network and CPU overhead, but also affects reordering delay. The receiver of an idle link can only increase its barrier timestamp every time it receives a beacon. We further synchronize beacons at different network links, so that reordering delay overhead is the beacon interval regardless of number of hops in network path. As shown in Algorithm~\ref{alg:beacon}, a switch broadcasts beacons when it receives beacons or the timer fires. The network/CPU overhead and reordering delay is a trade-off to choose a proper beacon interval.
 
 \setlength{\textfloatsep}{1em}
 \begin{algorithm}[t]
@@ -161,51 +159,58 @@ To minimize reordering delay, we hope to synchronize the beacons at different ne
 \subsection{Minimax Clock Synchronization}
 \label{sec:sync}
 
-\RED{This section needs review.}
-
 %\RED{\sout{People perceive two events as simultaneous when observing their effects at the same time.}}
 %Due to different propagation delays from the origin of events to the observers, simultaneity of events is relative to observers.
-From an end-host receiver's perspective, two events should be simultaneous if the messages originated from the events reach the receiver simultaneously.
+%From an end-host receiver's perspective, two events should be simultaneous if the messages originated from the events arrive at the receiver simultaneously.
 %In a distributed system, events are timestamped and their effects propagate in the form of packets.
 %On one hand, we hope to timestamp the events so that if two packets originated from two distant events arrive at a receiver simultaneously, these two events should have a same timestamp.
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
-If we simply synchronize the clocks using physical clock synchronization, \textit{e.g.}, NTP~\cite{mills1991internet}, PTP~\cite{correll2005design} or DTP~\cite{lee2016globally}, the packets received from a low latency path always need to wait for the packets received from a higher latency path. This increase the reordering delay to at least the maximum delay variance of all senders.
-Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may grow to milliseconds under heavy load.
+
+The next challenge is how to assign timestamps to messages.
+The naive approach of physical clock synchronization (\textit{e.g.} NTP~\cite{mills1991internet}, PTP~\cite{correll2005design} or DTP~\cite{lee2016globally}) does not account for the delay variance of network paths.
+Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may increase to milliseconds under heavy load.
 Links with different speeds or congestions also lead to delay variations.
+For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to different network delays. As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
-We assign an \textit{event timestamp} to each event and its emitted messages, such that:
-\begin{enumerate}
-\item Event timestamps strictly increase monotonically on each host.
-\item Event timestamps increase at the pace of a physical clock on average.
-\item Event timestamps should be assigned so that messages from different end hosts with near timestamps arrive at receivers at approximately same receiver local physical time.
-\item Event timestamps should converge in a network with stable link delays and clock speed, given any initial timestamp.
-\end{enumerate}
+To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks. We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$. Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$. Note that we can measure the round-trip time ($RTT_i = d_i + r_i$) between two nodes, but one-way delay is hard to measure. We further observe that speed of clocks on each node have negligible difference (relative error less than $10^{-5}$~\cite{corbett2013spanner}), while in the long run they will diverge. We consider physical clocks precise enough to measure short intervals.
 
-The first property is necessary for correctness. The second property ensures numerical stability, \textit{i.e.}, the increase speed of timestamps does not vanish or explode. In addition, the second property enables us to obtain an unbiased estimate of the event timestamp after one round trip, by measuring RTT with a local physical clock. The third property minimizes reordering delay by optimizing for simultaneous arrival of a message timestamp and its corresponding barrier timestamp.
+To minimize reordering delay, we want the senders to assign timestamps so that messages with a same timestamp arrive at receiver simultaneously. Consequently, the logical clock at $S_i$ should have an offset $d_i$ to the physical time. If $R$ broadcasts a clock synchronization message at physical time 0, $S_i$ will receive it at $r_i$. Then $S_i$ compensates a round-trip time $RTT_i$ to the received timestamp and sets its clock to $0 + d_i + r_i$ at physical time $r_i$, which has offset $d_i$ to physical time. Our goal is achieved.
 
-To maintain the second property, we store event timestamps as \textit{offsets} relative to local physical clock on end hosts and switches. When sending timestamps to the network, we add current clock time back to the offset.
-This effectively uses physical clock to measure \textit{relative time} instead of absolute time, so the clock skew would not accumulate. Physical clocks driven by crystal oscillators and CPU instruction counters are accurate enough to measure short intervals, because their relative error is less than $10^{-5}$~\cite{corbett2013spanner} and the granularity is at nanosecond level to ensure each packet has a unique timestamp.
-It worth noting that Sec.~\ref{sec:ideal} stores a timestamp barrier as an \textit{absolute value} to represent a slacked bound, while this subsection stores event timestamps as \textit{relative offsets} to represent unbiased estimations.
-
-For the third property, we determine new event timestamp on end hosts according to feedback information from the network.
-The synchronized timestamp from the network may be smaller than the last assigned event timestamp $T_{last}$. To prevent the event timestamps from decreasing, we track $T_{last}$ and let the new event timestamp to be the maximum of $T_{last} + 1$ and synchronized timestamp, as shown in Algorithm~\ref{alg:clock}. This effectively ``stalls'' the event timestamp until the synchronized timestamp catches up with it.
 
 \begin{algorithm}[t]
  \DontPrintSemicolon
  \textbf{States:} Clock adjustment offset $off$\;
- \qquad Last assigned event timestamp $T_{last}$\;
+ \qquad Last assigned timestamp $T_{last}$\;
  \qquad Local physical clock, fetched via $time()$\;
  \textbf{Event processing:}\;
  \If{received sync timestamp $T_{sync}$}{
  	$off \leftarrow T_{sync} - time()$\;
  }
  \ElseIf{a total-ordered event occurs}{
-    EventTS $\leftarrow \max (T_{last} + 1, time() + off)$\;
-    $T_{last} \leftarrow$ EventTS\;
+    TS $\leftarrow \max (T_{last} + 1, time() + off)$\;
+    $T_{last} \leftarrow$ TS\;
  }
- \caption{Clock adjustment and event timestamp assignment on each end host.}
+ \caption{Clock adjustment and timestamp assignment on each end host.}
  \label{alg:clock}
 \end{algorithm}
+
+
+
+Because timestamps can only increase monotonically, when the newly synchronized offset $d_i$ is less than the current offset of $S_i$, it has to ``stall'' the logical clock rather than decreasing it. During stall, the logical clock increments by 1 per scattering, while the synchronized offset increases at the speed of physical clock. Algorithm~\ref{alg:clock} shows the procedure.
+
+Now we extend to multiple receivers $R_i \in \mathcal{R}$.
+%In a data center, each sender is also a receiver, but we denote the send and receive roles separately for clarity.
+Assume the one-way delays are $d_{ij}$ for $S_i \rightarrow R_j$ and $r_{ij}$ for $R_j \rightarrow S_i$, and we can measure $RTT_{ij} = d_{ij} + r_{ij}$. If we want to follow the approach above for each receiver, we need to synchronize the clocks of receivers first. In this regard, we add a \textit{forward pass} in which $S_i$ send to $R_j$ and synchronize clocks of $R_j$, then run the \textit{backward pass} above from $R_j$ to $S_i$. In both forward pass and backward pass, each node receives potentially different offsets from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}. Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ should be:
+
+\vspace{-1em}
+\begin{equation*}
+\begin{aligned}
+T'_k & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i - d_{ij} \} - r_{jk} + RTT_{kj} \} \\
+     & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i - d_{ij} \} + d_{kj} \}
+\end{aligned}
+\end{equation*}
+
+Because a logical clock needs to be stalled if it is synchronized to a lower offset, and the reordering delay during stall is not optimal, we aim to minimize clock stall. Consequently, all clocks should catch up with the clock with highest offset, indicating that \texttt{FwdFunc} should be \texttt{max}. If we choose \texttt{BackFunc} to also be \texttt{max}, in some networks with delay imbalance, the clocks would not converge. Convergence means that $\forall k \in \mathcal{S}, T'_k = T_k$. In this regard, we choose \texttt{BackFunc} to be \texttt{min}. Appendix~\ref{appx:minimax} proves that given any initial clock offsets, clocks converge in one RTT. This ensures self-stabilization in a network with rapidly changing delays.
 
 
 \begin{figure*}[t]
@@ -224,6 +229,28 @@ The synchronized timestamp from the network may be smaller than the last assigne
 \vspace{-1.2em}
 \end{figure*}
 
+
+
+Fig.~\ref{fig:minimax} shows an example with two senders and two receivers.
+In Fig.~\ref{fig:minimax_max}, each receiver chooses the maximum timestamp offset from physical clock and broadcasts the offset back to sender. Initial reordering delays are 10 at $R_1$ and 5 at $R_2$.
+In Fig.~\ref{fig:minimax_min}, each sender adds RTT to received offsets and synchronizes to the minimum offset.
+Fig.~\ref{fig:minimax_result} shows that after minimax synchronization, reordering delays reduce to 4 at $R_1$ and 0 at $R_2$.
+
+Without in-network computation, clock synchronization would require $O(N^2)$ messages. Similar to hierarchical aggregation of barriers, we use network switches to aggregate \texttt{min} and \texttt{max} timestamps hierarchically, as shown in Algorithm~\ref{alg:minimax}.
+
+\iffalse
+The first property is necessary for correctness. The second property ensures numerical stability, \textit{i.e.}, the increase speed of timestamps does not vanish or explode. In addition, the second property enables us to obtain an unbiased estimate of the event timestamp after one round trip, by measuring RTT with a local physical clock. The third property minimizes reordering delay by optimizing for simultaneous arrival of a message timestamp and its corresponding barrier timestamp.
+
+To maintain the second property, we store event timestamps as \textit{offsets} relative to local physical clock on end hosts and switches. When sending timestamps to the network, we add current clock time back to the offset.
+This effectively uses physical clock to measure \textit{relative time} instead of absolute time, so the clock skew would not accumulate. Physical clocks driven by crystal oscillators and CPU instruction counters are accurate enough to measure short intervals, because their relative error is less than $10^{-5}$~\cite{corbett2013spanner} and the granularity is at nanosecond level to ensure each packet has a unique timestamp.
+It worth noting that Sec.~\ref{sec:ideal} stores a timestamp barrier as an \textit{absolute value} to represent a slacked bound, while this subsection stores event timestamps as \textit{relative offsets} to represent unbiased estimations.
+
+For the third property, we determine new event timestamp on end hosts according to feedback information from the network.
+The synchronized timestamp from the network may be smaller than the last assigned event timestamp $T_{last}$. To prevent the event timestamps from decreasing, we track $T_{last}$ and let the new event timestamp to be the maximum of $T_{last} + 1$ and synchronized timestamp, as shown in Algorithm~\ref{alg:clock}. This effectively ``stalls'' the event timestamp until the synchronized timestamp catches up with it.
+\fi
+
+
+\iffalse
 To derive the timestamp feedback in the network, we need to estimate the delay from end-host senders to end-host receivers.
 One-way delay is hard to measure, therefore we use round-trip time (RTT) instead.
 Each end-host will add RTT to received feedback timestamp, just as illustrated in Figure~\ref{fig:minimax_min}.
@@ -253,6 +280,7 @@ In Figure~\ref{fig:minimax_min}, both senders add RTT to feedback and synchroniz
 Figure~\ref{fig:minimax_result} shows that compared to the original timestamp assignment, reorder delay declines after minimax synchronization.
 
 Finally, to reduce the message complexity of clock synchronization, we use network switches to aggregate the $min$ and $max$ timestamps hierarchically, as shown in Algorithm~\ref{alg:minimax}.
+\fi
 
 \setlength{\textfloatsep}{0em}
 \begin{algorithm}[t]
@@ -295,102 +323,101 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 
 
 
-\section{\sys in an Unreliable Network}
+\section{\sys in Unreliable Networks}
 \label{sec:reliable}
 
-\RED{Leading paragraph: packet loss and node failure.}
+Previous section achieves TOMS in reliable networks. In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
-\label{subsec:loss-recovery}
+\label{sec:lossy}
 
-Above design only provides ordered but unreliable delivery.
-In practice, network links typically experience one packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
-Additionally, some devices or network links may have congestion or bugs to incur higher packet loss possibility~\cite{guo2015pingmesh}.
-\sys detects packet loss in the network and mark barrier timestamps with a \textit{loss encountered} flag.
-The original barrier timestamp is renamed to \textit{unreliable barrier}.
-For applications requiring reliable ordered delivery, it can process the messages below unreliable barrier if the loss encountered flag is off.
-When a loss is encountered, the receiver needs to wait for the senders to retransmit the lost messages.
-\sys provides an \textit{ACK barrier} to indicate that all messages with timestamps below that barrier have been received by their desired recipients.
+In data centers, network links experience one packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
+Additionally, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
+%\sys detects packet loss in the network and mark barrier timestamps with a \textit{loss encountered} flag.
+\sys detects packet loss in the network using per-port packet loss counter in commodity NICs and switches. Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
+
+Our aim is to deliver messages in an one-way network delay when no packet loss encountered, and fall back to two-phase commit (2PC) with three one-way delays when loss occurs. For this purpose, we rename the original barrier to \textit{unreliable barrier} and add a \textit{commit barrier} and a \textit{loss encountered} flag alongside it. Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below commit timestamp has been received. Figure~\ref{fig:ack-barrier} shows an example. When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier. Otherwise, it delivers based on commit barrier.
+
 
 \setlength{\textfloatsep}{1em}
 \begin{algorithm}[t]
  \DontPrintSemicolon
- \textbf{States:} Unreliable barrier $B_i, i \in \mathcal{I}$\;
- 	\qquad ACK barrier $A_i, i \in \mathcal{I}$\;
- 	\qquad Last-hop loss encountered flag $LE_i, i \in \mathcal{I}$\;
+ \textbf{States:} Unreliable barrier $UB_i, i \in \mathcal{I}$\;
+ 	\qquad Commit barrier $CB_i, i \in \mathcal{I}$\;
     \qquad Received loss encountered flag $RLE_i, i \in \mathcal{I}$\;
+ 	\qquad Last-hop loss encountered flag $LE_i, i \in \mathcal{I}$\;
     \qquad Unreliable barrier at last loss $LB_i, i \in \mathcal{I}$\;
     \qquad Last loss counter $LC_i, i \in \mathcal{I}$\;
     \qquad Current loss counter, fetched via $C(i), i \in \mathcal{I}$\;
  \textbf{Event processing:}\\
  \If{\textnormal{Receive beacon packet from ingress $i$}}{
  	$RLE_i \leftarrow$ loss encounter flag in the packet\;
-    $B_i \leftarrow$ unreliable barrier in the packet\;
+    $UB_i \leftarrow$ unreliable barrier in the packet\;
+    $CB_i \leftarrow$ commit barrier in the packet\;
     \If{$LC_i \neq C(i)$}{
     	$LE_i \leftarrow \textnormal{True}$\;
-        $LB_i \leftarrow B_i$\;
+        $LB_i \leftarrow UB_i$\;
         $LC_i \leftarrow C(i)$\;
     }
-    $A_i \leftarrow$ ACK barrier in the packet\;
-	\If{$A_i > LB_i \wedge LC_i = C(i)$}{
+	\ElseIf{$CB_i \geq LB_i$}{
     	$LE_i \leftarrow \textnormal{False}$\;
     }
  }
  \ElseIf{\textnormal{Send beacon packet to egress $E$}}{
-    Unreliable barrier $\leftarrow \min \{ B_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
-    ACK barrier $\leftarrow \min \{ A_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
+    Unreliable barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
+    Commit barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
     Loss encountered flag $\leftarrow \exists i \in \mathcal{I} \wedge (i \rightarrow E) \wedge (LE_i \vee RLE_i)$\;
  }
  \caption{Hop-by-hop loss detection in network switches.}
  \label{alg:loss-detection}
 \end{algorithm}
 
-To detect packet loss in the network, we leverage per-port packet drop counter in commodity NICs and network switches.
-If the packet drop counter of an ingress port changes, we know that a packet is lost during current interval and set the \textit{loss encountered} flag of the ingress port.
-As a justification, our actual measurements find that the number of end-to-end packet losses agree with the packet drop counters in our test environment.
+%To detect packet loss in the network, we leverage per-port packet loss counter in commodity NICs and switches.
+%If packet loss counter of an ingress port changes, we know that a packet is lost during current interval and set the \textit{loss encountered} flag of the ingress port.
+%As a justification, our actual measurements find that the number of end-to-end packet losses agree with the packet drop counters in our test environment.
 
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.45\textwidth]{images/loss_detection.pdf}
-\caption{Loss detection, recovery and ACK barriers.}
+\caption{Loss recovery and commit barriers.}
 \label{fig:ack-barrier}
 \vspace{-0.4em}
 \end{figure}
 
 
 
-Similar to TCP, packets have sequence numbers independent of timestamps.
-The receiver responds ACK to the sender via non-timestamped packets.
-For each connection, the sender maintains a \textit{minimum unacknowledged timestamp}, detect packet loss via duplicate ACKs or timeout, then retransmit the lost packets with the same timestamp (Figure~\ref{fig:ack-barrier}).
-Each sender maintains an unacknowledged timestamp barrier (\textit{ACK barrier}), which is the minimum of minimum unacknowledged timestamps among all connections. Messages with timestamps below the ACK barrier are guaranteed to be received by all recipients.
+%Similar to TCP, packets have sequence numbers independent of timestamps.
+%The receiver responds ACK to the sender via non-timestamped packets.
+%For each connection, the sender maintains a \textit{minimum unacknowledged timestamp}, detect packet loss via duplicate ACKs or timeout, then retransmit the lost packets with the same timestamp (Figure~\ref{fig:ack-barrier}).
+%Each sender maintains an unacknowledged timestamp barrier (\textit{ACK barrier}), which is the minimum of minimum unacknowledged timestamps among all connections. Messages with timestamps below the ACK barrier are guaranteed to be received by all recipients.
 
-ACK barriers are aggregated hierarchically in network switches.
-ACK barrier also \textit{clears} the loss encountered flag of an ingress port.
-As shown in Algorithm~\ref{alg:loss-detection}, the switch records the unreliable barrier at the time of marking the loss encountered flag. Then the switch waits for the ACK barrier to grow above this recorded unreliable barrier. If no packet loss occurred during this interval, the loss encountered flag can be cleared.
+Different from traditional 2PC where commit messages are sent to receivers directly, \sys aggregates commit barriers hierarchically in network. The first reason is that \sys can only deliver a message after all messages with lower timestamps. The second reason is to \textit{clear} the loss encountered flag. As shown in Algorithm~\ref{alg:loss-detection}, when commit barrier is higher than unreliable barrier recorded at last packet loss, the switch clears the flag because messages below commit barrier have been received and messages above that have not been lost.
 
 
 \subsection{Fault Tolerance and Incremental Deployment}
-\label{sec:incremental}
+\label{sec:failure}
 
-\RED{Need to discuss atomic message scattering based on 2PC, improvement (fast commit when no loss), recalling messages on node failure.}
+Previous section retransmits lost packets with end hosts. When a host, switch or network link fails, we cannot stall the network and wait for it to recover. First, we deal with host failure. When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets. A receiver discards messages from the failed node in reordering buffer. To ensure message scattering atomicity, a sender checks uncommitted messages and send \textit{recall} messages to other receivers. Upon receiving \textit{recall}, it discards the message in reordering buffer and responds ACK. The sender then discards the uncommitted message when all healthy receivers have recalled. We admit that \sys shares a same limitation with standard two-phase commit. If a receiver fails after commit message has been sent, \sys cannot recall committed messages from other receivers.
 
-\RED{Discuss the difference of switch failure and host failure. Switch failure, sender can resend. Node failure, may need recall. Difference from consensus: all or nothing, quorum includes all nodes. Cannot recover from permanent host failure. Leave persistence, replication and failure recovery to the application.}
+When a host recovers from failure, it needs to join \sys system as a new host. Recovering lost messages during failure requires persistence or replication, which incurs high cost and the best choice should be determined by applications rather than \sys transport.
 
-Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
-Upon detection of failure, it will install a firewall rule to block data packets from the corresponding port and excludes the port from barrier aggregation and clock synchronization.
-As an effect, the barriers are temporarily stalled during the timeout interval, and proceed to increase after the failure port is excluded.
-In terms of CAP theorem~\cite{brewer2000towards}, we choose availability and partition tolerance over consistency between the partitions.
-When the link or neighbor node recovers, it needs to rejoin the \sys system like a newcomer.
+Next, we deal with failure of network switches or links. If a failure does not block communication between any pair of hosts, it only causes a brief interval of packet losses. Otherwise, the sender would timeout in retransmission and \textit{recall} messages from other receivers. If a failure disconnects an end host from the network (\textit{e.g.} ToR switch failure), nearby switches would broadcast the host failure. In the extreme case of network partition, all cross-partition scatterings will fail and scatterings within a partition still proceed with total order.
 
-When an end host or switch needs to join a \sys system, it first initializes a \sys system by itself (all the timestamps are initialized arbitrarily). Therefore, the joining process is reduced to connecting two existing \sys systems with a new network link.
+%Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
+%Upon detection of failure, it will install a firewall rule to block data packets from the corresponding port and excludes the port from barrier aggregation and clock synchronization.
+%As an effect, the barriers are temporarily stalled during the timeout interval, and proceed to increase after the failure port is excluded.
+%In terms of CAP theorem~\cite{brewer2000towards}, we choose availability and partition tolerance over consistency between the partitions.
+%When the link or neighbor node recovers, it needs to rejoin the \sys system like a newcomer.
 
-When merging \sys system $A$ with system $B$ via link $L$, the ingress ports from $L$ initially block all data packets and only allow beacon packets carrying barriers and clock synchronizations. 
-When $A$ receives a beacon packet with barrier timestamp greater than or equal to the barrier timestamps of all L's possible egress ports, the ingress port from $L$ is counted in and the data packets are allowed to pass through.
-If received barrier timestamp is smaller than one of L's possible egress port, it will be ignored.
-If $A$ initially has higher timestamps than $B$, minimax clock synchronization makes $B$ catch up with $A$ within one RTT.
-$B$ performs similarly and independently.
-Consequently, in networks with stable link delay and clock speed, only one end-to-end RTT is required to recover from failure, add new hosts, switches or links, or merge two existing \sys systems.
+%When an end host or switch needs to join a \sys system, it first initializes a \sys system by itself (all the timestamps are initialized arbitrarily). Therefore, the joining process is reduced to connecting two existing \sys systems with a new network link.
+
+Failure recovery and incremental deployment requires new hosts, switches and links to join a \sys system efficiently. All these cases reduce to adding a link $L$ between two nodes.
+Initially, the nodes block all data packets on $L$ and only allow beacon packets carrying barriers and clock synchronizations.
+A challenge comes from existing ingress links of the nodes. Because barrier timestamps are monotonic, a barrier from newly added link must not reduce the minimum barrier of existing ingress ports.
+For this reason, a node adds $L$ to the list of ingress ports only when this condition is met.
+With minimax clock synchronization, the entire network synchronize clocks in one RTT, since then the barriers would meet the condition.
+Consequently, only one end-to-end RTT is required for failure recovery and adding new nodes.
 
 \iffalse
 \subsection{Inter-DC Topology}

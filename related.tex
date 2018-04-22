@@ -6,6 +6,10 @@
 \RED{NetChain: Scale-Free Sub-RTT Coordination (key-value store + scalable)
 Exploiting a Natural Network Effect for Scalable, Fine-grained Clock Synchronization (background for clock synchronization algorithm)}
 \RED{PLOVER: Fast, Multi-core Scalable Virtual Machine Fault-tolerance (application of TOMS)}
+\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
+\RED{ISIS.}
+
+Different from causally ordered communication, most critics of totally ordered communication~\cite{cheriton1994understanding} focus on the lack of atomicity and limitations on efficiency and scalability.
 
 \textbf{Total-order multicast.}
 Efficiency and scalability is a fundamental trade-off for general total-order multicast algorithms~\cite{defago2004total}.
@@ -36,8 +40,6 @@ A network with bounded delay can lead to accurate clock synchronization and tota
 Achieving bounded delay requires not only the queue length to be bounded, but also the network to be lossless.
 Recent years see a lot of progress in lossless data center networks~\cite{calder2013don,cheng2014catch,handley2017re} or fast detection of packet losses~\cite{li2016lossradar}.
 Bounded queuing delay is also implemented with centralized controller~\cite{perry2015fastpass} or fully end-to-end~\cite{cho2017credit}.
-However, bounded delay in network requires reserved bandwidth, which is not economic in data center networks with background traffic.
-
 
 
 
