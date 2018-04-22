@@ -4,19 +4,20 @@
 \RED{Evaluation was written in a rush. Need rewrite.}
 
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
-In this section, we focus on the efficiency of \sys.
-%First, we evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions. Then we deep dive into the behavior of \sys under abnormal conditions, including new node joining, failure, route change, packet loss and inter-datacenter topology.
+In this section, we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions. Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
 
 \subsection{Methodology}
 \label{sec:testbed}
 
-We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
-Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
+We use two testbeds with different programming capabilities. The first  includes three servers and one Tofino~\cite{tofino} 100G P4 programmable switch. The second includes 32 servers and 10 Arista 100G Ethernet switches in fat-tree topology~\cite{arista}. Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC.
+
+%We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
+%Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
-To test the throughput, we use 8 cores on each host to continuously send RoCEv2~\cite{infinibandrocev2} unreliable datagram (UD) messages via \sys to a corresponding core on the receiver. To minimize inter-core synchronization, each core maintains timestamps independently and uses an unique RDMA queue-pair. Top-of-rack switches view each core as a unique host.
+To test the throughput, we use 8 cores on each host to continuously send RoCEv2~\cite{infinibandrocev2} unreliable datagram messages via \sys to a corresponding core on the receiver. To minimize inter-core synchronization, each core maintains timestamps independently and uses an unique RDMA queue-pair. Top-of-rack switches view each core as a unique host.
 
-
+\iffalse
 \begin{table}[t]
 \centering
 \scalebox{0.85}{
@@ -46,19 +47,17 @@ Host & ToR & Leaf & Core & ToR & Leaf & Core \\
 We evaluate 5 different system scales in Table~\ref{tab:eval-topology}: testbed consisting of one to three layers of network switches, as well as simulation of three-layer fat-tree topology with 64 or 1024 hosts.
 Topologies in Table~\ref{tab:eval-topology}.
 For large-scale experiments, we use NS-3~\cite{henderson2008network} for simulation. The link bandwidth, link delay and processing delay are extracted from three-layer testbed experiments. To make simulations faster, each sender only sends one message to a randomly chosen receiver.
+\fi
 
 \RED{In the evaluation about beacon overhead, we should not simply show a line chart of reordering delay and beacon overhead. We should show the impact on application performance with different reorder delays.}
 
 \subsection{Efficiency}
 
-\RED{
-\begin{enumerate}
-\item Compare with hierarchical merge using end hosts only (validate our principle of ordering/forwarding separation).
-\item Fault tolerance, failure recovery and incremental deployment 
-\item Reordering delay with background traffic (DCTCP + ECN) 
-\item minimax clock synchronization (compare reordering delay with physical clock synchronization)
-\end{enumerate}
-}
+Figure X compares the throughput with hierarchical merge using end hosts only.
+
+Figure X shows the reordering delay with background traffic. 
+
+Figure X compares reordering delay of minimax clock synchronization with physical clock synchronization.
 
 
 \begin{figure}[t]
@@ -154,7 +153,6 @@ After a host recovers from failure, the
 Figure~\ref{fig:failure}, time graph. X axis: time, Y axis: throughput and latency (on left and right side)
 \fi
 
-\iffalse
 \subsubsection{Incremental Deployment}
 \label{sec:eval-incremental}
 
@@ -174,7 +172,7 @@ Figure~\ref{fig:clock-convergence} shows
 Converge time graph, compare with physical time synchronization solution
 
 Figure~\ref{fig:incremental-delay} shows the reordering delay. (spike then fall back)
-\fi
+
 
 
 

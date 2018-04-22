@@ -1,7 +1,8 @@
 \section{Implementation}
 \label{sec:impl}
 
-In this section, we implement \sys in three types of networks with different programming capabilities.
+On end hosts, \sys is a reliable transport built upon RDMA/RoCEv2 unreliable datagram or UDP.
+This section implements packet processing in three types of network switches with different programming capabilities.
 
 \begin{figure*}[t]
 \centering
@@ -45,4 +46,4 @@ In case the switch vendor does not allow programming in switch CPUs, we can stil
 
 As shown in Figure~\ref{fig:end-host}, for two directly-connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. A beacon packet $H_1 \rightarrow H_2$ is sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$ and $S_2 \rightarrow H_2$. We install tunnel termination rules in each network switch to decapsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
 
-The beacon processing delay overhead of offloading a switch to an end-host representative is the RTT from the end host to the switch. Compared to Sec.~\ref{sec:commodity}, the additional reordering delay is host-to-switch RTT $\times$ number of hops.
+The beacon processing delay overhead of offloading a switch to an end-host representative is the RTT from the end host to the switch. %Compared to Sec.~\ref{sec:commodity}, the additional reordering delay is host-to-switch RTT $\times$ number of hops.

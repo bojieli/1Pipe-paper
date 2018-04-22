@@ -1,10 +1,16 @@
 \section{Application}
 \label{sec:application}
 
-\subsection{Transactional Key-Value Store}
-\label{subsec:eval-kvs}
+%\subsection{Transactional Key-Value Store}
+%\label{subsec:eval-kvs}
 
-\RED{Figure 12 should not compare directly with TAPIR/Eris. Should compare with lock-based, OCC, end-host based hierarchical merge and single-switch timestamp assignment (Eris).}
+YCSB+T~\cite{dey2014ycsbt}.
+
+New-Order and Payment in TPC-C transaction benchmark~\cite{tpcc}.
+
+Compare: lock-based, OCC, end-host based hierarchical merge, single-switch timestamp assignment (Eris), \sys and non-transactional.
+
+
 
 As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
@@ -35,7 +41,7 @@ The throughput gap between TOMS and non-transactional system (NonTX) is mainly d
 
 Figure~\ref{fig:multishard} compares the throughput of TOMS, OCC, lock-based and non-transactional key-value stores.
 Each transaction accesses 8 unique remote objects.
-If the 8 objects are on two shards, OCC has 50\% chance of transaction abort, so the throughput is 50\% of non-transactional systems. When the objects are distributed on more shards, OCC has an exponentially higher chance of abort (Sec.~\ref{sec:toms}). The throughputs of other systems are unrelated to number of shards. \sys has 10x transaction throughput than lock-based systems, as well as OCC systems with more than 4 shards per transaction. The throughput of \sys is close to the theoretical bound of non-transactional system.
+%If the 8 objects are on two shards, OCC has 50\% chance of transaction abort, so the throughput is 50\% of non-transactional systems. When the objects are distributed on more shards, OCC has an exponentially higher chance of abort (Sec.~\ref{sec:toms}). The throughputs of other systems are unrelated to number of shards. \sys has 10x transaction throughput than lock-based systems, as well as OCC systems with more than 4 shards per transaction. The throughput of \sys is close to the theoretical bound of non-transactional system.
 
 
 
@@ -68,11 +74,12 @@ On the latency side, reliable \sys adds one RTT of latency to derive the ACK bar
 Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workload of TOMS and lock-based.
 \fi
 
-\subsection{Serializable Replication}
-\label{subsec:eval-replication}
+%\subsection{Serializable Log Replication}
+%\label{subsec:eval-replication}
 
-\RED{Evaluate average number of history rewriting for TOMS and ``last-writer-wins rule'', under different number of concurrent write sites.
-(TOMS has at most rewrite history once at a write origin site; last-writer-wins rule may rewrite history at most N-1 times at any site.)}
+%Compare latency and throughput of TOMS with network sequencer (control path) and centralized coordinator (data path).
+
+
 
 %\subsection{Multiple Round-Trip Transactions}
 
