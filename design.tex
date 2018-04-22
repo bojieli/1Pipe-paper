@@ -172,12 +172,12 @@ When a sender is idle for a timeout significantly longer than RTT, it notifies t
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
 
 The next challenge is how to assign timestamps to messages.
-The naive approach of physical clock synchronization (\textit{e.g.} NTP~\cite{mills1991internet}, PTP~\cite{correll2005design} or DTP~\cite{lee2016globally}) does not account for the delay variance of network paths.
+Clock synchronization in data centers becomes increasingly accurate leveraging NIC timestamps~\cite{correll2005design}, GPS~\cite{corbett2013spanner}, PHY~\cite{lee2016globally} and network effects~\cite{geng2018exploiting}. However, delay variance of network paths makes physical time a suboptimal choice for timestamps.
 Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may increase to milliseconds under heavy load.
 Links with different speeds or congestions also lead to delay variations.
 For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to different network delays. As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
-To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks. We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$. Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$. Note that we can measure the round-trip time ($RTT_i = d_i + r_i$) between two nodes, but one-way delay is hard to measure. We further observe that speed of clocks on each node have negligible difference (relative error less than $10^{-5}$~\cite{corbett2013spanner}), while in the long run they will diverge. We consider physical clocks precise enough to measure short intervals.
+To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks. We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$. Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$. Note that we can measure the round-trip time ($RTT_i = d_i + r_i$) between two nodes, but one-way delay is hard to measure. We further observe that speed of clocks on each node have negligible difference (relative error less than $10^{-5}$~\cite{corbett2013spanner,geng2018exploiting}), while in the long run they will diverge. We consider physical clocks precise enough to measure short intervals.
 
 To minimize reordering delay, we want the senders to assign timestamps so that messages with a same timestamp arrive at receiver simultaneously. Consequently, the logical clock at $S_i$ should have an offset $d_i$ to the physical time. If $R$ broadcasts a clock synchronization message at physical time 0, $S_i$ will receive it at $r_i$. Then $S_i$ compensates a round-trip time $RTT_i$ to the received timestamp and sets its clock to $0 + d_i + r_i$ at physical time $r_i$, which has offset $d_i$ to physical time. Our goal is achieved.
 
@@ -331,12 +331,12 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \section{\sys in Unreliable Networks}
 \label{sec:reliable}
 
-Previous section achieves TOMS in reliable networks. In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
+Previous section achieves TOMS in reliable networks. In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses, packet corruptions and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
 
-In data centers, network links experience one packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
+In data centers, network links experience one packet loss or corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
 Additionally, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
 %\sys detects packet loss in the network and mark barrier timestamps with a \textit{loss encountered} flag.
 \sys detects packet loss in the network using per-port packet loss counter in commodity NICs and switches. Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.

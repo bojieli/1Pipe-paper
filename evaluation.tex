@@ -9,13 +9,13 @@ In this section, we first evaluate the reordering delay, CPU overhead and networ
 \subsection{Methodology}
 \label{sec:testbed}
 
-We use two testbeds with different programming capabilities. The first  includes three servers and one Tofino 100G P4 programmable switch~\cite{tofino}. The second includes 32 servers and 10 Arista 100G Ethernet switches~\cite{arista} in fat-tree topology. Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC.
+We use two testbeds with different programming capabilities. The first includes 3 servers and one Tofino 100G P4 programmable switch~\cite{tofino}. The second includes 32 servers and 10 Arista 100G Ethernet switches~\cite{arista} in fat-tree topology. Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~\cite{infinibandrocev2}.
 
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
-To test the throughput, we use 8 cores on each host to continuously send RoCEv2~\cite{infinibandrocev2} unreliable datagram messages via \sys to a corresponding core on the receiver. To minimize inter-core synchronization, each core maintains timestamps independently and uses an unique RDMA queue-pair. Top-of-rack switches view each core as a unique host.
+In throughput tests, each server uses 8 send cores and 8 receive cores in parallel. To minimize inter-core synchronization, each pair of send and receive cores is considered a unique host which maintains timestamps independently and processes unreliable datagrams via a separate RDMA queue pair.
 
 \iffalse
 \begin{table}[t]

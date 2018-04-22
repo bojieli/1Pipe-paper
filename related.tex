@@ -1,45 +1,36 @@
 \section{Related Work}
 \label{sec:related}
 
-\RED{Related work was written in a rush. Need to revisit.}
-\RED{Machine-aware Atomic Broadcast Trees for Multicores, OSDI'16.~\cite{kaestle2016machine}}
-\RED{NetChain: Scale-Free Sub-RTT Coordination (key-value store + scalable~\cite{jin2018netchain})
-Exploiting a Natural Network Effect for Scalable, Fine-grained Clock Synchronization (background for clock synchronization algorithm)~\cite{geng2018exploiting}}
-\RED{PLOVER: Fast, Multi-core Scalable Virtual Machine Fault-tolerance (application of TOMS)~\cite{state-machine-replication}}
-\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
-\RED{ISIS~\cite{birman1985replication}.}
-
-Different from causally ordered communication, most critics of totally ordered communication~\cite{cheriton1994understanding} focus on the lack of atomicity and limitations on efficiency and scalability.
+%\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
 
 \textbf{Total-order multicast.}
-Efficiency and scalability is a fundamental trade-off for general total-order multicast algorithms~\cite{defago2004total}.
-For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
-Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate the history during message delivery~\cite{chandra1996unreliable} or run a consensus protocol among receivers~\cite{lamport1978time}.
+Efficiency and scalability is considered a fundamental trade-off for total-order multicast~\cite{defago2004total}.
+For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
+Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable} or run a consensus protocol among receivers~\cite{lamport1978time}.
+Critics of totally ordered communication~\cite{cheriton1994understanding} blame the lack of atomicity, limited scalability and violation of end-to-end principle. \sys provides atomicity with message scattering, achieves scalability with in-network computation and incurs little overhead.
 
-A classical method of merging multiple ordered streams of packets into one ordered stream of packets is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
-It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
-Unfortunately, when any input stream is empty, the switch needs to wait and buffer the other streams in memory.
+\sys is a variant of tree-based atomic broadcast~\cite{rodrigues1998scalable}, which is used in multi-cores~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}. To merge multiple ordered streams of packets into one ordered stream, a classic algorithm is \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
+%It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
+%However, when the timestamps are not perfectly synchronized, the switch needs to wait and buffer other streams.
 %The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets. 
-The buffer size in commodity switches is one order of magnitude lower than the requirement~\cite{bai2017congestion}.
-Furthermore, the deterministic merge scheduling policy is not supported in commodity switches~\cite{sivaraman2015towards,sivaraman2016programmable}. In light of this, we propose the principle of separating ordering information from message forwarding.
+However, per-port buffer size in commodity switches is much smaller than bandwidth-delay product~\cite{bai2017congestion}. In addition, commodity switches do not support scheduling queues according to per-packet metadata~\cite{sivaraman2016programmable,jin2018netchain}. In light of these limitations, we propose the principle of separating ordering information from message forwarding.
 
-\textbf{Transaction processing.}
-Recent years there is rich literature in the importance and difficulties in achieving strong consistency efficiently in distributed systems~\cite{lloyd2011don,lloyd2013stronger,mu2014extracting,zhang2016operation,lu2015existential,ajoux2015challenges,mu2016consolidating,lu2016snow,kallman2008h,zhang2015building}.
-One line of research uses lock-based concurrency control. Most of the recent works~\cite{dragojevic2014farm,kalia2016fasst,kaminsky2016design,dragojevic2015no} use RDMA to offload network processing and lock handling to NICs.
-The other line of research use timestamp-based optimistic concurrency control (OCC).
-At the core, the operations should be received by shards in monotonic timestamp order.
-Mostly-Ordered Multicast~\cite{ports2015designing}, NOPaxos~\cite{li2016just} and Eris~\cite{eris} co-design distributed systems with programmable network switches to ensure total ordering of message timestamps. However, these designs require a centralized sequencer, which has limited scalability.
+\textbf{Hardware accelerated concurrency control.}
+%There is rich literature in achieving strong consistency efficiently in distributed systems.%~\cite{lloyd2011don,lloyd2013stronger,mu2014extracting,zhang2016operation,lu2015existential,ajoux2015challenges,mu2016consolidating,lu2016snow,kallman2008h,zhang2015building}.
+For lock-based concurrency control, most of the recent works~\cite{dragojevic2014farm,kalia2016fasst,kaminsky2016design,dragojevic2015no} use RDMA to offload network processing and lock handling to NICs.
+To reduce transaction abort rate in timestamp-based OCC, the key idea is to process transactions in monotonic timestamp order.
+Mostly-Ordered Multicast~\cite{ports2015designing}, NOPaxos~\cite{li2016just}, Eris~\cite{eris} and NetChain~\cite{jin2018netchain} co-design distributed systems with programmable network switches to ensure total ordering of message timestamps. However, these designs use a network switch as centralized sequencer, which has limited scalability.
 
-\textbf{In-network computation.}
-In-network computation flourishes with the trend of programmable switches~\cite{lu2011serverswitch,tofino,bosshart2013forwarding} and NICs~\cite{kaufmann2016high,clicknp}.
-Programmable switches can cache frequently accessed data in key-value stores~\cite{li2016fast,netcache-sosp17,kv-direct} and network infrastructure services~\cite{fayazbakhsh2013less,liu2017incbricks,miao2017silkroad}.
-The wide visibility of programmable switches make them a better place to implement consensus protocols~\cite{dang2016network,dang2016paxos,dang2015netpaxos}.
+%\textbf{In-network computation.}
+%In-network computation flourishes with the trend of programmable switches~\cite{lu2011serverswitch,tofino,bosshart2013forwarding} and NICs~\cite{kaufmann2016high,clicknp}.
+%Programmable switches can cache frequently accessed data in key-value stores~\cite{li2016fast,netcache-sosp17,kv-direct} and network infrastructure services~\cite{fayazbakhsh2013less,liu2017incbricks,miao2017silkroad}.
+%The wide visibility of programmable switches make them a better place to implement consensus protocols~\cite{dang2016network,dang2016paxos,dang2015netpaxos}.
 
 \textbf{Bounded delay.}
-A network with bounded delay can lead to accurate clock synchronization and total ordering of network messages.
-Achieving bounded delay requires not only the queue length to be bounded, but also the network to be lossless.
-Recent years see a lot of progress in lossless data center networks~\cite{calder2013don,cheng2014catch,handley2017re} or fast detection of packet losses~\cite{li2016lossradar}.
-Bounded queuing delay is also implemented with centralized controller~\cite{perry2015fastpass} or fully end-to-end~\cite{cho2017credit}.
+A network with bounded delay can improve reordering delay of \sys.
+Achieving bounded delay requires the queue length to be bounded and the network to be lossless.
+Recent years see progress in lossless data center networks~\cite{calder2013don,cheng2014catch,handley2017re} and fast detection of packet losses~\cite{li2016lossradar}.
+Bounded queuing delay is also enabled by centralized controller~\cite{perry2015fastpass} or end-to-end flow control~\cite{cho2017credit}.
 
 
 
