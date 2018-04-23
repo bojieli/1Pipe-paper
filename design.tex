@@ -337,11 +337,16 @@ Previous section achieves TOMS in reliable networks. In this section, we discuss
 \label{sec:lossy}
 
 In data centers, network links experience one packet loss or corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
-Additionally, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
-%\sys detects packet loss in the network and mark barrier timestamps with a \textit{loss encountered} flag.
-\sys detects packet loss in the network using per-port packet loss counter in commodity NICs and switches. Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
+In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
+\sys detects packet loss and corruption on last-hop links and ingress queues using packet loss counter in commodity NICs and switches. Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery. Since retransmitted packets may violate the barrier property, we add a special mark to them.
 
-Our aim is to deliver messages in an one-way network delay when no packet loss encountered, and fall back to two-phase commit (2PC) with three one-way delays when loss occurs. For this purpose, we rename the original barrier to \textit{unreliable barrier} and add a \textit{commit barrier} and a \textit{loss encountered} flag alongside it. Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below commit timestamp has been received. Figure~\ref{fig:ack-barrier} shows an example. When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier. Otherwise, it delivers based on commit barrier.
+Our aim is to deliver messages in an one-way network delay when no packet loss is encountered, and fall back to two-phase commit (2PC) with three one-way delays when loss occurs. In 2PC, each receiver responds an ACK to a data message, then sender multicasts a commit message after receiving all ACKs in the scattering, finally receiver delivers the data when receiving commit. Different from 2PC, \sys aggregates commit barriers hierarchically in network rather than multicasting commit messages to receivers. This is because \sys can only deliver a message after delivering all committed messages with lower timestamps.
+
+In \sys, we rename the original barrier to \textit{unreliable barrier} and add a \textit{commit barrier} and a \textit{loss encountered} flag alongside it. Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below commit barrier has been received. Figure~\ref{fig:ack-barrier} shows an example of commit barrier. When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier. Otherwise, it delivers based on commit barrier.
+
+To \textit{clear} the loss encountered flag after all previous losses are recovered, as shown in Algorithm~\ref{alg:loss-detection}, when commit barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag. At this time, messages below commit barrier are received and messages above that are not lost before passing through this switch.
+
+
 
 
 \setlength{\textfloatsep}{1em}
@@ -396,9 +401,6 @@ Our aim is to deliver messages in an one-way network delay when no packet loss e
 %The receiver responds ACK to the sender via non-timestamped packets.
 %For each connection, the sender maintains a \textit{minimum unacknowledged timestamp}, detect packet loss via duplicate ACKs or timeout, then retransmit the lost packets with the same timestamp (Figure~\ref{fig:ack-barrier}).
 %Each sender maintains an unacknowledged timestamp barrier (\textit{ACK barrier}), which is the minimum of minimum unacknowledged timestamps among all connections. Messages with timestamps below the ACK barrier are guaranteed to be received by all recipients.
-
-Different from traditional 2PC where commit messages are sent to receivers directly, \sys aggregates commit barriers hierarchically in network. The first reason is that \sys can only deliver a message after all messages with lower timestamps. The second reason is to \textit{clear} the loss encountered flag. As shown in Algorithm~\ref{alg:loss-detection}, when commit barrier is higher than unreliable barrier recorded at last packet loss, the switch clears the flag because messages below commit barrier have been received and messages above that have not been lost.
-
 
 \subsection{Fault Tolerance and Incremental Deployment}
 \label{sec:failure}
