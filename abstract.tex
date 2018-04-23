@@ -1,6 +1,6 @@
 \subsection*{Abstract}
 
-The ability to have total ordering of messages can simplify and accelerate many distributed applications. Traditional approaches to achieve total ordering either employs centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which is inefficient due to bandwidth and latency overheads.
+The ability to have total ordering of messages can simplify and accelerate many distributed applications. To achieve total ordering, traditional approaches either employ centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which is inefficient due to bandwidth and latency overheads.
 
 In this paper, we propose Total-Order Message Scattering (TOMS), an efficient and scalable solution to this problem. At its core, TOMS separates the bookkeeping of order information from message forwarding. On control plane, \sys aggregates order information using in-network computation at the network switches. On data plane, \sys forwards messages as usual in the network and reorders them at the receiver-end based on the order information. \sys is scalable as it distributes work to each switch and host. To achieve high efficiency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection in order to reduce CPU and network overhead, and minimize message reordering latency.
 
