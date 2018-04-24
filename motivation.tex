@@ -10,7 +10,7 @@ In a traditional distributed system where the network is unreliable and has arbi
 
 \textbf{Write after write (WAW)}. $A$ writes data to shared storage $O$, then writes metadata to shared storage $X$. Asynchronously, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
 
-\textbf{Independent multi-write (IMW)}. $S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request. The interleaving order of requests from $S_1$ and $S_2$ may be different at $A$ and $E$.
+\textbf{Independent multi-write (IMW)}. $S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request. The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
 
 \textbf{Independent read, independent write (IRIW)}. Client $R$ reads two remote shards while another client $W$ writes the two shards. $R$ may get an inconsistent state where only one of the shards is written by $W$.
 
