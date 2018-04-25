@@ -55,7 +55,6 @@ This causes extra network communication overhead and delay, thus degrading syste
 More over, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
 
 In this work, we seek a solution to provide efficient and scalable total-order communication for distributed systems in a data center environment.
-\RED{Should we emphasize, focus on \textbf{intra-} data center?}
 First, we generalize multicast to \textit{message scattering}~\cite{}, a more general communication pattern where a sender sends potentially different messages to multiple receivers.
 Message scattering is a common communication pattern in a distributed system.
 For instance, in distributed storage, a client writes metadata to a site and data to another site, while other clients read them concurrently.
