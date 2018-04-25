@@ -24,7 +24,7 @@ In light of these limitations, we propose the principle of separating ordering i
 For lock-based concurrency control, most of the recent works~\cite{dragojevic2014farm,kalia2016fasst,kaminsky2016design,dragojevic2015no} use RDMA to offload network processing and lock handling to NICs.
 To reduce transaction abort rate in timestamp-based OCC, the key idea is to process transactions in monotonic timestamp order.
 Mostly-Ordered Multicast~\cite{ports2015designing}, NOPaxos~\cite{li2016just}, Eris~\cite{eris} and NetChain~\cite{jin2018netchain} co-design distributed systems with programmable network switches to ensure total ordering of message timestamps. 
-However, these designs use a network switch as centralized sequencer, which has limited scalability.
+However, these designs use a network switch as centralized sequencer with limited scalability, and do not support atomic scattering.
 
 %\textbf{In-network computation.}
 %In-network computation flourishes with the trend of programmable switches~\cite{lu2011serverswitch,tofino,bosshart2013forwarding} and NICs~\cite{kaufmann2016high,clicknp}.
