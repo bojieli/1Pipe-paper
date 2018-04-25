@@ -4,7 +4,10 @@
 \subsection{Atomic Multi-Site Operations}
 \label{subsec:eval-kvs}
 
-As a case study, we evaluate the performance of atomic multi-site operations using YCSB+T~\cite{dey2014ycsbt} skewed workload. For simplicity, we assume each site is an in-memory key-value store. Replication, logging and durability are out of scope of this paper. Clients scatter operations to sites and gather responses.
+As a case study, we evaluate the performance of atomic multi-site operations using YCSB+T~\cite{dey2014ycsbt} skewed workload.
+For simplicity, we assume each site is an in-memory key-value store.
+Replication, logging and durability are out of scope of this paper.
+Clients scatter operations to sites and gather responses.
 
 %As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 %For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
@@ -20,7 +23,8 @@ As a case study, we evaluate the performance of atomic multi-site operations usi
 \end{figure}
 
 
-We use the second testbed (commodity switches) as Sec.~\ref{sec:testbed} with 8 sites. We set the beacon interval to 10~$\mu$s.
+We use the second testbed (commodity switches) as Sec.~\ref{sec:testbed} with 8 sites.
+We set the beacon interval to 10~$\mu$s.
 Figure~\ref{fig:ycsb} shows the throughput and latency, where each atomic operation accesses two randomly chosen objects.
 \sys achieves 6.4~M transactions per server (0.8~M transactions per core) with 40~$\mu$s latency, close to an non-atomic system (NonTX) where operations are scattered directly without ordering.
 The throughput gap between \sys and NonTX is mainly due to CPU processing of reordering messages.
@@ -39,7 +43,9 @@ The throughput of centralized coordination is bottlenecked by the coordinator.
 \vspace{-10pt}
 \end{figure}
 
-Figure~\ref{fig:multishard} compares the throughput with an increasing number of keys per atomic scattering. Now we consider other timestamp-based methods. With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
+Figure~\ref{fig:multishard} compares the throughput with an increasing number of keys per atomic scattering.
+Now we consider other timestamp-based methods.
+With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
 
 %Figure~\ref{fig:multishard} compares the throughput of TOMS, OCC, lock-based and non-transactional key-value stores.
 %Each transaction accesses 8 unique remote objects.
@@ -62,9 +68,14 @@ Figure~\ref{fig:multishard} compares the throughput with an increasing number of
 
 Finally, we study the efficiency of our loss detection and recovery mechanism in Sec.~\ref{sec:lossy}.
 Assume 1/10 of the transactions have conflicts, \textit{i.e.}, if a transaction is rollbacked, 1/10 of uncommitted transactions also need rollback.
-Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under different loss ratios. With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput. If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
+Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under different loss ratios.
+With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput.
+If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
 
-On the latency side, reliable \sys adds one RTT of latency to derive the ACK barrier. If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet. When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency. Under high packet loss probability, however, handling losses in \sys is better.
+On the latency side, reliable \sys adds one RTT of latency to derive the ACK barrier.
+If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
+When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency.
+Under high packet loss probability, however, handling losses in \sys is better.
 
 \iffalse
 \begin{figure}[t]
@@ -81,7 +92,8 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 \subsection{Concurrency Control in Transactions}
 \label{subsec:eval-transactions}
 
-Now we apply \sys to concurrent control in one-shot transactions. We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}.
+Now we apply \sys to concurrent control in one-shot transactions.
+We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}.
 
 
 \begin{figure*}[t]
@@ -98,14 +110,19 @@ Now we apply \sys to concurrent control in one-shot transactions. We benchmark N
 \label{fig:tpc-c}
 \end{figure*}
 
-Performance with 4 districts. X axis: number of concurrent clients.~\cite{yu2014staring}. For Payment transaction, throughput cannot scale with number of concurrent clients, because all payment transactions updates a shared field.
+Performance with 4 districts.
+X axis: number of concurrent clients.~\cite{yu2014staring}.
+For Payment transaction, throughput cannot scale with number of concurrent clients, because all payment transactions updates a shared field.
 
-With 1024 districts. OCC peak at X due to timestamp assignment.~\cite{yu2014staring} Ours can still scale because no centralized timestamp assignment.
+With 1024 districts.
+OCC peak at X due to timestamp assignment.~\cite{yu2014staring} Ours can still scale because no centralized timestamp assignment.
 
 \subsection{Serializable Log Replication}
 \label{subsec:eval-replication}
 
-Compare latency and throughput of TOMS with network sequencer (control path) and centralized coordinator (data path). Just list some numbers in one paragraph. \RED{Bojie should fill in the numbers.}
+Compare latency and throughput of TOMS with network sequencer (control path) and centralized coordinator (data path).
+Just list some numbers in one paragraph.
+\RED{Bojie should fill in the numbers.}
 
 
 

@@ -12,7 +12,8 @@
 \newtheorem*{note}{Note}
 \subsection{Proof of hierarchical merge}
 \label{appx:hierarchical_merge}
-In Sec.~\ref{sec:ideal}, we have pointed out the property of barrier timestamp and how we merge barriers hierarchically. Here we prove that the way we merge barriers does maintain its property.
+In Sec.~\ref{sec:ideal}, we have pointed out the property of barrier timestamp and how we merge barriers hierarchically.
+Here we prove that the way we merge barriers does maintain its property.
 Let's rewrite the property and formula:
 \begin{property}\label{prop:barrier}
 	Take any network link $L$, if a packet with barrier timestamp $B$ is on the $L$, then for any following packet carrying (barrier or data) timestamp $T$, there must be $B \le T$.
@@ -24,7 +25,8 @@ Let's rewrite the property and formula:
 	We reuse notation $\mathcal{I}_E$ and $R_i$ defined in (\ref{equ:derive_barriers}).
 	After barrier timestamp $B$ is sent through egress port $E$, all following packets are either data packets from a certain ingress port or barrier packets determined in the future.
 
-	For a following data packet carrying timestamp $T$, let's assume it comes from ingress link $I \in \mathcal{I}$. Because all received barrier timestamps from $I$ have the Property~\ref{prop:barrier}, we have $B \le R_I \le T$.
+	For a following data packet carrying timestamp $T$, let's assume it comes from ingress link $I \in \mathcal{I}$.
+	Because all received barrier timestamps from $I$ have the Property~\ref{prop:barrier}, we have $B \le R_I \le T$.
 
 	For a following barrier timestamp $T$, let's assume it is determined by newer register value $R'_I$.
 	$$T:=\min\{R'_I|I \in \mathcal{I}_E\}$$
@@ -39,24 +41,30 @@ Besides, an endhost sender assigns barrier timestamps to be the same as data tim
 \label{appx:minimax}
 
 \begin{notation}
-	Each sender $i\in\mathcal{S}$ has a logical timestamp $T_i$, which consists of physical clock $Phy$, physical clock skew $s_i$ and logical timestamp offset $O_i$ ($T_i = Phy+s_i+O_i$). Each receiver $j \in \mathcal{R}$ also has physical clock skew $s_j$.
+	Each sender $i\in\mathcal{S}$ has a logical timestamp $T_i$, which consists of physical clock $Phy$, physical clock skew $s_i$ and logical timestamp offset $O_i$ ($T_i = Phy+s_i+O_i$).
+	Each receiver $j \in \mathcal{R}$ also has physical clock skew $s_j$.
 \end{notation}\begin{notation}
-	One-way delay from sender $i \in \mathcal{S}$ to receiver $j \in \mathcal{R}$ is $d_{ij}$. $d_{ij}$ is unmeasurable.
+	One-way delay from sender $i \in \mathcal{S}$ to receiver $j \in \mathcal{R}$ is $d_{ij}$.
+	$d_{ij}$ is unmeasurable.
 \end{notation}
 \begin{notation}
-	One-way delay from receiver $j \in \mathcal{R}$ to sender $i \in \mathcal{S}$ is $r_{ji}$. $r_{ji}$ is unmeasurable.
+	One-way delay from receiver $j \in \mathcal{R}$ to sender $i \in \mathcal{S}$ is $r_{ji}$.
+	$r_{ji}$ is unmeasurable.
 \end{notation}
 \begin{notation}
-	Round trip delay between sender $i \in \mathcal{S}$ and receiver $j \in \mathcal{R}$ is $RTT_{ij}( = RTT_{ji} = d_{ij} + r_{ji})$. $RTT_{ij}$ is measurable.
+	Round trip delay between sender $i \in \mathcal{S}$ and receiver $j \in \mathcal{R}$ is $RTT_{ij}( = RTT_{ji} = d_{ij} + r_{ji})$.
+	$RTT_{ij}$ is measurable.
 \end{notation}
 \begin{note}
-	A common endhost functions as both sender and receiver. So the delay between its two parts is $0$.
+	A common endhost functions as both sender and receiver.
+	So the delay between its two parts is $0$.
 \end{note}
 \begin{assump}
 	There are no switches.
 \end{assump}
 \begin{assump}
-	Senders and receivers are fully connected. The delay between physically unconnected sender and receiver is $+\infty$.
+	Senders and receivers are fully connected.
+	The delay between physically unconnected sender and receiver is $+\infty$.
 \end{assump}
 \begin{assump}
 	Delay is invariant during the synchronization.
@@ -173,7 +181,8 @@ From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in
 	With arbitrary initial $O_i(i\in \mathcal{S})$, the initial reorder delay $D$ $\ge$ the reorder delay $D'$ after Minimax Synchronization.
 \end{theorem}
 \begin{proof}
-		Take any receiver $r \in \mathcal{R}$ and any sender $s \in \mathcal{S}$, let's consider the reorder delay before ($d$) and after ($d'$) synchronization between them. Use (\ref{proof:unchanged_FM}), we have
+		Take any receiver $r \in \mathcal{R}$ and any sender $s \in \mathcal{S}$, let's consider the reorder delay before ($d$) and after ($d'$) synchronization between them.
+		Use (\ref{proof:unchanged_FM}), we have
 	\begin{equation*}\begin{split}
 		 d &=\left(\FMGEN{\FM{r}}{r}\right)-\left(\FMGEN{s}{r}\right) \ge 0\\ d'&=|\left(\FMGEN{\FM{r}}{r}\right)-\left(O'_s - d_{sr}\right)| \ge 0
 	\end{split}\end{equation*}
@@ -192,7 +201,9 @@ From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in
 	timestamp will converge in at most one rtt; reorder delay may decline (won't increase) after synchronization.
 \end{rem}
 \begin{note}
-	If there are switches, the above proof still holds. Because the \textbf{min} and \textbf{max} are aggregate operations having associative property. So switches introduced in Algorithm~\ref{alg:minimax} don't affect the results.
+	If there are switches, the above proof still holds.
+	Because the \textbf{min} and \textbf{max} are aggregate operations having associative property.
+	So switches introduced in Algorithm~\ref{alg:minimax} don't affect the results.
 \end{note}
 
 \begin{note}
