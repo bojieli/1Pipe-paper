@@ -111,7 +111,7 @@ After receiving replication of timestamp $T$, we are sure that the history befor
 
 Memory consistency and log replication motivate the need of total order multicast, where one message is sent to multiple receivers.
 In addition, applications need serializable execution of a group of operations~\cite{cheriton1994understanding}, \textit{e.g.} accessing metadata and data.
-If a group of operations involve multiple nodes in a distributed system, the communication pattern is \textit{message scattering}, where one sender scatters potentially different messages to multiple receivers.
+If a group of operations involves multiple nodes in a distributed system, the communication pattern is \textit{message scattering}, where one sender scatters potentially different messages to multiple receivers.
 The messages in a scattering should be ordered \textit{atomically}, such that a) either all or none receivers deliver the messages, b) all messages are delivered at a same serialization time.
 The IMW and IRIW cases in Sec.\ref{subsec:tso} are examples of message scattering.
 In IMW, access and error log of a request compose a scattering.
@@ -129,7 +129,7 @@ Out-of-order transactions are aborted and retried with a higher timestamp.
 The abort rate increases with the number of concurrent conflicting transactions, and the effective throughput does not scale~\cite{yu2014staring}.
 In addition, timestamp assignment often requires a centralized sequencer, which limits scalability~\cite{yu2014staring}.
 
-We implement an one-shot transaction as a total-order message scattering, which ensures that shards process transactions in timestamp order, therefore eliminating transaction aborts and centralized timestamp assignment.
+We implement a one-shot transaction as a total-order message scattering, which ensures that shards process transactions in timestamp order, therefore eliminating transaction aborts and centralized timestamp assignment.
 %In the absence of packet loss and node failure, total-order scattering can complete in an RTT, adding little latency and bandwidth overhead compared to traditional message scattering.
 
 %We will use a hypothetical banking example to illustrate the main concepts. Two accounts Alice and Bob are stored in different \textit{shards} at distant locations. Initially, their balances are $B_a$ and $B_b$. When Alice transfers \$1 to Bob, two write operations are sent to the shards: $B_a -= 1$ and $B_b += 1$, call them $W_a$ and $W_b$. At the same time, an auditor checks the total balance in the bank by accumulating balances of all accounts, resulting in two read operations: $R_a$ and $R_b$. If the system does not support transactions, the ordering of events may be $W_a < R_a < R_b < W_b$, then the auditor would find an inconsistent total balance.

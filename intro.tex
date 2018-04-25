@@ -15,7 +15,7 @@
 \fi
 
 %Today's data centers host a variety of distributed systems~\textcolor{red}{cite some papers here} to provide service for global users. 
-Traditionally, in a network with arbitrary delays, messages are not garanteed to be delivered in a consistent order.
+Traditionally, in a network with arbitrary delays, messages are not guaranteed to be delivered in a consistent order.
 For example, multiple shards of a distributed database generate logs to multiple replicas.
 Each replica may receive logs from shards in a different order.
 Without special care, such inconsistent ordering may violate data consistency.
@@ -135,4 +135,4 @@ As a case study, Sec.\ref{sec:application} shows that \sys achieves 6.4 million 
 For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 districts, \sys scales to thousands of concurrent clients, while other concurrency control mechanisms only scale to tens of clients.
 \sys can also achieve scalable serializable log replication.
 
-\textcolor{red}{Do we need to add: the rest of the paper is orgainized as follows. .....}
+\textcolor{red}{Do we need to add: the rest of the paper is organized as follows. .....}

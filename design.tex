@@ -187,7 +187,7 @@ The next challenge is how to assign timestamps to messages.
 Clock synchronization in data centers becomes increasingly accurate leveraging NIC timestamps~\cite{correll2005design}, GPS~\cite{corbett2013spanner}, PHY~\cite{lee2016globally} and network effects~\cite{geng2018exploiting}.
 However, delay variance of network paths makes physical time a suboptimal choice for timestamps.
 Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may increase to milliseconds under heavy load.
-Links with different speeds or congestions also lead to delay variations.
+Links with different speeds or congestion also lead to delay variations.
 For example, two messages are transmitted from two senders to the same receiver at the same physical time.
 However, they arrive at different times due to different network delays.
 As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
@@ -246,7 +246,7 @@ T'_k & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i - d_{ij} \} - r_{jk} + RTT
 \end{equation*}
 
 Because a logical clock needs to be stalled if it is synchronized to a lower offset, and the reordering delay during stall is not optimal, we aim to minimize clock stall.
-Consequently, all clocks should catch up with the clock with highest offset, indicating that \texttt{FwdFunc} should be \texttt{max}.
+Consequently, all clocks should catch up with the clock with the highest offset, indicating that \texttt{FwdFunc} should be \texttt{max}.
 If we choose \texttt{BackFunc} to also be \texttt{max}, in some networks with delay imbalance, the clocks would not converge.
 Convergence means that $\forall k \in \mathcal{S}, T'_k = T_k$.
 In this regard, we choose \texttt{BackFunc} to be \texttt{min}.
