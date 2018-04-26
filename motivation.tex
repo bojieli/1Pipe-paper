@@ -32,13 +32,14 @@ To avoid IMW and IRIW hazards, application needs locks or explicit coordination 
 
 \iffalse
 \textcolor{red}{I think the following paragraph is useless.}
+\RED{gefei: yes, I think any explanation can be removed. marked in red}
 These ordering anomalies have been studied extensively in shared memory systems~\cite{gharachorloo1990memory}.
 Recent processors provide higher memory consistency models.
-In particular, x86 ensures a \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} where each core observes a consistent ordering of writes from all other cores.
-In other words, remote writes are propagated via total order communication.
+In particular, x86 ensures a \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} \RED{where each core observes a consistent ordering of writes from all other cores}.
+\RED{In other words, remote writes are propagated via total order communication.}
 TSO eliminates SAW and WAW ordering anomalies above and reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}.
-In addition, TSO makes \textit{memory barrier} easy to implement without locking the bus.
-The barrier initiator core blocks itself and sends a message to itself via total order communication, and unblocks upon receiving the message.
+\RED{In addition, TSO makes \textit{memory barrier} easy to implement without locking the bus.
+The barrier initiator core blocks itself and sends a message to itself via total order communication, and unblocks upon receiving the message.}
 In this paper, we extend the concept of TSO to distributed systems, providing same consistency as multi-core processors.
 In Sec.\ref{subsec:transactional-kvs}, we introduce a novel message scattering primitive to remove IMW and IRIW hazards.
 %Concretely, each message is assigned a monotonically increasing timestamp at the sender and each receiver processes messages in timestamp order (break ties by sender ID).
