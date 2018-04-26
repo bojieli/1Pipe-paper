@@ -22,7 +22,7 @@ The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU
 Client $R$ reads two remote shards while another client $W$ writes the two shards.
 $R$ may get an inconsistent state where only one of the shards is written by $W$.
 
-In today's distributed systems, to avoid RAW and WAW hazards, $A$ needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.
+In today's distributed systems, to avoid RAW and WAW hazards, $A$~\textcolor{red}{$A$ is not defined here} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
 To avoid IMW and IRIW hazards, application needs locks or explicit coordination via logical timestamps~\cite{lamport1978time}.
 
 These ordering anomalies have been studied extensively in shared memory systems~\cite{gharachorloo1990memory}.
