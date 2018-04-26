@@ -101,8 +101,8 @@ Each receiver delivers messages to applications in timestamp order (break ties b
 Messages in each scattering are delivered by either all or none receivers.
 
 \textbf{Scalable.}
-Eris~\cite{eris} proposed an efficient solution for total-order broadcast using centralized sequencers.
-However, for large-scale deployments, the throughput of the centralized sequencer would become bottleneck.
+Eris~\cite{eris} proposed an efficient solution for total-order \RED{broadcast or multicast} broadcast using centralized sequencers.
+However, for large-scale deployments, the throughput of centralized sequencers would become bottleneck.
 In our proposal, the system is decentralized.
 Additionally, for ease of deployment, it is also highly desirable for the algorithms running on each end host or network switch to be logically equivalent.
 

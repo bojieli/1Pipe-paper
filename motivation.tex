@@ -22,7 +22,7 @@ The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU
 Client $R$ reads two remote shards while another client $W$ writes the two shards.
 $R$ may get an inconsistent state where only one of the shards is written by $W$.
 
-In today's distributed systems, to avoid RAW and WAW hazards, $A$~\textcolor{red}{$A$ is not defined here} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
+In today's distributed systems, to avoid RAW and WAW hazards, $A$~\textcolor{red}{$A$ is not defined here. gefei:'A is defined in Figure~\ref{fig:causality_traditional}'} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
 To avoid IMW and IRIW hazards, application needs locks or explicit coordination via logical timestamps~\cite{lamport1978time}.
 
 These ordering anomalies have been studied extensively in shared memory systems~\cite{gharachorloo1990memory}.
@@ -111,24 +111,25 @@ After receiving replication of timestamp $T$, we are sure that the history befor
 Memory consistency and log replication motivate the need of total order multicast, where one message is sent to multiple receivers.
 In addition, applications need serializable execution of a group of operations~\cite{cheriton1994understanding}, \textit{e.g.} accessing metadata and data.
 If a group of operations involves multiple nodes in a distributed system, the communication pattern is \textit{message scattering}, where one sender scatters potentially different messages to multiple receivers.
-The messages in a scattering should be ordered \textit{atomically}, such that a) either all or none receivers deliver the messages, b) all messages are delivered at a same serialization time.
-The IMW and IRIW cases in Sec.\ref{subsec:tso} are examples of message scattering.
+The messages in a scattering should be ordered \textit{atomically}, such that a) either all or none receivers deliver the messages, b) all messages are delivered at the same serialization time.
+The IMW and IRIW cases in Sec.\ref{subsec:tso} are examples of \RED{atomic message scattering or just message scattering?} message scattering.
 In IMW, access and error log of a request compose a scattering.
 In IRIW, two read requests and two write requests each compose a scattering.
 
 Atomic message scattering can solve the concurrency control problem of one-shot transactions~\cite{kallman2008h} (or called single round-trip transactions), in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
 For example, the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are one-shot transactions.
 
-There are two categories of concurrency control~\cite{bernstein1981concurrency}.
+\RED{is here sounds like 'there are only two categories?'} There are two categories of concurrency control~\cite{bernstein1981concurrency}.
 One category uses \textit{locks} to protect accesses to shared resources.
 In this way, the transaction throughput is bounded by the RTT between the clients and the shards.
 The other category is \textit{timestamp ordering}, which assigns a \textit{timestamp} to each transaction, and transactions are serialized according to timestamp order~\cite{kung1981optimistic,bernstein1983multiversion}.
-Due to variable network delay, shards may receive transactions out-of-order.
+Due to variable network delay \RED{and multi-path?}, shards may receive transactions out-of-order.
 Out-of-order transactions are aborted and retried with a higher timestamp.
 The abort rate increases with the number of concurrent conflicting transactions, and the effective throughput does not scale~\cite{yu2014staring}.
 In addition, timestamp assignment often requires a centralized sequencer, which limits scalability~\cite{yu2014staring}.
 
 We implement a one-shot transaction as a total-order message scattering, which ensures that shards process transactions in timestamp order, therefore eliminating transaction aborts and centralized timestamp assignment.
+\RED{doesn't make sense, ensure process in timestamp order has nothing to do with centralized timestamp assignment. may be: 'which requires no centralized timestamp assignment and ensures that shards process transactions in timestamp order without out-of-order aborts.' is better}
 %In the absence of packet loss and node failure, total-order scattering can complete in an RTT, adding little latency and bandwidth overhead compared to traditional message scattering.
 
 %We will use a hypothetical banking example to illustrate the main concepts. Two accounts Alice and Bob are stored in different \textit{shards} at distant locations. Initially, their balances are $B_a$ and $B_b$. When Alice transfers \$1 to Bob, two write operations are sent to the shards: $B_a -= 1$ and $B_b += 1$, call them $W_a$ and $W_b$. At the same time, an auditor checks the total balance in the bank by accumulating balances of all accounts, resulting in two read operations: $R_a$ and $R_b$. If the system does not support transactions, the ordering of events may be $W_a < R_a < R_b < W_b$, then the auditor would find an inconsistent total balance.
