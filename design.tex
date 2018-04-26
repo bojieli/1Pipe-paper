@@ -97,7 +97,7 @@ So we can't increase the barrier timestamp because a packet may be forwarded in 
 %This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
 When the routing loop is removed, barrier timestamps will start increasing again.
 
-Although the design above works on a P4 programmable switch, many commodity switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
+Although the design above works on a P4 programmable switch, many commodity switching chips are \RED{capable or not? I guess here should be 'capable'} not capable of storing states $R_i$ and calculating the minimum among $R_i$.
 By using beacon packets as \textit{slacked barriers} of data packets, we can still offload the control plane entirely to the CPU on switches.
 This will be discussed in Sec.~\ref{sec:commodity}.
 
@@ -105,7 +105,8 @@ This will be discussed in Sec.~\ref{sec:commodity}.
 \label{sec:beacon}
 
 The liveness of the system requires information from every network link.
-The receiver cannot distinguish between an idle link or excessive delay on the link.
+The receiver cannot distinguish between an idle link and a link with excessive delay.
+% should be "between A and B" or "either A or B", see here https://english.stackexchange.com/questions/138239/between-with-and-or-or
 We send periodic \textit{beacons} to ensure the link is always busy.
 %There are two ways: (1) let the sender send a signal packet to shutdown the link temporarily; (2) ensure the link is always busy by sending periodic \textit{beacons}.
 
@@ -118,7 +119,14 @@ To this end, we introduce two beacon intervals $B_{min}$ and $B_{max}$.
 A switch broadcasts beacons as soon as it receives a beacon and have not sent beacons for at least $B_{min}$ time.
 A switch also broadcasts beacons when it has not received a beacon for $B_{max}$ time.
 $B_{min}$ is set to the estimated maximum path delay variance, while $B_{max}$ is the desired beacon interval.
-The network/CPU overhead and reordering delay is a trade-off to choose $B_{max}$.
+Choosing $B_{max}$ is a trade-off between the network/CPU overhead and reordering delay.
+
+\RED{we shouldn't and actually can't say when to leave the \sys and when not. I think
+
+	There is another trade-off between beacon overhead and system rejoin latency. A sender can notify the switch its exit and stop sending beacons, but it must rejoin (need a RTT, see Sec.\ref{sec:failure}) before sending messages again.
+
+is better
+}
 
 When a sender is idle for a timeout significantly longer than RTT, it notifies the switch and stops sending beacons.
 When it sends messages via \sys again, it can rejoin within an RTT (Sec.\ref{sec:failure}).
