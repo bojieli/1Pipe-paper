@@ -9,6 +9,8 @@
 \vspace{-1em}
 \end{figure}
 
+\textcolor{red}{Define reliable networks. 1. No host/link/switch failures. 2. Lossless. No packet is lost due to congestion. No packet for corruption. We make such strong assumptions to help the reader to understand the key ideas of TOMS. We will present the design of TOMS in xxx in the section xxx}
+
 In this section, we assume that all hosts, network switches and links are reliable.
 Figure~\ref{fig:barrier} shows an IRIW example where reader $R$ sends $R_a$ and $R_b$ to shard($a$), while writer $W$ sends $W_a$ and $W_b$ to shard($b$).
 When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from either $R$ or $W$, so it can safely process messages with $T \leq \min(T_R, T_W)$.
