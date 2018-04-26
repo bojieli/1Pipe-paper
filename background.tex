@@ -13,11 +13,11 @@
 Our goal is to build a scalable total-order message scattering service on top of existing network infrastructure in a data center.
 Such a service should satisfy the following requirements.
 
-\textbf{Correctness.}
-A sender scatters a group of messages with a same timestamp to multiple receivers, called a \textit{scattering}.
-Timestamps for different scatterings are unique and increasing on each sender.
-Each receiver delivers messages to applications in timestamp order (break ties by sender ID).
-Messages in each scattering are delivered by either all or none receivers.
+%\textbf{Correctness.}
+%A sender scatters a group of messages with a same timestamp to multiple receivers, called a \textit{scattering}.
+%Timestamps for different scatterings are unique and increasing on each sender.
+%Each receiver delivers messages to applications in timestamp order (break ties by sender ID).
+%Messages in each scattering are delivered by either all or none receivers.
 
 \textbf{Scalable.}
 Eris~\cite{eris} proposed an efficient solution for total-order \RED{broadcast or multicast} broadcast using centralized sequencers.
@@ -91,10 +91,14 @@ Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson
 Shortest-path routing between two servers in a fat-tree first goes up layers of switches to one of their common ancestors, then goes down layers of switches.
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
 
+\RED{Discuss loop-free routing.}
+Formally, for $n$ distinct switches $S_1, \ldots, S_n$, if there are $n$ links $L_1, \ldots, L_n$ directly connecting $S_1 \rightarrow S_2, \ldots, S_{n-1} \rightarrow S_n, S_n \rightarrow S_1$, and $n$ possible routes (need not be distinct) passing through $L_1 \rightarrow L_2, \ldots, L_{n-1} \rightarrow L_n, L_n \rightarrow L_1$ respectively, then we call it a \textit{routing loop}.
+Loop-free is a liveness requirement.
+A routing loop stalls the update of timestamp barriers, but does not violate correctness.
 
 \subsection{Programmable switches in Data Center Networks}
+\label{sec:programmable-switches}
 
-%In a modern data center, servers (\textit{end hosts}) are typically organized as the leaves of a fat-tree, while the \textit{network switches} form multiple layers of internal nodes. Shortest-path routing between two servers in a fat-tree first goes up layers of switches to one of their common ancestors, then goes down layers of switches. Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
 
 The typical data center switch consists of a switching chip~\cite{broadcom} and a CPU (Figure~\ref{fig:switch}).
 The switch operating system~\cite{arista-eos} software running on the CPU controls the switching chip (\textit{e.g.} configure chip register values).
@@ -110,6 +114,10 @@ However, despite the good programmability, the data center switch typically has 
 The average per-port on-chip buffer size is typically hundreds of KB~\cite{bai2017congestion}.
 Furthermore, the buffer size per port per Gbps keeps decreasing with the increase of the link speed.
 As a result, it is very challenging to buffer many packets at the data center switch.
+
+\RED{Discuss FIFO ordering of a switch.}
+If packets $P_1, P_2$ arrive in order to an ingress port of switch $S$, and they are routed to the same egress port, then their egress ordering should also be $P_1, P_2$.
+In practice, packets from the same application typically have the same priority, so packet ordering is preserved after passing through a single switch.
  
 %, controls the switching chip and communicates with other switches via a management network. 
 
