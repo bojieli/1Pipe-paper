@@ -9,7 +9,7 @@
 \subsection{Ordering Anomalies}
 \label{subsec:tso}
 
-Message scattering is a common communication pattern in distributed systems, where one end-host sender scatters a group of messages to multiple end-host receivers. Because of variable delay of multiple network paths, several categories of ordering anomalies may take place \textcolor{red}{Some references here?}. In addition, packet losses can occur due to congestion, packet corruption and network switch or link failure. Packet losses and host failures may violate atomicity of message scattering.
+Message scattering is a common communication pattern in distributed systems, where one end-host sender scatters a group of messages to multiple end-host receivers. First, packet losses can occur due to congestion, packet corruption and network switch or link failure. Packet losses and host failures may violate atomicity of message scattering. Due to different delays of multiple network paths, several categories of ordering anomalies may take place \textcolor{red}{Some references here?}.
 
 \textbf{Send after write (SAW)}.
 As shown in Figure~\ref{fig:causality_traditional}, $A$ writes data to a remote shared storage $O$ and sends a message to notify $B$.
