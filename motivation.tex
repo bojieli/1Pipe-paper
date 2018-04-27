@@ -32,26 +32,25 @@ Packet losses and host failures may violate atomicity of message scattering.
 Together with different delays of network paths, several categories of ordering hazards may take place, as shown in Figure~\ref{fig:ordering}. \textcolor{red}{Some references here?}.
 
 \textbf{Write after write (WAW)}.
-Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a kind of write operation.
-When $B$ receives the notification, it issues read command to $O$, but may not get the data due to reordering between $A$'s write to $O$ and $B$.
+Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a write operation.
+When $B$ receives the notification, it issues read command to $O$, but may not get the data due to message delays.
 
 %\textbf{Write after write (WAW)}.
 %$A$ writes data to shared storage $O$, then writes metadata to shared storage $X$.
 %Asynchronously\textcolor{red}{In the meanwhile?}, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
 
 \textbf{Independent read, independent write (IRIW)}.
-$A$ reads $O_1$ and $O_2$ in a message scattering, while $B$ writes $O_1$ and $O_2$ simultaneously.
-Due to variable delay and possible packet loss, $A$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
+$A$ writes $O_1$ and $O_2$ in a message scattering, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
 
 \textbf{Independent multi-write (IMW)}.
-$A$ scatters write operations to both $O_1$ and $O_2$. Asynchronously, $B$ also scatter write operations. The ordering of $A$'s and $B$'s write operations at $O_1$ and $O_2$ may be different. For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
+$A$ scatters writes to both $O_1$ and $O_2$. Asynchronously, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different. For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
 %$S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request.
 %The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
 
-\RED{Why ordering hazards affect system performance.}
+Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs to wait for the first write operation to complete (an RTT to $O$) before sending to $B$, thus increasing latency and degrading throughput. To avoid IRIW and IMW hazards, application needs locks, centralized sequencers~\cite{kaminsky2016design} or explicit coordination via logical timestamps~\cite{lamport1978time}.
 
-In today's distributed systems, to avoid WAW hazards, $A$~\textcolor{red}{$A$ is not defined here. gefei:'A is defined in Figure~\ref{fig:causality_traditional}'} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
-To avoid IMW and IRIW hazards, application needs locks or explicit coordination via logical timestamps~\cite{lamport1978time}.
+%In today's distributed systems, to avoid WAW hazards, $A$~\textcolor{red}{$A$ is not defined here. gefei:'A is defined in Figure~\ref{fig:causality_traditional}'} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
+%To avoid IMW and IRIW hazards, application needs locks or explicit coordination via logical timestamps~\cite{lamport1978time}.
 
 
 \iffalse
@@ -86,6 +85,14 @@ To avoid IMW and IRIW hazards, application needs locks or explicit coordination 
 \subsection{Total Order Message Scattering}
 
 \RED{Define total order message scattering.}
+
+We propose total order message scattering (TOMS), which ensures a group of messages to be scattered atomically in FIFO order. A message scattering means that a host $S$ scatters a group of (potentially different) messages $M_1, \ldots, M_n$ to receivers $R_1, \ldots, R_n$ respectively.
+
+\textbf{Total Order.} For each pair of receivers $R_1$ and $R_2$ and
+for each pair of messages $M_1$ and $M_2$ that are delivered to both receivers, $R_1$ is delivered $M_1$ before $M_2$ if and only if $R_j$ is delivered $M_x$ before $M_y$.~\cite{kshemkalyani2011distributed}
+
+\textbf{FIFO.} For each pair of sender $S$ and receiver $R$ and for each pair of messages $M_x$ and $M_y$ that are delivered from $S$ to $R$, $M_x$ is delivered before $M_y$ if and only if $M_x$ is sent before $M_y$.
+
 
 \RED{Discuss how TOMS solves the hazards above.}
 
