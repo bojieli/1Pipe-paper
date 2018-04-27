@@ -1,11 +1,13 @@
-\section{Background and Goals}
+\section{Goals and Background}
+\label{sec:background}
+
+\iffalse
 \textcolor{red}{Outline:\\
 1. Design Goals (remove corretness)
 2. Data Center Netowkrs: loop-free
 3. Programmable switches in Data Center Netowkrs: FIFO
 }
-\label{sec:background}
-
+\fi
 
 \subsection{Design Goals}
 \label{sec:goals}
@@ -107,13 +109,14 @@ The switching chip can transfer traffic (typically control plane packets, such a
 The data center switch can provide good programmability.
 First, the CPU can be used to co-process (a small amount of) data plane packets with high flexibility\cite{lu2011serverswitch}.
 Second, the switching chip is becoming more and more programmable in recent years.
-For example, Tofino chip from Barefoot networks~\cite{tofino} uses RMT architecture~\cite{bosshart2013forwarding} with flexible packet parsers and reconfigurable match action table pipelines.
-It can be programmed using P4~\cite{bosshart2014p4} to achieve \textit{flexible per-packet processing}.
+For example, Tofino chip from Barefoot networks~\cite{tofino} 
+%uses RMT architecture~\cite{bosshart2013forwarding} with 
+has flexible packet parsers and reconfigurable match action table pipelines that can be programmed using P4~\cite{bosshart2014p4} to achieve \textit{flexible per-packet processing}.
 
-However, despite the good programmability, the data center switch typically has the limited buffer resource for low cost.
-The average per-port on-chip buffer size is typically hundreds of KB~\cite{bai2017congestion}.
-Furthermore, the buffer size per port per Gbps keeps decreasing with the increase of the link speed.
-As a result, it is very challenging to buffer many packets at the data center switch.
+Despite good programmability, the data center switch typically has limited buffer resource.
+The average per-port on-chip buffer is typically hundreds of KB~\cite{bai2017congestion} in size.
+Furthermore, the buffer size per port per Gbps keeps decreasing with the increase of link speed.
+As a result, it is challenging to buffer many packets at the switches in a data center.
 
 \RED{Discuss FIFO ordering of a switch.}
 If packets $P_1, P_2$ arrive in order to an ingress port of switch $S$, and they are routed to the same egress port, then their egress ordering should also be $P_1, P_2$.
