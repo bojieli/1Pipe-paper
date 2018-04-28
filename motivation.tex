@@ -33,7 +33,7 @@
 Message scattering is a common communication pattern in distributed systems, where one end-host sender scatters a group of messages to one or more end-host receivers.
 First, packet losses can occur due to congestion, packet corruption and network switch or link failure.
 Packet losses and host failures may violate atomicity of message scattering.
-Together with different delays of network paths, several categories of ordering hazards may take place, as shown in Figure~\ref{fig:ordering}. \textcolor{red}{Some references here?}.
+Together with different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place, as shown in Figure~\ref{fig:ordering}.
 
 \textbf{Write after write (WAW)}.
 Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a write operation.
@@ -108,7 +108,7 @@ For each pair of message scatterings $S_i$ and $S_j$ with a same sender, $S_i$ i
 \textbf{Causality.}
 The total order of message scatterings preserves causality. For each pair of message scatterings $S_i$ and $S_j$, if the sender of $S_j$ is one receiver of $S_i$, and $S_j$ is sent after receiving $M_i \in S_i$, then $S_i$ is ordered before $S_j$.
 
-\sys can solve all three hazards in Sec.\ref{subsec:tso}.
+\sys can remove all three hazards in Sec.\ref{subsec:tso}.
 In WAW hazard, the three messages $A \rightarrow O$, $A \rightarrow B$ and $B \rightarrow O$ are three message scatterings.
 By FIFO order, $A \rightarrow O$ is ordered before $A \rightarrow B$. By causality, $A \rightarrow B$ is ordered before $B \rightarrow O$.
 Consequently, $A \rightarrow O$ is before $B \rightarrow O$ in the total order.
@@ -222,10 +222,10 @@ Another ubiquitous application of \sys is \textit{serializable log replication}~
 Distributed databases are replicated for reliability and performance.
 When multiple replicas process write operations in parallel, the consistency among replicas is a paramount challenge.
 The PACELC theorem~\cite{abadi2012consistency} suggests that even when a system has no failure and network partition, one has to choose between latency (L) and consistency (C).
-On one end of the spectrum are strongly consistent systems~\cite{kallman2008h,li2012making,corbett2013spanner}, where each replica processes read operations locally and requires an RTT for write operations to propagate to all replicas.
+On one end of the spectrum are strongly consistent systems~\cite{kallman2008h,li2012making,corbett2013spanner}, where each replica processes read operations locally and waits an RTT for write operations to propagate to all replicas.
 Low latency data center networks enable an increasing number of intra-datacenter databases embrace strong consistency.
-On the other end of spectrum are eventually consistent systems~\cite{terry1995managing,lloyd2011don,lloyd2013stronger}, where both read and write operations can be processed locally, and conflicting write operations are merged in a deterministic way.
-Due to high latency among data centers, most geographically replicated databases choose eventual consistency.
+On the other end of spectrum are eventually consistent systems~\cite{terry1995managing,lloyd2011don,lloyd2013stronger}, where both read and write operations are processed locally, and conflicting write operations are merged in a deterministic way.
+Due to high latency among data centers, many geographically replicated databases choose eventual consistency.
 
 %Due to scalability concerns of log serialization~\cite{anna}, there has been extensive work to track dependency and ensure convergent conflict resolution at application level~\cite{lloyd2011don,lloyd2013stronger}.
 %First, most of these approaches do not ensure all 
@@ -243,7 +243,7 @@ Similar reasoning applies to write-intensive systems where writes are local, whi
 
 \subsubsection{Total Store Ordering in DSM}
 
-Recent x86 processors provides a \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} in which each core observes a consistent ordering of writes from all other cores.
+Recent x86 processors provides a \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} in which each core observes a consistent ordering of writes from all other cores, thus being causally and eventually consistent.
 TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}.
 Obviously, a distributed shared memory (DSM) system built upon \sys achieves TSO.
 

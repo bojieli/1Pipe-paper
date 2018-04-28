@@ -9,7 +9,7 @@
 \vspace{-1em}
 \end{figure}
 
-In this section, we assume that the network is reliable, in the sense that a) no host, link or switch failure, b) no packet is lost due to congestion or corruption. We make such strong assumptions to help the reader to understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.~\ref{sec:design-unreliable}.
+In this section, we assume that the network is reliable, in the sense that a) no host, link or switch failure, b) no packet is lost due to congestion or corruption. We make such strong assumptions to help the reader to understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.\ref{sec:design-unreliable}.
 
 Figure~\ref{fig:barrier} shows an IRIW example where reader $R$ sends $R_a$ and $R_b$ to shard($a$), while writer $W$ sends $W_a$ and $W_b$ to shard($b$).
 When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from either $R$ or $W$, so it can safely process messages with $T \leq \min(T_R, T_W)$.
@@ -88,17 +88,17 @@ In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge 
 
 When a receiver receives a packet with barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
 
-One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).
+%One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).
 %{The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
-If there is a routing loop of links $L_1, \ldots , L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$.
-So we can't increase the barrier timestamp because a packet may be forwarded in this routing loop indefinitely.
+%If there is a routing loop of links $L_1, \ldots , L_n$, then the barrier timestamps $B_{L_2} \leq B_{L_1}, \ldots, B_{L_n} \leq B_{L_{n-1}}, B_{L_1} \leq B_{L_n}$.
+%So we can't increase the barrier timestamp because a packet may be forwarded in this routing loop indefinitely.
 %{, so the barrier timestamps cannot increase.
 %This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
-When the routing loop is removed, barrier timestamps will start increasing again.
+%When the routing loop is removed, barrier timestamps will start increasing again.
 
-Although the design above works on a P4 programmable switch, many commodity switching chips are \RED{capable or not? I guess here should be 'capable'} not capable of storing states $R_i$ and calculating the minimum among $R_i$.
-By using beacon packets as \textit{slacked barriers} of data packets, we can still offload the control plane entirely to the CPU on switches.
-This will be discussed in Sec.~\ref{sec:commodity}.
+Although the design above works on a reconfigurable switch, many fixed function switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
+We offload the control plane to the CPU on switches, by using beacon packets as \textit{slacked barriers} of data packets.
+This will be discussed in Sec.\ref{sec:commodity}.
 
 \subsection{Beacons on Idle Links}
 \label{sec:beacon}
@@ -120,15 +120,10 @@ A switch also broadcasts beacons when it has not received a beacon for $B_{max}$
 $B_{min}$ is set to the estimated maximum path delay variance, while $B_{max}$ is the desired beacon interval.
 Choosing $B_{max}$ is a trade-off between the network/CPU overhead and reordering delay.
 
-\RED{we shouldn't and actually can't say when to leave the \sys and when not. I think
+When a host stops using \sys, it can notify the switch its exit and stop sending beacons, but it must rejoin (need an RTT, see Sec.\ref{sec:failure}) before sending messages again.
+This is a trade-off between beacon overhead and system rejoin latency.
 
-	There is another trade-off between beacon overhead and system rejoin latency. A sender can notify the switch its exit and stop sending beacons, but it must rejoin (need a RTT, see Sec.\ref{sec:failure}) before sending messages again.
 
-is better
-}
-
-When a sender is idle for a timeout significantly longer than RTT, it notifies the switch and stops sending beacons.
-When it sends messages via \sys again, it can rejoin within an RTT (Sec.\ref{sec:failure}).
 
 \iffalse
 %Remove the algorithm because it does not contain much information and takes too much space.
@@ -475,9 +470,9 @@ At this time, messages below commit barrier are received and messages above that
 \label{sec:failure}
 
 Previous section retransmits lost packets with end hosts.
-When a host, switch or network link fails, the barrier timestamp would stall.
-We detect failures using timeout and removes failed nodes to achieve fault tolerance.
-Because failures can be detected and messages would not delay arbitrarily, achieving atomicity is much easier than consensus in general distributed systems.
+When a host, switch or network link fails, barrier timestamps and message delivery stall.
+We detect failures using beacon timeout and removes failed nodes to resume progress of rest of the system.
+Because failures and packet loss can be detected, achieving atomicity is much easier than consensus in general distributed systems.
 
 First, we deal with host failure.
 When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets.

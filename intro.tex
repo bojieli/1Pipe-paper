@@ -59,11 +59,11 @@ First, we generalize multicast to \textit{message scattering}~\cite{kshemkalyani
 Message scattering is common in distributed systems.
 For instance, in distributed storage, a client writes metadata to a site and data to another site, while another client reads them concurrently.
 Consistency between metadata and data requires the operations to be scattered atomically to the two sites.
+
 %For instance, web servers send an access log and an error log of each HTTP request to different log collectors. Achieving consistent ordering of requests between access and error logs requires \textit{total-order message scattering} (\sys), which ensures a group of messages to be scattered atomically.
 %Assume $S_1$ scatters access log $A_1$ and error log $E_1$, while $S_2$ scatters $A_2$ and $E_2$. If $A_1$ is processed before $A_2$ at access log collector, then error log collector should process $E_1$ before $E_2$.
 %Logically, a \sys network resembles a FIFO where messages in a same \textit{scattering} are enqueued atomically, and messages are dequeued by receivers in FIFO order.
 
- 
 %Since the dawn of distributed systems research~\cite{lamport1978time}, there has been considerable amount of literature on total-ordering events and input messages using \textit{total order broadcast}~\cite{defago2004total}.
 %Most total-order broadcast algorithms can be modified to implement total-order message scattering, but they have scalability or efficiency limitations.
 %One line of work uses logically centralized coordination, \textit{e.g.}, using one or more centralized sequencers~\cite{eris}, or have a token to be passed among senders or receivers~\cite{}. The throughput of such systems is hard to scale.
@@ -85,8 +85,9 @@ To ensure \sys's efficiency and reliability, we still need to solve three main c
 
 To solve the first challenge, we first generalize timestamp barriers from end hosts to every link in the network.
 Each switch keeps per-link barrier information and updates it for each packet.
+We merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:ideal}).
 If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
-We further merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:ideal}).
+
 
 For the second challenge, physical clock synchronization seems to be a straightforward solution.
 However, it does not account for the network latency difference incurred by the OS and links, thus makes fast links constantly waiting for slow links.
@@ -95,8 +96,8 @@ To minimize the impact, we propose \textit{minimax clock synchronization} (Sec.\
 
 For the third challenge, we are aware that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}.
 We detect packet loss via counters in network switches, and rely on end hosts to retransmit lost packets (Sec.\ref{sec:lossy}).
-The system is fault tolerant with regard to switch failures.
-To cope with node failure, \sys achieves atomic delivery using a mechanism similar to two-phase commit (Sec.\ref{sec:failure}).
+We detect failures of hosts, switches and links via beacon timeout.
+When no packet loss or failure is present, a message scattering can be delivered in one network delay. Otherwise, we fall back to two-phase commit (2PC) to deliver a scattering in three network delays (Sec.\ref{sec:failure}).
 
 %In Sec.\ref{sec:lossy}, we add reliability to total-order message scattering in lossy networks, with overhead of one round-trip delay. 
 
@@ -129,7 +130,7 @@ In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-hos
 We evaluate the performance of \sys using both small-scale testbed experiments and large-scale simulation.
 \sys achieves low reordering delay and low network overhead and CPU processing overhead in both small and large system scales.
 \sys is also fault tolerant and supports incremental deployment, as new hosts, switches and links can join the system within only one RTT.
-As a case study, Sec.\ref{sec:application} shows that \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for one-shot transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than other systems and close to the performance of a non-transactional system.
+As a case study, \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for one-shot transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than other systems and close to the performance of a non-transactional system.
 For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 districts, \sys scales to thousands of concurrent clients, while other concurrency control mechanisms only scale to tens of clients.
 \sys can also achieve scalable serializable log replication.
 
