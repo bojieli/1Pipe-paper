@@ -79,7 +79,7 @@ With this information, the receiver reorders messages below the barrier and deli
 
 To ensure \sys's efficiency and reliability, we still need to solve three main challenges: 1) How to derive timestamp barriers? 2) How to assign event timestamps? and 3) How to handle packet losses and node failures?
 
-To solve the first challenge, we first generalize timestamp barriers from end hosts to every link in the network.
+For the first challenge, we first generalize timestamp barriers from end hosts to every link in the network.
 Each switch keeps per-link barrier information and updates it for each packet.
 We merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:ideal}).
 If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
