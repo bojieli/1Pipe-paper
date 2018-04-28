@@ -49,24 +49,18 @@ In this section, we assume that the network is reliable. There is no host, link 
 
 We begin with an example.
 As shown in Figure~\ref{fig:barrier}, host $R$ scatters $R_a$ and $R_b$ to shard($a$), host $W$ scatters $W_a$ and $W_b$ to shard($b$).
-Sender assigns an identical timestamp to each message in a scattering, namely $T_R$ and $T_W$.
-Timestamps in different scatterings increase monotonically.
+Each sender assigns an identical timestamp to each message in a scattering, namely $T_R$ and $T_W$.
+Each sender assigns monotonically increasing timestamps to different scatterings.
 Message timestamp determines the delivery order at receiver.
 When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between each pair of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$.
 Combined, it will no longer receive timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$, so it can deliver messages with $T \le \min(T_R, T_W)$.
-In this way, each receiver independently derive a barrier timestamp, which is the minimum message timestamp of all possible senders.
+In this way, each receiver derives a \textit{barrier timestamp}, which is the minimum message timestamp of all possible senders.
 
-At the core, \sys leverages programmable switches to provide the order information, which forms the ``control plane''. On the ``data plane'', given the limited buffer resource at the switch, \sys does not reorder messages in the network. Instead, \sys reorders messages at the receiver-end based on the order information provided by the switch.
+Barrier timestamp can be derived with all-to-all communication, but it does not scale. \sys leverages programmable switches to provide the order information, which forms the ``control plane''. On the ``data plane'', given the limited buffer resource at the switch, \sys does not reorder messages in the network. Instead, \sys reorders messages at the receiver-end based on the order information provided by the switch.
 
 To provide the order information, we attach two timestamp fields to each packet.
 The first one is \textit{message timestamp} field, which is set by the sender and will not be modified by the switch.
 The second one is \textit{barrier timestamp} field, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp is:
-
-%In this case, the control plane is the ordering information, and the data plane is the messages.
-%Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet.
-%Thus, each packet contains two timestamp fields: a \textit{message timestamp} used by end hosts, and a \textit{barrier timestamp} used by both end hosts and switches. 
-%At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
-%As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.
 
 \emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets arrival from link $L$ will have higher message and barrier timestamps than $B$.}
 
@@ -87,9 +81,11 @@ Where
 \end{equation}
 
 Here $\rightarrow$ means \textit{can be forwarded to}.
-$\mathcal{I}_E$ is predetermined at route configuration time. \textcolor{red}{We need one or two sentences to summarize the insight of above mechanims.}
-%Note that the switches do not read or modify message timestamps. 
-In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge~\textcolor{red}{I don't see hierachical meaning here. It is just a per-hop update} described in (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}) maintains the property of barrier timestamps.
+$\mathcal{I}_E$ is predetermined at route configuration time.
+Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all its input links.
+As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps aggregate hierarchically through layers of switches, and finally the receiver host gets the barrier of all reachable hosts and links in the network.
+In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps.
+
 
 When then receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue which sorts packets based on message timestamps. Based on the property of barrier timestamp, the receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
 
