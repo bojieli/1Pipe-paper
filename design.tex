@@ -9,8 +9,9 @@
 \vspace{-1em}
 \end{figure}
 
-In this section, we assume that the network is reliable, in the sense that a) no host, link or switch failure, b) no packet is lost due to congestion or corruption. We make such strong assumptions to help the reader to understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.\ref{sec:design-unreliable}.
+In this section, we assume that the network is reliable. There is no host, link or switch failure. No packet is lost due to congestion or corruption. We make such strong assumptions to help the reader to understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.\ref{sec:design-unreliable}.
 
+\textcolor{red}{The following paragraph looks weird. What information do you want to convey.}
 Figure~\ref{fig:barrier} shows an IRIW example where reader $R$ sends $R_a$ and $R_b$ to shard($a$), while writer $W$ sends $W_a$ and $W_b$ to shard($b$).
 When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from either $R$ or $W$, so it can safely process messages with $T \leq \min(T_R, T_W)$.
 
@@ -37,7 +38,8 @@ When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assign
 %Sec.\ref{sec:inter-dc} extends the design to inter-DC topology where routing paths are not loop-free.
 
 
-\subsection{Hierarchical Merge of Barriers}
+%\subsection{Hierarchical Merge of Barriers}
+\subsection{Key Idea: Timestamp Barriers}
 \label{sec:ideal}
 
 \begin{figure}[t]
@@ -48,12 +50,12 @@ When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assign
 \vspace{-0.9em}
 \end{figure}
 
-In the Lamport-style~\cite{lamport1978time} approach above, with $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.
-Our solution is to \textit{separate the control plane from the data plane}.
-Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
-We attach two fields to each packet.
-The first is a \textit{message timestamp} field, which is only used by end-hosts and won't change once assigned.
-The second is a \textit{barrier timestamp} field, which is initialized by end-hosts but will be modified by switches.
+%In the Lamport-style~\cite{lamport1978time} approach above, with $N$ senders and $N$ receivers, the complexity of communication is $O(N^2)$.\textcolor{red}{No relationship between two sentences.}
+%Our solution is to separate the control plane from the data plane.
+%Instead of buffering packets, each network switch only maintains ordering information (aka the control plane), while packets are forwarded as usual (aka the data plane).
+At its core, \sys separates the bookeeping of order information from message forwarding. \sys leverages programmable switches to provide the order information, which forms the ``control plane''. On the ``data plane'', given the limited buffer resource at the switch, \sys does not reorder messages in the network. Instead, \sys reorders messages at the receiver-end based on the order information provided by the switch.
+
+To provide the order information, we attach two timestamp fields to each packet. The first one is \textit{message timestamp} field, which is set by the sender and will not be modified by the switch. \textcolor{red}{We need a sentence to explain the meaning of this field} The second one is \textit{barrier timestamp} field, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp is:
 
 %In this case, the control plane is the ordering information, and the data plane is the messages.
 %Instead of buffering messages at each network switch, we add a \textit{barrier timestamp} field to each packet.
@@ -61,13 +63,11 @@ The second is a \textit{barrier timestamp} field, which is initialized by end-ho
 %At beginning, a packet is formed by an end host which fills the same timestamp value in both fields.
 %As the packet moves along the route,  its barrier timestamp is modified by the switches in each link while its message timestamp is unchanged.
 
-The property of the barrier timestamp is:
+\emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets arrival from link $L$ will have higher message and barrier timestamps than $B$.}
 
-\emph{When a switch or an end host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that all future packets from link $L$ will have higher message and barrier timestamps than $B$.}
-
-To derive barriers, senders assign the same value to both fields.
-A network switch maintains a register $R_i$ per ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
-After routing a packet with barrier timestamp $B$ from ingress port $i$ to the egress port $E$, the switch updates register $R_i := B$, and modifies the barrier timestamp of the packet to a new value $B_{new}$:
+%To derive barriers, senders assign the same value to both fields.
+To derive barriers, the sender initializes the both fields of a departure message using the same value. The switch maintains a register $R_i$ for each ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
+After forwarding a packet with barrier timestamp $B$ from ingress port $i$ to egress port $E$, the switch does two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
 
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
 \begin{equation}\label{equ:derive_barriers}
@@ -81,12 +81,12 @@ Where
 \mathcal{I}_E =\{i| i\rightarrow E, i \in \mathcal{I} \}
 \end{equation}
 
-Here $\rightarrow$ means \textit{can be routed to}.
-$\mathcal{I}_E$ can be predetermined at route configuration time.
+Here $\rightarrow$ means \textit{can be forwarded to}.
+$\mathcal{I}_E$ is predetermined at route configuration time. \textcolor{red}{We need one or two sentences to summarize the insight of above mechanims.}
 %Note that the switches do not read or modify message timestamps. 
-In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge described in (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}) maintains the property of barrier timestamps.
+In Appendix~\ref{appx:hierarchical_merge}, we prove that the hierarchical merge~\textcolor{red}{I don't see hierachical meaning here. It is just a per-hop update} described in (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}) maintains the property of barrier timestamps.
 
-When a receiver receives a packet with barrier timestamp $B$, it puts the packet into a priority queue ordered by message timestamps, then delivers all packets with message timestamp below $B$ to the application.
+When then receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue which sorts packets based on message timestamps. Based on the property of barrier timestamp, the receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
 
 %One liveness requirement of the system is \textit{Loop-Free Routing}(Sec.\ref{sec:assumptions}).
 %{The liveness of the system is guaranteed if there are no \textit{routing loops} in the network (Sec.\ref{sec:assumptions}).}
@@ -96,9 +96,9 @@ When a receiver receives a packet with barrier timestamp $B$, it puts the packet
 %This result is evident because a packet may be forwarded in this routing loop indefinitely, therefore we cannot increase the lower bound of in-flight message timestamps.}
 %When the routing loop is removed, barrier timestamps will start increasing again.
 
-Although the design above works on a reconfigurable switch, many fixed function switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
-We offload the control plane to the CPU on switches, by using beacon packets as \textit{slacked barriers} of data packets.
-This will be discussed in Sec.\ref{sec:commodity}.
+%Although the design above works on a reconfigurable switch, many fixed function switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
+%We offload the control plane to the CPU on switches, by using beacon packets as \textit{slacked barriers} of data packets.
+%This will be discussed in Sec.\ref{sec:commodity}.
 
 \subsection{Beacons on Idle Links}
 \label{sec:beacon}

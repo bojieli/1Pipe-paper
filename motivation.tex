@@ -35,7 +35,7 @@ First, packet losses can occur due to congestion, packet corruption and network 
 Packet losses and host failures may violate atomicity of message scattering.
 Together with different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place, as shown in Figure~\ref{fig:ordering}.
 
-\textbf{Write after write (WAW)}.
+\parab{Write after write (WAW)}.
 Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a write operation.
 When $B$ receives the notification, it issues read command to $O$, but may not get the data due to message delays.
 
@@ -43,10 +43,10 @@ When $B$ receives the notification, it issues read command to $O$, but may not g
 %$A$ writes data to shared storage $O$, then writes metadata to shared storage $X$.
 %Asynchronously\textcolor{red}{In the meanwhile?}, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
 
-\textbf{Independent read, independent write (IRIW)}.
+\parab{Independent read, independent write (IRIW)}.
 $A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
 
-\textbf{Independent multi-write (IMW)}.
+\parab{Independent multi-write (IMW)}.
 $A$ scatters writes to both $O_1$ and $O_2$. Asynchronously, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different. For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
 %$S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request.
 %The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
@@ -93,20 +93,15 @@ A \textit{message scattering} is a group of (potentially different) messages $M_
 Each host can be both sender and receiver, but we split each host to a sender and a receiver for clarity.
 TOMS offers the following properties:~\cite{kshemkalyani2011distributed}
 
-\textbf{Validity.}
-If the sender and all receivers $R_i$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i \in S$ is eventually delivered by $R_i$. No message is delivered more than once.
+\parab{Validity.} If the sender and all receivers $R_i$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i \in S$ is eventually delivered by $R_i$. No message is delivered more than once.
 
-\textbf{Atomicity.}
-For any pair of messages $M_x$ and $M_y$ in a same message scattering, either $R_x$ deliver $M_x$ and $R_y$ deliver $M_y$, or $R_x$ does not deliver $M_x$ and $R_y$ does not deliver $M_y$.
+\parab{Atomicity.} For any pair messages $M_x$ and $M_y$ in a same message scattering, either $R_x$ deliver $M_x$ and $R_y$ deliver $M_y$, or $R_x$ does not deliver $M_x$ and $R_y$ does not deliver $M_y$.
 
-\textbf{Total Order.}
-There is a total order among message scatterings. For each pair of message scatterings $S_i$ and $S_j$ with at least one overlapping receiver $R$, $R$ is delivered message $M_i \in S_i$ before $M_j \in S_j$ if and only if $S_i$ is ordered before $S_j$.
+\parab{Total Order.}There is a total order among message scatterings. For each pair of message scatterings $S_i$ and $S_j$ with at least one overlapping receiver $R$, $R$ is delivered message $M_i \in S_i$ before $M_j \in S_j$ if and only if $S_i$ is ordered before $S_j$.
 
-\textbf{FIFO Order.}
-For each pair of message scatterings $S_i$ and $S_j$ with a same sender, $S_i$ is sent before $S_j$ if and only if $S_i$ is ordered before $S_j$.
+\parab{FIFO Order.}For each pair of message scatterings $S_i$ and $S_j$ with a same sender, $S_i$ is sent before $S_j$ if and only if $S_i$ is ordered before $S_j$.
 
-\textbf{Causality.}
-The total order of message scatterings preserves causality. For each pair of message scatterings $S_i$ and $S_j$, if the sender of $S_j$ is one receiver of $S_i$, and $S_j$ is sent after receiving $M_i \in S_i$, then $S_i$ is ordered before $S_j$.
+\parab{Causality.}The total order of message scatterings preserves causality. For each pair of message scatterings $S_i$ and $S_j$, if the sender of $S_j$ is one receiver of $S_i$, and $S_j$ is sent after receiving $M_i \in S_i$, then $S_i$ is ordered before $S_j$.
 
 \sys can remove all three hazards in Sec.\ref{subsec:tso}.
 In WAW hazard, the three messages $A \rightarrow O$, $A \rightarrow B$ and $B \rightarrow O$ are three message scatterings.
