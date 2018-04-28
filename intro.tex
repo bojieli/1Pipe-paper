@@ -52,10 +52,9 @@ As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, add a consensus round among receivers before they start to process messages~\cite{lamport1978time,chandra1996unreliable}.
 This causes extra network communication overhead and delay, thus degrading system efficiency.
 %An additional limitation comes from the semantics of multicast, where each receiver must get a same sequence of messages. 
-More over, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
+Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
 
-In this work, we seek a solution to provide efficient and scalable total-order communication for distributed systems in a data center environment.
-First, we generalize multicast to \textit{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages simultaneously to multiple hosts.
+In this work, we seek a solution to provide efficient and scalable total-order communication for distributed systems in a data center environment. First, we generalize multicast to \textit{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages simultaneously to multiple hosts.
 Message scattering is common in distributed systems.
 For instance, in distributed storage, a client writes metadata to a site and data to another site, while another client reads them concurrently.
 Consistency between metadata and data requires the operations to be scattered atomically to the two sites.
@@ -69,10 +68,7 @@ Consistency between metadata and data requires the operations to be scattered at
 %One line of work uses logically centralized coordination, \textit{e.g.}, using one or more centralized sequencers~\cite{eris}, or have a token to be passed among senders or receivers~\cite{}. The throughput of such systems is hard to scale.
 %Another line of work uses fully distributed coordination, \textit{e.g.}, add a consensus round among receivers after they receive the messages~\cite{}. The network communication overhead and additional consensus delay are not negligible.
 
-
-%Different from the traditional assumption that the network is an unreliable blackbox, a datacenter network has a regular topology and a single administrative domain.
-%Recent years, as programmable network switches flourish, there has been a trend to co-design the network with distributed systems~\cite{}. By offloading end-host computation to network switches, key-value stores can be load balanced better~\cite{} and distributed coordination can be simple and fast~\cite{eris}.
-%This paper follows this trend and shows that in programmable datacenter networks, total-order message scattering can achieve high performance, be scalable both inside and across data centers, without changing existing network infrastructure.
+Unlike Internet, a data center network (DCN) has a number of desirable properties for distributed systems design, such as regular topologies~\cite{leiserson1985fat,greenberg2009vl2} and single administrative domain. Furthermore, programmable switches start to flourish in data center networks, providing more flexible packet processing. Recently, there has been a trend to co-design distributed systems with underlying data center networks~\cite{eris,netcache-sosp17,dang2016paxos}. Following this trend, we propose \sys to achieve efficient and scalable \textit{total order message scattering} by leveraging a programmable data center network.
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys attaches a timestamp to each message at the sender side, forwards them as usual in the network, and buffers them at the receiver side.
