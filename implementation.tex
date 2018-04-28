@@ -19,7 +19,7 @@ This section implements packet processing in three types of network switches wit
 \vspace{-1em}
 \end{figure*}
 
-\subsection{Data-plane Programmable Switches}
+\subsection{Reconfigurable Switches}
 \label{sec:p4}
 
 A data-plane programmable switch is able to maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$.
@@ -29,7 +29,7 @@ Each timestamp is a 6-byte integer, indicating the number of nanoseconds passed.
 Since the timestamps wrap around in 7.8 hours, we use PAWS~\cite{jacobson1992tcp} to compare timestamps: If $s$ and $t$ are timestamp values, $s < t$ iff $0 < t - s < 2^{47}$, computed in 48-bit unsigned arithmetic.
 As shown in Figure~\ref{fig:p4}, the beacon packets carry not only the same set of timestamps and flag as data packets, but also information for minimax clock synchronization (Algorithm~\ref{alg:minimax}).
 
-\subsection{CPU on Commodity Switches}
+\subsection{CPU on Fixed Function Switches}
 \label{sec:commodity}
 
 Data-plane programmable switches are currently not widely available in data centers.

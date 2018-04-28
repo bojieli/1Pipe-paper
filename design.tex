@@ -9,9 +9,8 @@
 \vspace{-1em}
 \end{figure}
 
-\textcolor{red}{Define reliable networks. 1. No host/link/switch failures. 2. Lossless. No packet is lost due to congestion. No packet for corruption. We make such strong assumptions to help the reader to understand the key ideas of TOMS. We will present the design of TOMS in xxx in the section xxx}
+In this section, we assume that the network is reliable, in the sense that a) no host, link or switch failure, b) no packet is lost due to congestion or corruption. We make such strong assumptions to help the reader to understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.~\ref{sec:design-unreliable}.
 
-In this section, we assume that all hosts, network switches and links are reliable.
 Figure~\ref{fig:barrier} shows an IRIW example where reader $R$ sends $R_a$ and $R_b$ to shard($a$), while writer $W$ sends $W_a$ and $W_b$ to shard($b$).
 When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between pairs of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \leq \min(T_R, T_W)$ from either $R$ or $W$, so it can safely process messages with $T \leq \min(T_R, T_W)$.
 
@@ -388,10 +387,10 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 
 
 \section{\sys in Unreliable Networks}
-\label{sec:reliable}
+\label{sec:design-unreliable}
 
 Previous section achieves TOMS in reliable networks.
-In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses, packet corruptions and node failures.
+In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
@@ -476,7 +475,10 @@ At this time, messages below commit barrier are received and messages above that
 \label{sec:failure}
 
 Previous section retransmits lost packets with end hosts.
-When a host, switch or network link fails, we cannot stall the network and wait for it to recover.
+When a host, switch or network link fails, the barrier timestamp would stall.
+We detect failures using timeout and removes failed nodes to achieve fault tolerance.
+Because failures can be detected and messages would not delay arbitrarily, achieving atomicity is much easier than consensus in general distributed systems.
+
 First, we deal with host failure.
 When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets.
 A receiver discards messages from the failed node in reordering buffer.
@@ -510,7 +512,7 @@ A challenge comes from existing ingress links of the nodes.
 Because barrier timestamps are monotonic, a barrier from newly added link must not reduce the minimum barrier of existing ingress ports.
 For this reason, a node adds $L$ to the list of ingress ports only when this condition is met.
 With minimax clock synchronization, the entire network synchronize clocks in one RTT, since then the barriers would meet the condition.
-Consequently, only one end-to-end RTT is required for failure recovery and adding new nodes.
+Consequently, only one RTT is required for failure recovery and adding new nodes.
 
 \iffalse
 \subsection{Inter-DC Topology}

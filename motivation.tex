@@ -247,7 +247,7 @@ Recent x86 processors provides a \textit{total store ordering} (TSO) memory mode
 TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}.
 Obviously, a distributed shared memory (DSM) system built upon \sys achieves TSO.
 
-In addition, \sys enables an efficient implementation of \textit{memory barrier}.
+In addition, \sys enables an efficient and scalable implementation of \textit{memory barrier}.
 The caller site blocks itself and sends a null message to itself via \sys with timestamp $T$. Then it unblocks upon receiving the message at time $T'$.
 The causality property of \sys ensures that all scatterings ordered before $T$ have been received at $T'$.
 
@@ -272,11 +272,28 @@ In Sec.\ref{subsec:transactional-kvs}, we introduce a novel message scattering p
 
 
 \subsection{Existing Approaches}
+\label{subsec:existing-approaches}
+
+There has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
+Efficiency and scalability is considered a fundamental trade-off for total order multicast~\cite{defago2004total}.
+For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
+Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable}, use Lamport timestamps~\cite{lamport1978time} or run a consensus protocol among receivers~\cite{lamport1998part}.
+
+Critics of total order communication blame the lack of atomicity and limited scalability and efficiency~\cite{cheriton1994understanding}.
+\sys provides atomicity by proposing a message scattering primitive. \sys also achieves scalability with in-network computation and incurs little overhead.
+
+Recent years witness a trend of co-designing distributed systems with programmable network switches.
+Mostly-Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
+Eris~\cite{eris} proposes in-network concurrency control using switch as a serialization point.
+To mitigate the single point of failure, NetChain~\cite{jin2018netchain} uses a chain of switches for fault tolerance.
+However, in these designs, the switch is a scalability bottleneck.
+\sys follows this trend while achieving scalability.
 
 
-Existing Approaches (centralized, timestamp). Not scalable or efficient. Primitive not provide atomic group of messages.
+%It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
+%However, when the timestamps are not perfectly synchronized, the switch needs to wait and buffer other streams.
+%The maximum time of waiting equals the network delay variance plus the clock skew among senders. According to Sec.\ref{sec:goals}, the delay variance may be milliseconds, therefore for a 40~Gbps network, the switch needs a 5~MB buffer per port to hold out-of-order packets.
 
+%The predominant approach to total order communication is consensus protocols~\cite{lamport1998part,raft}, which introduces a centralized serialization point (not necessarily on the data path, but at least requires a centralized sequencer~\cite{kaminsky2016design}).
 
-The predominant approach to total order communication is consensus protocols~\cite{lamport1998part,raft}, which introduces a centralized serialization point (not necessarily on the data path, but at least requires a centralized sequencer~\cite{kaminsky2016design}).
-
-they cannot say ``for sure'' in the presence of out-of-band communication~\cite{cheriton1994understanding}
+%they cannot say ``for sure'' in the presence of out-of-band communication~\cite{cheriton1994understanding}

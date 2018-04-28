@@ -28,7 +28,7 @@ Solutions that mitigate this problem often introduce synchronization overhead, a
 %Total order communication provides an abstraction where different receivers process messages from senders in a consistent order. In a total order communication system, messages are tagged with monotonic \textit{event timestamps} by sender, and each receiver processes all messages sent to it based on timestamp order. In log replication, each replica will receive logs in a consistent ordering, which can be an important building block for both strongly consistent and eventually consistent systems. In addition, total order communication can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}.
 
 Total order communication provides an abstraction where different receivers process messages from senders in a consistent order~\cite{kshemkalyani2011distributed}.
-More formally, in total order communication, for each pair of processes $P_i$ and $P_j$ and for each pair of messages $M_x$ and $M_y$ that are delivered to both processes, $P_i$ is delivered $M_x$ before $M_y$ if and only if $P_j$ is delivered $M_x$ before $M_y$.
+More formally, in total order communication, for each pair of hosts $R_i$ and $R_j$ and for each pair of messages $M_x$ and $M_y$ that are delivered to both hosts, $R_i$ is delivered $M_x$ before $M_y$ if and only if $R_j$ is delivered $M_x$ before $M_y$.
 
 %In a total order communication system, messages are tagged with monotonic \textit{event timestamps} by the sender. The receiver processes arrival messages based on the timestamp order. In log replication, each replica will process logs in a consistent order, which can be 
 Total order communication is an important building block for both strongly consistent and eventually consistent systems.
@@ -55,10 +55,10 @@ This causes extra network communication overhead and delay, thus degrading syste
 More over, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
 
 In this work, we seek a solution to provide efficient and scalable total-order communication for distributed systems in a data center environment.
-First, we generalize multicast to \textit{message scattering}~\cite{}, a more general communication pattern where a sender sends potentially different messages to multiple receivers.
-Message scattering is a common communication pattern in a distributed system.
-For instance, in distributed storage, a client writes metadata to a site and data to another site, while other clients read them concurrently.
-Consistency between metadata and data requires \RED{only requires message scattering, not total-order, should be 'requires a group of messages to be scattered atomically'} \textit{total-order message scattering} (\sys), which ensures a group of messages to be scattered atomically at the two sites.
+First, we generalize multicast to \textit{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages simultaneously to multiple hosts.
+Message scattering is common in distributed systems.
+For instance, in distributed storage, a client writes metadata to a site and data to another site, while another client reads them concurrently.
+Consistency between metadata and data requires the operations to be scattered atomically to the two sites.
 %For instance, web servers send an access log and an error log of each HTTP request to different log collectors. Achieving consistent ordering of requests between access and error logs requires \textit{total-order message scattering} (\sys), which ensures a group of messages to be scattered atomically.
 %Assume $S_1$ scatters access log $A_1$ and error log $E_1$, while $S_2$ scatters $A_2$ and $E_2$. If $A_1$ is processed before $A_2$ at access log collector, then error log collector should process $E_1$ before $E_2$.
 %Logically, a \sys network resembles a FIFO where messages in a same \textit{scattering} are enqueued atomically, and messages are dequeued by receivers in FIFO order.
@@ -86,10 +86,10 @@ To ensure \sys's efficiency and reliability, we still need to solve three main c
 To solve the first challenge, we first generalize timestamp barriers from end hosts to every link in the network.
 Each switch keeps per-link barrier information and updates it for each packet.
 If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
-We further merge barriers hierarchically at switches to reduce \REDBLU{communication overhead}{the amount of beacon traffic} (Sec.\ref{sec:ideal}).
+We further merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:ideal}).
 
 For the second challenge, physical clock synchronization seems to be a straightforward solution.
-However, it does not account for the network latency difference incurred by the OS and links, \REDBLU{thus makes}{making} fast links constantly waiting for slow links.
+However, it does not account for the network latency difference incurred by the OS and links, thus makes fast links constantly waiting for slow links.
 %For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to their different network path lengths. As a result, the earlier one must wait for the later one to be processed together.
 To minimize the impact, we propose \textit{minimax clock synchronization} (Sec.\ref{sec:sync}) to synchronize logical clocks on each node and assign timestamps to events according to the logical clocks.
 
@@ -126,8 +126,7 @@ In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-hos
 
 %We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
-\textcolor{red}{We evaluate the performance of \sys using both small-scale testbed experiments and large-scale xxxx.}
-
+We evaluate the performance of \sys using both small-scale testbed experiments and large-scale simulation.
 \sys achieves low reordering delay and low network overhead and CPU processing overhead in both small and large system scales.
 \sys is also fault tolerant and supports incremental deployment, as new hosts, switches and links can join the system within only one RTT.
 As a case study, Sec.\ref{sec:application} shows that \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for one-shot transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than other systems and close to the performance of a non-transactional system.
