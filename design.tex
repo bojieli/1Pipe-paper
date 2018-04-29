@@ -194,7 +194,7 @@ This is a trade-off between beacon overhead and system rejoin latency.
 
 The next challenge is how to assign message timestamps. Given recent efforts on accurate clock syncrhonization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward approach is using physical time. When a host scatters a group of messages, it gets current physical time and uses this to initialize message timestamp and barrier timestamp fields of all packets in this scattering. 
 
-However, this approach does not consider the delay variance of different network paths. Delay variance may be caused by different processing delays in kernel stacks, different cable lengths and different queueing delay. 
+However, this approach does not consider the delay variance of different network paths. Delay variance may be caused by different processing delays in OS kernel, different cable lengths and different queueing delay. 
 
 
 %The next challenge is how to assign timestamps to messages.
