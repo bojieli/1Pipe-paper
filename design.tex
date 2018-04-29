@@ -36,7 +36,7 @@ In this section, we assume that the network is reliable. There is no host, link 
 
 
 %\subsection{Hierarchical Merge of Barriers}
-\subsection{Key Idea: Timestamp Barriers}
+\subsection{Key Idea: Barrier Timestamp}
 \label{sec:ideal}
 
 \begin{figure}[t]
@@ -47,14 +47,9 @@ In this section, we assume that the network is reliable. There is no host, link 
 \vspace{-0.9em}
 \end{figure}
 
-We begin with an example.
-As shown in Figure~\ref{fig:barrier}, host $R$ scatters $R_a$ and $R_b$ to shard($a$), host $W$ scatters $W_a$ and $W_b$ to shard($b$).
-Each sender assigns an identical timestamp to each message in a scattering, namely $T_R$ and $T_W$.
-Each sender assigns monotonically increasing timestamps to different scatterings.
-Message timestamp determines the delivery order at receiver.
-When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment and the FIFO property between each pair of sender and receiver, shard($a$) knows that it will no longer receive timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$.
-Combined, it will no longer receive timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$, so it can deliver messages with $T \le \min(T_R, T_W)$.
-In this way, each receiver derives a \textit{barrier timestamp}, which is the minimum message timestamp of all possible senders.
+\sys leverages the \emph{barrier timestamp} to deliver order information. Before introducing the mechanims, we illustrate the barrier timestamp with a simple example.   
+
+In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
 
 Barrier timestamp can be derived with all-to-all communication, but it does not scale. \sys leverages programmable switches to provide the order information, which forms the ``control plane''. On the ``data plane'', given the limited buffer resource at the switch, \sys does not reorder messages in the network. Instead, \sys reorders messages at the receiver-end based on the order information provided by the switch.
 
