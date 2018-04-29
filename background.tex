@@ -105,7 +105,7 @@ The switching chip can forward selected traffic (typically control plane packets
 The switching chip is composed of an \textit{ingress} pipeline, multiple FIFO queues and an \textit{egress} pipeline.
 When a packet is received from an ingress link, it first goes through the ingress pipeline to determine the egress link and queueing priority, then get buffered into the corresponding FIFO queue.
 The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to egress links.
-This queueing model ensures FIFO property for packets with a same priority.
+This queueing model ensures FIFO property for packets with the same priority.
 In addition, packet corruption on ingress links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
 The data center switch can provide good programmability.
