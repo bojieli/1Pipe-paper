@@ -444,11 +444,11 @@ This is because \sys can only deliver a message after delivering all committed m
 
 In \sys, we rename the original barrier to \textit{unreliable barrier} and add a \textit{commit barrier} and a \textit{loss encountered} flag alongside it.
 Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below commit barrier has been received.
-Figure~\ref{fig:ack-barrier} shows an example of commit barrier.
+Figure~\ref{fig:ack-barrier} shows an example of commit barrier.\RED{Should I rename ACK barrier to commit barrier in Fig.~\ref{fig:ack-barrier}?}
 When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier.
 Otherwise, it delivers based on commit barrier.
 
-To \textit{clear} the loss encountered flag after all previous losses are recovered, as shown in Algorithm~\ref{alg:loss-detection}, when commit barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
+\RED{concatenate two sentences by mistake?}To \textit{clear} the loss encountered flag after all previous losses are recovered, as shown in Algorithm~\ref{alg:loss-detection}, when commit barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
 At this time, messages below commit barrier are received and messages above that are not lost before passing through this switch.
 
 
@@ -519,18 +519,19 @@ First, we deal with host failure.
 When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets.
 A receiver discards messages from the failed node in reordering buffer.
 To ensure message scattering atomicity, a sender checks uncommitted messages and send \textit{recall} messages to other receivers.
-Upon receiving \textit{recall}, it discards the message in reordering buffer and responds ACK.
+Upon receiving \textit{recall}, \RED{`it' is ambiguous here, should use receiver explicitly}it discards the message in reordering buffer and responds ACK.
 The sender then discards the uncommitted message when all healthy receivers have recalled.
 We admit that \sys shares a same limitation with standard two-phase commit.
 If a receiver fails after commit message has been sent, \sys cannot recall committed messages from other receivers.
 
 When a host recovers from failure, it needs to join \sys system as a new host.
-Recovering lost messages during failure requires persistence or replication, which incurs high cost and the best choice should be determined by applications rather than \sys transport.
+Recovering lost messages during failure requires persistence or replication, which incurs high cost\REDBLU{. So the best choice is to let applications determine, }{ and the best choice should be determined by applications }rather than \sys transport.
 
 Next, we deal with failure of network switches or links.
 If a failure does not block communication between any pair of hosts, it only causes a brief interval of packet losses.
 Otherwise, the sender would timeout in retransmission and \textit{recall} messages from other receivers.
 If a failure disconnects an end host from the network (\textit{e.g.} ToR switch failure), nearby switches would broadcast the host failure.
+\RED{Q1:should every switch records which host may pass through which ingress port? so that the switch is able to broadcast (potential) host failure. It seems really difficult. Q2:What if switches hold different opinions about whether a host fails. Is it possible?}
 In the extreme case of network partition, all cross-partition scatterings will fail and scatterings within a partition still proceed with total order.
 
 %Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
@@ -542,11 +543,16 @@ In the extreme case of network partition, all cross-partition scatterings will f
 %When an end host or switch needs to join a \sys system, it first initializes a \sys system by itself (all the timestamps are initialized arbitrarily). Therefore, the joining process is reduced to connecting two existing \sys systems with a new network link.
 
 Failure recovery and incremental deployment requires new hosts, switches and links to join a \sys system efficiently.
-All these cases reduce to adding a link $L$ between two nodes.
+All these cases \REDBLU{can be reduced}{reduce} to adding a link $L$ between two nodes.
 Initially, the nodes block all data packets on $L$ and only allow beacon packets carrying barriers and clock synchronizations.
+\REDBLU{
+	A node adds $L$ to its ingress ports list only when the barrier from $L$ isn't smaller than the minimum barrier of existing ingress ports.
+}
+{
 A challenge comes from existing ingress links of the nodes.
 Because barrier timestamps are monotonic, a barrier from newly added link must not reduce the minimum barrier of existing ingress ports.
-For this reason, a node adds $L$ to the list of ingress ports only when this condition is met.
+For this reason, a node adds $L$ to the list of ingress ports only when this condition is met.}
+
 With minimax clock synchronization, the entire network synchronize clocks in one RTT, since then the barriers would meet the condition.
 Consequently, only one RTT is required for failure recovery and adding new nodes.
 
