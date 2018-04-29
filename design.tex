@@ -192,10 +192,9 @@ This is a trade-off between beacon overhead and system rejoin latency.
 %On one hand, we hope to timestamp the events so that if two packets originated from two distant events arrive at a receiver simultaneously, these two events should have a same timestamp.
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
 
-The next challenge is how to assign message timestamps. Given recent efforts on accurate clock syncrhonization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward approach is using physical time. When a host scatters a group of messages, it gets current physical time and uses this to initialize message timestamp and barrier timestamp fields of all packets in this scattering. 
+\parab{Physical time does not work well.}The next challenge is how to assign message timestamps. Given recent efforts on accurate clock syncrhonization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward approach is using \emph{physical} time. When a host scatters a group of messages, it gets current physical time and uses this to initialize message timestamp and barrier timestamp fields of all packets in this scattering. 
 
-However, this approach does not consider the delay variance of different network paths. Delay variance may be caused by different processing delays in OS kernel, different cable lengths and different queueing delay. 
-
+However, this approach does not consider the delay variance of different network paths. Delay variance is caused by different processing delays in OS kernel, different queueing delays at the switch and different number of hops. The delay variance causes straggler problem. For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to different network delays. As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.      
 
 %The next challenge is how to assign timestamps to messages.
 %Clock synchronization in data centers becomes increasingly accurate leveraging NIC timestamps~\cite{correll2005design}, GPS~\cite{corbett2013spanner}, PHY~\cite{lee2016globally} and network effects~\cite{geng2018exploiting}.
@@ -206,8 +205,8 @@ However, this approach does not consider the delay variance of different network
 %However, they arrive at different times due to different network delays.
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
+\parab{Logical time}
 To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
-
 
 We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$.
 Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$.
@@ -241,8 +240,7 @@ Our goal is achieved.
 \end{algorithm}
 
 
-
-Because timestamps can only increase monotonically, when the newly synchronized offset $d_i$ is less than the current offset of $S_i$, it has to ``stall'' the logical clock rather than decreasing it.
+\parab{How to adjust logical time?}Because timestamps can only increase monotonically, when the newly synchronized offset $d_i$ is less than the current offset of $S_i$, it has to ``stall'' the logical clock rather than decreasing it.
 During stall, the logical clock increases by 1 per scattering, while the synchronized offset increases at the speed of physical clock.
 \RED{offset can't increase, need more explanation}
 Algorithm~\ref{alg:clock} shows the procedure.
