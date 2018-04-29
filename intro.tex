@@ -56,8 +56,7 @@ Moreover, an additional restriction comes from the semantics of multicast, where
 
 In this work, we seek a solution to provide efficient and scalable total-order communication for distributed systems in a data center environment. We generalize multicast to \textit{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages simultaneously to multiple hosts.
 Message scattering is common in distributed systems.
-For instance, in distributed storage, a client writes metadata to a site and data to another site, while another client reads them concurrently~\textcolor{red}{at the same time}.
-Consistency between metadata and data requires the operations to be scattered atomically to the two sites.
+For instance, in distributed storage, a client writes metadata to a site and data to another site, while another client reads them concurrently. Consistency between metadata and data requires the operations to be scattered atomically to the two sites.
 
 %For instance, web servers send an access log and an error log of each HTTP request to different log collectors. Achieving consistent ordering of requests between access and error logs requires \textit{total-order message scattering} (\sys), which ensures a group of messages to be scattered atomically.
 %Assume $S_1$ scatters access log $A_1$ and error log $E_1$, while $S_2$ scatters $A_2$ and $E_2$. If $A_1$ is processed before $A_2$ at access log collector, then error log collector should process $E_1$ before $E_2$.
@@ -68,7 +67,7 @@ Consistency between metadata and data requires the operations to be scattered at
 %One line of work uses logically centralized coordination, \textit{e.g.}, using one or more centralized sequencers~\cite{eris}, or have a token to be passed among senders or receivers~\cite{}. The throughput of such systems is hard to scale.
 %Another line of work uses fully distributed coordination, \textit{e.g.}, add a consensus round among receivers after they receive the messages~\cite{}. The network communication overhead and additional consensus delay are not negligible.
 
-\textcolor{red}{In particular, we focus on data centers where many of today's distributed systems are deployed.} Unlike Internet, the data center network (DCN) has many desirable properties for distributed systems design, such as regular topologies~\cite{leiserson1985fat,greenberg2009vl2} and single administrative domain. Furthermore, programmable switches start to flourish in data centers, providing more flexible packet processing. Recently, there has been a trend to co-design distributed systems with underlying data center networks~\cite{eris,netcache-sosp17,dang2016paxos}. Following this trend, we propose \sys to achieve efficient and scalable \textit{total order message scattering} by leveraging a programmable data center network.
+Data center network (DCN) has many desirable properties for distributed systems design, such as regular topologies~\cite{leiserson1985fat,greenberg2009vl2} and single administrative domain. Furthermore, programmable switches start to flourish in data centers, providing more flexible packet processing. Recently, there has been a trend to co-design distributed systems with underlying data center networks~\cite{eris,netcache-sosp17,dang2016paxos}. Following this trend, we propose \sys to achieve efficient and scalable \textit{total order message scattering} by leveraging a programmable data center network.
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys attaches a timestamp to each message at the sender side, forwards them as usual in the network, and buffers them at the receiver side.
@@ -85,12 +84,11 @@ We merge barriers hierarchically at switches to reduce communication overhead (S
 If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
 
 
-For the second challenge, physical clock synchronization seems to be a straightforward solution.
-However, it does not account for the network latency difference incurred by the OS and links, thus makes fast links constantly waiting for slow links.
+Event timestamp on a host needs to be strictly incrementing. An obvious candidate for event timestamp would be (potentially synchronized) local physical clock of each host. However, this does not account for the network latency difference incurred by the OS and links, thus makes fast links constantly waiting for slow links.
 %For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to their different network path lengths. As a result, the earlier one must wait for the later one to be processed together.
 To minimize the impact, we propose \textit{minimax clock synchronization} (Sec.\ref{sec:sync}) to synchronize logical clocks on each node and assign timestamps to events according to the logical clocks.
 
-For the third challenge, we are aware that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}.
+For the third challenge, we take advantage of the fact that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}.
 We detect packet loss via counters in network switches, and rely on end hosts to retransmit lost packets (Sec.\ref{sec:lossy}).
 We detect failures of hosts, switches and links via beacon timeout.
 When no packet loss or failure is present, a message scattering can be delivered in one network delay. Otherwise, we fall back to two-phase commit (2PC) to deliver a scattering in three network delays (Sec.\ref{sec:failure}).

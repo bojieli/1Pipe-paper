@@ -89,15 +89,15 @@ Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs t
 \subsection{Total Order Message Scattering}
 
 We propose total order message scattering (TOMS), which ensures a group of messages to be scattered atomically in total order.
-A \textit{message scattering} is a group of (potentially different) messages $M_1, \ldots, M_n$ sent from a host to one or more hosts $R_1, \ldots, R_n$ respectively. Each host in the system may send message scatterings to any group of hosts.
+A \textit{message scattering} $S$ is a group of $n$ (potentially different) messages $M_1^s, \ldots, M_n^s$ sent from a sender host $H^s$ to $n$ receiving hosts $R_1^s, \ldots, R_n^s$ respectively. A host in the system may send message scatterings to any group of hosts.
 Each host can be both sender and receiver, but we split each host to a sender and a receiver for clarity.
 TOMS offers the following properties:~\cite{kshemkalyani2011distributed}
 
-\parab{Validity.} If the sender and all receivers $R_i$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i \in S$ is eventually delivered by $R_i$. No message is delivered more than once.
+\parab{Validity.} If the sender $H^s$ and all receivers $R_i^s$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i^s$ is eventually delivered to $R_i$. No message is delivered more than once.
 
-\parab{Atomicity.} For any pair messages $M_x$ and $M_y$ in a same message scattering, either $R_x$ deliver $M_x$ and $R_y$ deliver $M_y$, or $R_x$ does not deliver $M_x$ and $R_y$ does not deliver $M_y$.
+\parab{Atomicity.} The set of messages $M_i^s$ in a message scattering $S$ are either all got delivered or none got delivered.
 
-\parab{Total Order.}There is a total order among message scatterings. For each pair of message scatterings $S_i$ and $S_j$ with at least one overlapping receiver $R$, $R$ is delivered message $M_i \in S_i$ before $M_j \in S_j$ if and only if $S_i$ is ordered before $S_j$.
+\parab{Total Order.}The message scatterings are total ordered. For any pair of message scatterings $S_1$ and $S_2$, if a message in $S_1$ is delivered before $S_2$ to a reciver, then message in $S_1$ are delivered before $S_2$ to any other reciver that receives messages from both scatterings. 
 
 \parab{FIFO Order.}For each pair of message scatterings $S_i$ and $S_j$ with a same sender, $S_i$ is sent before $S_j$ if and only if $S_i$ is ordered before $S_j$.
 
