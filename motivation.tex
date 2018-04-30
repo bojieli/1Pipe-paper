@@ -239,8 +239,8 @@ When multiple replicas process write operations in parallel, the consistency amo
 
 By removing IMW hazard, \sys ensures that each replica receives an identical sequence of write operations from all other replicas.
 If write operations are blocked until receiving potentially conflicting writes, \textit{i.e.} insert a memory barrier after each write, the system is sequentially consistent because each operation can be serialized at its beginning time~\cite{lu2016snow}.
-If write operations are returned immediately while changes propagate, because local read operations may occur during propagation, the system is not sequentially consistent, but causality and eventual consistency are preserved~\cite{terry1995managing}.
-Applying the Thomas write rule~\cite{thomas1979majority} on the timestamps of local and remote updates achieves eventual consistency.
+If write operations are returned immediately while changes propagate, because local read operations may occur during propagation, the system is not sequentially consistent, but causality is preserved~\cite{terry1995managing}.
+Further, applying the Thomas write rule~\cite{thomas1979majority} on the timestamps of local and remote updates achieves eventual consistency.
 The reasoning above assumes reads are local and writes are propagated.
 Similar reasoning applies to write-intensive systems where writes are local, while each read operation retrieves from multiple replicas and return the latest version.
 \sys also ensures sequential consistency in this case.
@@ -252,8 +252,8 @@ TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tas
 Obviously, a distributed shared memory (DSM) system built upon \sys achieves TSO.
 
 In addition, \sys enables an efficient and scalable implementation of \textit{memory barrier}.
-The caller site blocks itself and sends a null message to itself via \sys with timestamp $T$. Then it unblocks upon receiving the message at time $T'$.
-The causality property of \sys ensures that all scatterings ordered before $T$ have been received at $T'$.
+The caller blocks itself and sends a null message to itself via \sys with timestamp $T$. Then it unblocks upon receiving the message at time $T'$.
+The causality property of \sys ensures that all messages sent before $T$ are received at $T'$.
 
 \iffalse
 \textcolor{red}{I think the following paragraph is useless.}

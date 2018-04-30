@@ -42,7 +42,7 @@ In this section, we assume that the network is reliable. There is no host, link 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
-\caption{Hierarchical aggregation of barrier timestamp.}
+\caption{Hierarchical aggregation of barrier timestamp. \RED{Change logos smaller. Use computer logo instead of this logo. Make the network links vertical (orthogonal to horizontal)}}
 \label{fig:hierarchical_merge}
 \vspace{-0.9em}
 \end{figure}
@@ -216,7 +216,10 @@ However, this approach does not consider the delay variance of different network
 %However, they arrive at different times due to different network delays.
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
-\parab{Logical time.}To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
+\parab{Logical time.}Realizing the limitation of physical time, we use \emph{logical time} as the message timestamp. Logical time is essentially the estimated message arrival time, \emph{e.g.}, physical time plus one way delay from the sender to the receiver. 
+
+\parab{How to adjust logical time?}
+To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
 
 We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$.
 Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$.
