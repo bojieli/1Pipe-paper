@@ -65,21 +65,21 @@ In \sys, we attach two timestamp fields to each message packet. The first one is
 
 \emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.}
 
-To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} using the monotonic scattering timestamp. The switch maintains a register $R_i$ for each input link $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all input links. After forwarding a packet with barrier timestamp $B$ from input link $i$ to output link $e$, the switch performs two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
+To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} using the monotonic scattering timestamp. The switch maintains a register $R_i$ for each input link $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all input links. After forwarding a packet with barrier timestamp $B$ from input link $i$ to output link $o$, the switch performs two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
 
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
 \begin{equation}\label{equ:derive_barriers}
 %\RED{
-B_{new}:=\min\{R_i| i\in \mathcal{I}_e\}
+B_{new}:=\min\{R_i| i\in \mathcal{I}_o\}
 %}
 \end{equation}
 %B := \min \{ R_i | \exists i \rightarrow E, i \in \mathcal{I} \}
 Where 
 \begin{equation}\label{equ:derive_barriers1}
-\mathcal{I}_e =\{i| i\rightarrow e, i \in \mathcal{I} \}
+\mathcal{I}_o =\{i| i\rightarrow o, i \in \mathcal{I} \}
 \end{equation}
 
-Here $\rightarrow$ means \textit{can be forwarded to}. In the regular topologies of data centers, the set of all possible input links $\mathcal{I}_e$ is predetermined at route configuration time. Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps.
+Here $\rightarrow$ means \textit{can be forwarded to}. In the regular topologies of data centers, the set of all possible input links $\mathcal{I}_o$ is predetermined at route configuration time. Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps.
 
 When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue which sorts packets based on the message timestamp. Based on the property of barrier timestamp, the receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
 
@@ -379,9 +379,9 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \setlength{\textfloatsep}{0em}
 \begin{algorithm}[t]
  \DontPrintSemicolon
- \textbf{States:} Per-port max timestamp $max_i, i \in \mathcal{I}$\;
- 	\qquad Per-port min timestamp feedback $min_e, e \in \mathcal{E}$\;
-    \qquad RTT estimation per output link, $RTT_e, e \in \mathcal{E}$\;
+ \textbf{States:} Max timestamp per input link, $max_i, i \in \mathcal{I}$\;
+ 	\qquad Min timestamp per output link, $min_o, o \in \mathcal{O}$\;
+    \qquad RTT estimation per output link, $RTT_o, o \in \mathcal{O}$\;
     \qquad Received RTT probe request, $rttreq_i, i \in \mathcal{I}$\;
  	\qquad Local physical clock, fetched via $time()$\;
  \textbf{Event processing:}\\
@@ -390,8 +390,8 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
  	max timestamp $T_{max}$:\\
     \quad $T_{max} = \max \{ max_i | i \in \mathcal{I} \wedge i \rightarrow P \} + time()$\;
     min timestamp $T_{min}$:\\
-    \eIf{$\exists e, e \in \mathcal{E} \wedge P \rightarrow e$} {
-        $T_{min} = \min \{ min_e | e \in \mathcal{E} \wedge P \rightarrow e \} + time()$\;
+    \eIf{$\exists o, o \in \mathcal{O} \wedge P \rightarrow o$} {
+        $T_{min} = \min \{ min_o | o \in \mathcal{O} \wedge P \rightarrow o \} + time()$\;
     }{
     	$T_{min} = T_{max}$\;
     }
@@ -473,10 +473,10 @@ At this time, messages below commit barrier are received and messages above that
     	$LE_i \leftarrow \textnormal{False}$\;
     }
  }
- \ElseIf{\textnormal{Send beacon packet to egress $E$}}{
-    Unreliable barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
-    Commit barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow E \}$\;
-    Loss encountered flag $\leftarrow \exists i \in \mathcal{I} \wedge (i \rightarrow E) \wedge (LE_i \vee RLE_i)$\;
+ \ElseIf{\textnormal{Send beacon packet to output $o$}}{
+    Unreliable barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
+    Commit barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
+    Loss encountered flag $\leftarrow \exists i \in \mathcal{I} \wedge (i \rightarrow o) \wedge (LE_i \vee RLE_i)$\;
  }
  \caption{Hop-by-hop loss detection in network switches.}
  \label{alg:loss-detection}

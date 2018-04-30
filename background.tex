@@ -102,9 +102,9 @@ A typical data center switch consists of a switching chip~\cite{broadcom} and a 
 The switch operating system~\cite{arista-eos} software running on the CPU controls the switching chip (\textit{e.g.} configure chip register values).
 The switching chip can forward selected traffic (typically control plane packets, such as DHCP and BGP) to CPU via a virtual NIC.
 
-The switching chip is composed of an \textit{ingress} pipeline, multiple FIFO queues and an \textit{egress} pipeline.
-When a packet is received from an input link, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
-The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to output links.
+The switching chip is composed of an ingress pipeline, multiple FIFO queues and an egress pipeline.
+When a packet is received from an \textit{input link}, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
+The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to \textit{output links}.
 This queueing model ensures FIFO property for packets with the same priority.
 In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
