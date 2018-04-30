@@ -12,7 +12,7 @@
 \subsection{Design Goals}
 \label{sec:goals}
 
-Our goal is to build a scalable total-order message scattering service in data centers. Such a service should satisfy the following requirements.
+Our goal is to build a scalable ordered message scattering service in data centers. Such a service should satisfy the following requirements.
 
 %\textbf{Correctness.}
 %A sender scatters a group of messages with a same timestamp to multiple receivers, called a \textit{scattering}.
@@ -22,10 +22,10 @@ Our goal is to build a scalable total-order message scattering service in data c
 
 \parab{Efficient.}First, the \textit{reordering delay} between end host receiving the message and delivering the message to application should be minimal.
 This requires senders to assign timestamps properly so that messages with similar timestamps arrive at receivers as synchronized as possible.
-Second, the network and computation overhead of total ordering should be minimal.
+Second, the network and computation overhead of the system should be minimal.
 
-\parab{Scalable.}The system should be scalable with number of switches and hosts, which implies no centralized coordinator and the overhead should not increase too much with system scale.
-Additionally, for ease of deployment, it is also desirable for the algorithms running on each host and switch to be logically equivalent.
+\parab{Scalable.}The system should be scalable with number of switches and hosts, which implies no central coordinator and the overhead should not increase too much as the system scales out.
+%Additionally, for ease of deployment, it is also desirable for the algorithms running on each host and switch to be logically equivalent.
 
 
 
@@ -87,7 +87,7 @@ The system ensures liveness unless network partition occurs.
 Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of end hosts.
 Shortest-path routing between two hosts in a multi-rooted tree first goes up layers of switches to one of their common ancestors, then goes down layers of switches.
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
-This loop-free topology enables hierarchical aggregation.
+This loop-free topology enables hierarchical aggregation of barrier timestamps, as discussed in \ref{sec:ideal}.
 
 %\RED{Discuss loop-free routing.}
 %Formally, for $n$ distinct switches $S_1, \ldots, S_n$, if there are $n$ links $L_1, \ldots, L_n$ directly connecting $S_1 \rightarrow S_2, \ldots, S_{n-1} \rightarrow S_n, S_n \rightarrow S_1$, and $n$ possible routes (need not be distinct) passing through $L_1 \rightarrow L_2, \ldots, L_{n-1} \rightarrow L_n, L_n \rightarrow L_1$ respectively, then we call it a \textit{routing loop}.
