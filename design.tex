@@ -47,9 +47,13 @@ In this section, we assume that the network is reliable. There is no host, link 
 \vspace{-0.9em}
 \end{figure}
 
-\parab{In-order processing based on message timestamp.}We implement the total order of message scattering
+\parab{In-order processing based on message timestamp.}\sys assigns the explicit timestamp for each message. When a sender scatters a group of messages, it assigns an identical timestamp for all the messages. Each sender assigns monotonically increasing message timestamps, \textit{e.g.}, synchronized physical time, to different scatterings. Message timestamp determines the processing order at receiver. If all the receivers process arrival meesages in ascending order of message timestamps, we can achieve total order message scattering.        
 
-\parab{Barrier timestamp.}
+\parab{Barrier timestamp.}However, it is challenging to proceess messages as described above. When a receiver wants to process a message with the timestamp $t$, it must guaranteee that it has received all the messages whose message timestamps are smaller than $t$. To this end, we introduce \emph{barrier timestamp}, which is the minimum message timestamp of all future arrival messages. Each receiver can 
+
+process the messages whose message timestamps are smaller than the barrier timestamp value.
+
+We use a simple example to show how to derive the barrier timestamp. 
 
 \parab{Hierahical aggregation of barrier timestamp.}
 
