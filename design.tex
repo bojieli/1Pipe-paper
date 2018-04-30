@@ -217,23 +217,27 @@ However, this approach does not consider the delay variance of different network
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
 \parab{Logical time.}Realizing the limitation of physical time, we use \emph{logical time} as the message timestamp. Logical time is essentially the estimated message arrival time, \emph{e.g.}, physical time plus one way delay from the sender to the receiver. 
+\RED{We represent logical time as an offset of senders' local physical time.}
 
-\parab{How to adjust logical time?}
-To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
 
 We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$.
 Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$.
-Note that we can measure the round-trip time ($RTT_i = d_i + r_i$) between two nodes, but one-way delay is hard to measure.
+Note that we can \RED{use logical time to} measure the round-trip time ($RTT_i = d_i + r_i$) between two nodes, but one-way delay is hard to measure.
 We further observe that speed of clocks on each node have negligible difference (relative error less than $10^{-5}$~\cite{corbett2013spanner,geng2018exploiting}), while in the long run they will diverge.
-We consider physical clocks precise enough to measure short intervals.
+We \REDBLU{assume}{consider} physical clocks precise enough to measure short intervals \RED{Should we give a certain number here? e.g. 100us}.
 
 To minimize reordering delay, we want \REDBLU{messages with similar \textit{message timestamps} from different senders arrive at each receiver about the same time}{the senders to assign timestamps so that messages with a same timestamp arrive at receiver simultaneously}.
-\RED{I think here is still obscure, readers may fail to follow such logic}
+\REDBLU{
+	If R broadcasts a clock synchronization message to set logical time to 0 at physical time 0, $S_i$ will receive it at $r_i$.
+	Then $S_i$ compensates $RTT_i$ to the received timestamp and sets its logical time to $d_i+r_i$.
+	If each $S_i$ immediately reply to $R$ with the new logical time, $R$ will receive message with logical time $d_i+r_i$ at physical time $d_i+r_i$, which theoretically means zero reordering delay.
+}
+{
 Consequently, the logical clock at $S_i$ should have an offset $d_i$ to the physical time.
 If $R$ broadcasts a clock synchronization message at physical time 0, $S_i$ will receive it at $r_i$.
 Then $S_i$ compensates a round-trip time $RTT_i$ to the received timestamp and sets its clock to $0 + d_i + r_i$ at physical time $r_i$, which has offset $d_i$ to physical time.
 Our goal is achieved.
-
+}
 
 \begin{algorithm}[t]
  \DontPrintSemicolon
@@ -254,19 +258,17 @@ Our goal is achieved.
 
 
 \parab{How to adjust logical time?}
-Because timestamps can only increase monotonically, when the newly synchronized offset $d_i$ is less than the current offset of $S_i$, it has to ``stall'' the logical clock rather than \REDBLU{decrease}{decreasing} it.
-During stall, the logical clock increases by 1 per scattering, while the synchronized offset increases at the speed of physical clock.
-\RED{offset can't increase, need more explanation}
+Because timestamps can only increase monotonically, when the newly synchronized \REDBLU{logical clock}{offset $d_i$} is less than the current \REDBLU{one}{offset of $S_i$}, it has to ``stall'' the logical clock rather than \REDBLU{decrease}{decreasing} it.
+During stall, the logical clock increases by 1 per scattering, while the synchronized \REDBLU{one}{offset} increases at the speed of physical clock.
 Algorithm~\ref{alg:clock} shows the procedure.
 
 Now we extend to multiple receivers $R_i \in \mathcal{R}$.
 %In a data center, each sender is also a receiver, but we denote the send and receive roles separately for clarity.
 Assume the one-way delays are $d_{ij}$ for $S_i \rightarrow R_j$ and $r_{ij}$ for $R_j \rightarrow S_i$, and we can measure $RTT_{ij} = d_{ij} + r_{ij}$.
 If we want to follow the approach above for each receiver, we need to synchronize the clocks of receivers first.
-In this regard, we add a \textit{forward pass} in which \REDBLU{$R_j$ receives and synchronizes clocks from $S_i$}{$S_i$ send to $R_j$ and synchronize clocks of $R_j$}, then run the \textit{backward pass} above from $R_j$ to $S_i$.
-\RED{mix offsets and clocks, should we unify them?}
-In both forward pass and backward pass, each node receives potentially different \RED{offsets} from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}.
-Assume the sender \RED{logical clocks} are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ should be:
+In this regard, we add a \textit{forward pass} in which \REDBLU{$R_j$ receives and synchronizes clocks from $S_i$}{$S_i$ send to $R_j$ and synchronize clocks of $R_j$}, then run the \textit{backward pass} \REDBLU{likewise}{above} from $R_j$ to $S_i$.
+In both forward pass and backward pass, each node receives potentially different \REDBLU{logical clocks}{offsets} from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}.
+Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ should be:
 
 \vspace{-1em}
 \begin{equation*}
@@ -411,7 +413,7 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \section{\sys in Unreliable Networks}
 \label{sec:design-unreliable}
 
-Previous section achieves TOMS in reliable networks.
+Previous section achieves \sys in reliable networks.
 In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
