@@ -42,50 +42,52 @@ In this section, we assume that the network is reliable. There is no host, link 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
-\caption{Hierarchical aggregation of timestamp barriers.}
+\caption{Hierarchical aggregation of barrier timestamp.}
 \label{fig:hierarchical_merge}
 \vspace{-0.9em}
 \end{figure}
 
-\sys leverages the \emph{barrier timestamp} to provide order information. Before going to the mechanims, we illustrate the barrier timestamp with a simple example.
+\parab{In-order processing based on message timestamp.}W
 
-In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
+\parab{Barrier timestamp.}
 
-As shown above, barrier timestamp can be derived with all-to-all communication.
-However, this approach does not scale well, especially in production data centers with hundreds of thousands of servers.
-Instead, \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information, which forms the ``control plane''.
-On the ``data plane'', given the limited switch buffer resource, \sys does not reorder messages in the network.
-Instead, \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
+\parab{Hierahical aggregation of barrier timestamp.}
 
-In \sys, we attach two timestamp fields to each message packet.
-The first one is \textit{message timestamp} field, which is set by the sender and will not be modified. The second one is \textit{barrier timestamp} field, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp is:
+%\sys leverages the \emph{barrier timestamp} to provide order information. Before going to the mechanims, we illustrate the barrier timestamp with a simple example.
 
-\emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.}
+%In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
 
-To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} using the monotonic scattering timestamp. The switch maintains a register $R_i$ for each ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
-After forwarding a packet with barrier timestamp $B$ from ingress port $i$ to egress port $E$, the switch does two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
+%As shown above, barrier timestamp can be derived with all-to-all communication.
+%However, this approach does not scale well, especially in production data centers with hundreds of thousands of servers.
+%Instead, \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information, which forms the ``control plane''.
+%On the ``data plane'', given the limited switch buffer resource, \sys does not reorder messages in the network.
+%Instead, \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
+
+%In \sys, we attach two timestamp fields to each message packet.
+%The first one is \textit{message timestamp} field, which is set by the sender and will not be modified. The second one is \textit{barrier timestamp} field, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp is:
+
+%\emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.}
+
+%To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} using the monotonic scattering timestamp. The switch maintains a register $R_i$ for each ingress port $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all ingress ports.
+%After forwarding a packet with barrier timestamp $B$ from ingress port $i$ to egress port $E$, the switch does two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
 
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
-\begin{equation}\label{equ:derive_barriers}
+%\begin{equation}\label{equ:derive_barriers}
 %\RED{
-B_{new}:=\min\{R_i| i\in \mathcal{I}_E\}
+%B_{new}:=\min\{R_i| i\in \mathcal{I}_E\}
 %}
-\end{equation}
+%\end{equation}
 %B := \min \{ R_i | \exists i \rightarrow E, i \in \mathcal{I} \}
-Where 
-\begin{equation}\label{equ:derive_barriers1}
-\mathcal{I}_E =\{i| i\rightarrow E, i \in \mathcal{I} \}
-\end{equation}
+%Where 
+%\begin{equation}\label{equ:derive_barriers1}
+%\mathcal{I}_E =\{i| i\rightarrow E, i \in \mathcal{I} \}
+%\end{equation}
 
-Here $\rightarrow$ means \textit{can be forwarded to}.
-In the regular topologies of data centers, $\mathcal{I}_E$ is predetermined at route configuration time.
-Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links.
-As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network.
-In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps.
+%Here $\rightarrow$ means \textit{can be forwarded to}.In the regular topologies of data centers, $\mathcal{I}_E$ is predetermined at route configuration time. Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links.As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps.
 
-When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue which sorts packets based on the message timestamp.
-Based on the property of barrier timestamp, the receiver knows that the message timestamp of all future arrival packets will be larger than $B$.
-Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
+%When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue which sorts packets based on the message timestamp.
+%Based on the property of barrier timestamp, the receiver knows that the message timestamp of all future arrival packets will be larger than $B$.
+%Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
 
 
 
@@ -232,8 +234,7 @@ As a result, the earlier one must wait for the later one to be processed togethe
 %However, they arrive at different times due to different network delays.
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
-\parab{Logical time}
-To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
+\parab{Logical time.}To this end, we devise a new algorithm to synchronize logical clocks on senders and assign message timestamps according to the clocks.
 
 We begin with a simplistic case with multiple senders $S_i \in \mathcal{S}$ and one receiver $R$.
 Assume the one-way network delays are $d_i$ for $S_i \rightarrow R$ and $r_i$ for $R \rightarrow S_i$.

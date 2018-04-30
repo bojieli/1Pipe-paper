@@ -72,7 +72,7 @@ Data center network (DCN) has many desirable properties for distributed systems 
 Furthermore, programmable switches start to flourish in data centers, providing more flexible packet processing.
 Recently, there has been a trend to co-design distributed systems with underlying data center networks~\cite{eris,netcache-sosp17,dang2016paxos}.
 Following this trend, we propose \sys to achieve efficient and scalable \textit{total order message scattering} by leveraging a programmable data center network.
-
+In \sys, sender end hosts send messages to receiver end hosts. A timestamp is attached to each message being sent. The timestamps satisfy two requirements. First, for any particular host they are non-decremental, meaning that 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys attaches a timestamp to each message at the sender side, forwards them as usual in the network, and buffers them at the receiver side.
 The switch aggregates timestamp information of all messages to derive the \textit{barrier} for each receiver.
