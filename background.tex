@@ -164,7 +164,7 @@ Otherwise, the retransmitted packet may violate timestamp ordering on the networ
 UDP/IP or unreliable datagram in RDMA satisfies this requirement.
 
 \textbf{FIFO on a Network Switch.}
-If packets $P_1, P_2$ arrive in order to an input link of switch $S$, and they are routed to the same output link, then their egress ordering should also be $P_1, P_2$.
+If packets $P_1, P_2$ arrive in order to an input link of switch $S$, and they are routed to the same output link, then their output ordering should also be $P_1, P_2$.
 In practice, packets from the same application typically have the same priority, so packet ordering is preserved after passing through a single switch.
 
 \textbf{Loop-Free Routing.}
