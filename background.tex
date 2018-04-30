@@ -103,10 +103,10 @@ The switch operating system~\cite{arista-eos} software running on the CPU contro
 The switching chip can forward selected traffic (typically control plane packets, such as DHCP and BGP) to CPU via a virtual NIC.
 
 The switching chip is composed of an \textit{ingress} pipeline, multiple FIFO queues and an \textit{egress} pipeline.
-When a packet is received from an ingress link, it first goes through the ingress pipeline to determine the egress link and queueing priority, then get buffered into the corresponding FIFO queue.
-The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to egress links.
+When a packet is received from an input link, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
+The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to output links.
 This queueing model ensures FIFO property for packets with the same priority.
-In addition, packet corruption on ingress links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
+In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
 The data center switch can provide good programmability.
 First, the CPU can be used to co-process (a small amount of) data plane packets with high flexibility~\cite{lu2011serverswitch}.
@@ -128,7 +128,7 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 
 %Logically, the switching chip is composed of an \textit{ingress} pipeline, multiple queues and an \textit{egress} pipeline.
 %Both ingress and egress pipelines are a chain of match-action tables. Each table can accomodate a number of rules. Each rule matches a set of packet header fields and internal states, and applies a limited repertoire of actions corresponding to common processing behaviors.
-%When a packet is received from an ingress link, it first goes through the ingress pipeline (including tunnel decapsulation, routing, ACL rules and others) to determine the egress port and queueing priority, then get buffered into the tail of the queue of corresponding priority. The egress pipeline pulls packets from the head of each queue according to scheduling disciplines, applies header modifications and sends them to the egress links. This queueing model ensures FIFO property for packets with same priority.
+%When a packet is received from an input link, it first goes through the ingress pipeline (including tunnel decapsulation, routing, ACL rules and others) to determine the output link and queueing priority, then get buffered into the tail of the queue of corresponding priority. The egress pipeline pulls packets from the head of each queue according to scheduling disciplines, applies header modifications and sends them to the output links. This queueing model ensures FIFO property for packets with same priority.
 
 %One limitation of most widely-deployed switching chips is the limited programmability of internal states that are persistent across packets. The Barefoot Tofino switching chip~\cite{tofino} using RMT architecture~\cite{bosshart2013forwarding} supports \textit{stateful per-packet processing} and has high programmability with P4~\cite{bosshart2014p4} language.
 %However, the number of persistent states supported by each switch is only sufficient to have several per-port registers, but not enough to maintain per-packet states. 
@@ -142,7 +142,7 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 
 %\textit{Increase knowledge and control in network transmission.}
 %In modern datacenters, there are multiple paths from a sender to a receiver for load balancing and fault tolerance. 
-%Software-defined networking (SDN) enables visibility to routing table changes from BGP or administrators. In our scenario, in order to know the set of all possible ingress ports per egress port, \sys software on the affected switches need to be notified prior to route change.
+%Software-defined networking (SDN) enables visibility to routing table changes from BGP or administrators. In our scenario, in order to know the set of all possible input links per output link, \sys software on the affected switches need to be notified prior to route change.
 
 %\textit{Offload computation on end hosts to reduce network traffic and latency.}
 %\textit{Multicast} is an in-network computation to reduce duplication of messages on sender side.
@@ -164,11 +164,11 @@ Otherwise, the retransmitted packet may violate timestamp ordering on the networ
 UDP/IP or unreliable datagram in RDMA satisfies this requirement.
 
 \textbf{FIFO on a Network Switch.}
-If packets $P_1, P_2$ arrive in order to an ingress port of switch $S$, and they are routed to the same egress port, then their egress ordering should also be $P_1, P_2$.
+If packets $P_1, P_2$ arrive in order to an input link of switch $S$, and they are routed to the same output link, then their egress ordering should also be $P_1, P_2$.
 In practice, packets from the same application typically have the same priority, so packet ordering is preserved after passing through a single switch.
 
 \textbf{Loop-Free Routing.}
-%Formally, for a switch $S$, its egress ports $E$ and ingress ports $I$, if there is a possible route from an ingress port $i \in I$ to an egress port $e \in E$, then add $i$ to the \textit{ingress set} of $e$.
+%Formally, for a switch $S$, its output links $E$ and input links $I$, if there is a possible route from an input link $i \in I$ to an output link $e \in E$, then add $i$ to the \textit{ingress set} of $e$.
 Formally, for $n$ distinct switches $S_1, \ldots, S_n$, if there are $n$ links $L_1, \ldots, L_n$ directly connecting $S_1 \rightarrow S_2, \ldots, S_{n-1} \rightarrow S_n, S_n \rightarrow S_1$, and $n$ possible routes (need not be distinct) passing through $L_1 \rightarrow L_2, \ldots, L_{n-1} \rightarrow L_n, L_n \rightarrow L_1$ respectively, then we call it a \textit{routing loop}.
 Loop-free is a liveness requirement.
 A routing loop stalls the update of timestamp barriers, but does not violate correctness.

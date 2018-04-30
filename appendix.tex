@@ -19,13 +19,13 @@ Let's rewrite the property and formula:
 	Take any network link $L$, if a packet with barrier timestamp $B$ is on the $L$, then for any following packet carrying (barrier or data) timestamp $T$, there must be $B \le T$.
 \end{property}
 \begin{theorem}
-	If we derive barriers following (\ref{equ:derive_barriers}), then the barrier timestamp $B$ determined for egress port $E$ still has the above property as long as the barrier from every ingress port does.
+	If we derive barriers following (\ref{equ:derive_barriers}), then the barrier timestamp $B$ determined for output link $E$ still has the above property as long as the barrier from every input link does.
 \end{theorem}
 \begin{proof}
 	We reuse notation $\mathcal{I}_E$ and $R_i$ defined in (\ref{equ:derive_barriers}).
-	After barrier timestamp $B$ is sent through egress port $E$, all following packets are either data packets from a certain ingress port or barrier packets determined in the future.
+	After barrier timestamp $B$ is sent through output link $E$, all following packets are either data packets from a certain input link or barrier packets determined in the future.
 
-	For a following data packet carrying timestamp $T$, let's assume it comes from ingress link $I \in \mathcal{I}$.
+	For a following data packet carrying timestamp $T$, let's assume it comes from input link $I \in \mathcal{I}$.
 	Because all received barrier timestamps from $I$ have the Property~\ref{prop:barrier}, we have $B \le R_I \le T$.
 
 	For a following barrier timestamp $T$, let's assume it is determined by newer register value $R'_I$.

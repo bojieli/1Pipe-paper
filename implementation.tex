@@ -28,7 +28,7 @@ In the following, we implement in-network processing in three types of network s
 \label{sec:p4}
 
 A data-plane programmable switch is able to maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$.
-\sys needs 8 state registers per ingress port and 5 state registers per egress port.
+\sys needs 8 state registers per input link and 5 state registers per output link.
 Each data packet carry three timestamps: message timestamp, unreliable barrier and commit barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
 A timestamp is a 6-byte integer, indicating the number of nanoseconds passed on the host.
 Since the timestamps wrap around in 7.8 hours, we use PAWS~\cite{jacobson1992tcp} to compare timestamps: If $s$ and $t$ are timestamps, $s < t$ if and only if $0 < t - s < 2^{47}$, computed in 48-bit unsigned arithmetic.
@@ -44,7 +44,7 @@ Compared to server CPUs and NICs, the switch CPUs are typically less powerful (\
 Because the CPU is not capable of processing every data packet, we follow the principle of separating control from data.
 The control consists of beacon packets carrying timestamp information.
 As shown in Figure~\ref{fig:commodity}, data packets are forwarded by the switch as if there were no \sys service, and stored in reorder buffer on end-host receivers.
-The CPU sends beacons periodically on each egress link, regardless of whether the link is idle or busy.
+The CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved.
 On receiver hosts, buffered data packets are delivered to the application according to barriers in beacon packets.
 
