@@ -428,7 +428,7 @@ In this section, we discuss how to maintain the ordering and atomicity of messag
 
 In data centers, network links experience one packet loss or corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
 In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
-\sys detects packet loss and corruption on last-hop links and ingress queues using packet loss counter in commodity NICs and switches.
+\sys detects packet loss and corruption on last-hop links and queues using packet loss counter in commodity NICs and switches.
 Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
 Since retransmitted packets may violate the barrier property, we add a special mark to them.
 
@@ -460,7 +460,7 @@ At this time, messages below commit barrier are received and messages above that
     \qquad Last loss counter $LC_i, i \in \mathcal{I}$\;
     \qquad Current loss counter, fetched via $C(i), i \in \mathcal{I}$\;
  \textbf{Event processing:}\\
- \If{\textnormal{Receive beacon packet from ingress $i$}}{
+ \If{\textnormal{Receive beacon from input link $i$}}{
  	$RLE_i \leftarrow$ loss encounter flag in the packet\;
     $UB_i \leftarrow$ unreliable barrier in the packet\;
     $CB_i \leftarrow$ commit barrier in the packet\;
@@ -473,7 +473,7 @@ At this time, messages below commit barrier are received and messages above that
     	$LE_i \leftarrow \textnormal{False}$\;
     }
  }
- \ElseIf{\textnormal{Send beacon packet to output $o$}}{
+ \ElseIf{\textnormal{Send beacon to output link $o$}}{
     Unreliable barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
     Commit barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
     Loss encountered flag $\leftarrow \exists i \in \mathcal{I} \wedge (i \rightarrow o) \wedge (LE_i \vee RLE_i)$\;
