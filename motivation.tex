@@ -31,9 +31,9 @@
 
 
 Message scattering is a common communication pattern in distributed systems, where one end-host sender scatters a group of messages to one or more end-host receivers.
-First, packet losses can occur due to congestion, packet corruption and network switch or link failure.
-Packet losses and host failures may violate atomicity of message scattering.
-Together with different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place, as shown in Figure~\ref{fig:ordering}.
+%First, packet losses can occur due to congestion, packet corruption and network switch or link failure.
+%Packet losses and host failures may violate atomicity of message scattering.
+With different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place, as shown in Figure~\ref{fig:ordering}.
 
 \parab{Write after write (WAW)}.
 Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a write operation.
@@ -44,10 +44,10 @@ When $B$ receives the notification, it issues read command to $O$, but may not g
 %Asynchronously\textcolor{red}{In the meanwhile?}, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
 
 \parab{Independent read, independent write (IRIW)}.
-$A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
+$A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. %Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
 
 \parab{Independent multi-write (IMW)}.
-$A$ scatters writes to both $O_1$ and $O_2$. Asynchronously, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different. For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
+$A$ scatters writes to both $O_1$ and $O_2$. Concurrently, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different, causing inconsistency. % For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
 %$S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request.
 %The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
 
@@ -86,36 +86,37 @@ Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs t
 
 %It is worth noting that \sys ensures ordering instead of consensus. When some hosts experience failure, \sys does not ensure a quorum of hosts agree on its received messages. NOPaxos~\cite{li2016just} has shown that \sys leads to an efficient implementation of distributed consensus.
 
-\subsection{Total Order Message Scattering}
+%\subsection{Reliable Ordered Message Scattering}
 
-We propose total order message scattering (TOMS), which ensures a group of messages to be scattered atomically in total order.
-A \textit{message scattering} $S$ is a group of $n$ (potentially different) messages $M_1^s, \ldots, M_n^s$ sent from a sender host $H^s$ to $n$ receiving hosts $R_1^s, \ldots, R_n^s$ respectively. A host in the system may send message scatterings to any group of hosts.
-Each host can be both sender and receiver, but we split each host to a sender and a receiver for clarity.
-TOMS offers the following properties:~\cite{kshemkalyani2011distributed}
+%We propose reliable ordered message scattering (\sys), which ensures a group of messages to be scattered atomically and obey causality and total order.
+%A \textit{message scattering} $S$ is a group of $n$ (potentially different) messages $M_1^s, \ldots, M_n^s$ sent from a sender host $H^s$ to $n$ receiving hosts $R_1^s, \ldots, R_n^s$ respectively. A host in the system may send message scatterings to any group of hosts.
+%Each host can be both sender and receiver, but we split each host to a sender and a receiver for clarity.
+%\sys offers the following properties:~\cite{kshemkalyani2011distributed}
 
-\parab{Validity.} If the sender $H^s$ and all receivers $R_i^s$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i^s$ is eventually delivered to $R_i$. No message is delivered more than once.
+%\parab{Validity.} If the sender $H^s$ and all receivers $R_i^s$ of a message scattering $S$ have no failure, and the network has no permanent failure, each message $M_i^s$ is eventually delivered to $R_i$. No message is delivered more than once.
 
-\parab{Atomicity.} The set of messages $M_i^s$ in a message scattering $S$ are either all got delivered or none got delivered.
+%\parab{Atomicity.} The set of messages $M_i^s$ in a message scattering $S$ are either all got delivered or none got delivered.
 
-\parab{Total Order.}The message scatterings are total ordered. For any pair of message scatterings $S_1$ and $S_2$, if a message in $S_1$ is delivered before $S_2$ to a reciver, then message in $S_1$ are delivered before $S_2$ to any other reciver that receives messages from both scatterings. 
+%\parab{Total Order.}The message scatterings are total ordered. For any pair of message scatterings $S_1$ and $S_2$, if a message in $S_1$ is delivered before $S_2$ to a receiver, then message in $S_1$ are delivered before $S_2$ to any other receiver that receives messages from both scatterings. 
 
-\parab{FIFO Order.}For each pair of message scatterings $S_i$ and $S_j$ with a same sender, $S_i$ is sent before $S_j$ if and only if $S_i$ is ordered before $S_j$.
+%\parab{FIFO.}For each pair of message scatterings $S_1$ and $S_2$ with a same sender $H$ and share a same receiver $R$, $S_1$ is delivered before $S_2$ at $R$ if and only if $S_1$ is sent before $S_2$ by $H$.
 
-\parab{Causality.}The total order of message scatterings preserves causality. For each pair of message scatterings $S_i$ and $S_j$, if the sender of $S_j$ is one receiver of $S_i$, and $S_j$ is sent after receiving $M_i \in S_i$, then $S_i$ is ordered before $S_j$.
+%\parab{Causality.}The total order of message scatterings preserves causality. For a pair of scatterings $S_1$ and $S_2$, if the sender of $S_1$ is a receiver of $S_2$, and $S_2$ is sent after receiving $M \in S_1$, then $S_1$ is ordered before $S_2$.
 
-\sys can remove all three hazards in Sec.\ref{subsec:tso}.
+%\sys can remove all three hazards in Sec.\ref{subsec:tso}.
+\sys can remove all three hazards discussed above.  \sys ensures a group of messages to be scattered atomically and obeys causality and total order.
 In WAW hazard, the three messages $A \rightarrow O$, $A \rightarrow B$ and $B \rightarrow O$ are three message scatterings.
 By FIFO order, $A \rightarrow O$ is ordered before $A \rightarrow B$. By causality, $A \rightarrow B$ is ordered before $B \rightarrow O$.
-Consequently, $A \rightarrow O$ is before $B \rightarrow O$ in the total order.
-By total order property, the write operation is delivered before the read operation, thus avoiding WAW hazard.
+Consequently, $A \rightarrow O$ is before $B \rightarrow O$.
+Therefore, the write operation is delivered before the read operation, thus avoiding WAW hazard.
 
 In IRIW and IMW hazards, messages $A \rightarrow O_1$ and $A \rightarrow O_2$ belong to a same scattering $S_1$, and $B \rightarrow O_1$ and $B \rightarrow O_2$ belong to another scattering $S_2$.
 By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarrow O_1$ if and only if $O_2$ delivers $A \rightarrow O_2$ before $B \rightarrow O_2$.
 Together with atomicity, \sys ensures consistency between metadata and data (in IRIW hazard) and consistent history among replicas (in IMW hazard).
 
-We implement the total order of message scatterings using explicit timestamps.
-Each sender assigns a monotonically increasing timestamp to each message scattering.
-Each receiver delivers messages according to timestamp order (break ties by sender ID).
+%We implement the total order of message scatterings using explicit timestamps.
+%Each sender assigns a monotonically increasing timestamp to each message scattering.
+%Each receiver delivers messages according to timestamp order (break ties by sender ID).
 
 \subsection{Use Cases}
 \label{subsec:application-scenarios}
@@ -125,20 +126,9 @@ By avoiding IRIW hazard, one-shot distributed transactions can complete in one r
 By avoiding IMW hazard, log replication can be both scalable and serializable, which is a building block for both strongly and eventually consistent replicated systems.
 By avoiding WAW hazard, \sys improves consistency in distributed shared memory.
 
-\subsubsection{Distributed Transactions}
+\subsubsection{Distributed One Shot Transactions}
 \label{subsec:transactional-kvs}
-
-Concurrency control mechanisms of distributed transactions typically fall in two categories~\cite{bernstein1981concurrency}.
-One category uses \textit{locks} to protect accesses to shared resources.
-In this way, the transaction throughput is bounded by the RTT between clients and storage sites.
-The other category is \textit{timestamp ordering}, which assigns a \textit{timestamp} to each transaction, and transactions are serialized according to timestamp order~\cite{kung1981optimistic,bernstein1983multiversion}.
-Due to variable network delay and multiple paths in the network, sites may receive transactions out-of-order.
-Out-of-order transactions are aborted and retried with a higher timestamp.
-The abort rate increases with the number of concurrent conflicting transactions, and the effective throughput does not scale~\cite{yu2014staring}.
-In addition, timestamp assignment often requires a centralized sequencer, which limits scalability~\cite{yu2014staring}.
-
-We follow the timestamp ordering approach.
-First, we consider one-shot transactions~\cite{kallman2008h} or single round-trip transactions, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
+We consider one-shot transactions~\cite{kallman2008h} or single round-trip transactions, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
 For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are one-shot transactions.
 In \sys, we implement each transaction as a message scattering to multiple sites.
 Transaction initiator uses the scattering timestamp as the transaction timestamp.
@@ -147,11 +137,30 @@ Transactions would not abort due to out-of-order operations.
 Because \sys assigns timestamps on senders, there is also no sequencer bottleneck.
 In this way, one-shot transactions can complete in a single network RTT (if not counting replication and logging).
 
-Second, we consider general transactions in which the read set and write set is known at the beginning of transaction.
-In \sys, each transaction scatters its read and write sets to the involved sites when transaction begins.
-Each site builds a dependency graph of read and write operations, and executes transactions according to it.
-During transaction execution, messages do not need to go through \sys.
-Because each site receives read and write sets in transaction timestamp order, writes would not be reordered with previous reads during transaction execution, thus eliminating transaction aborts caused by write conflicts.
+%Concurrency control mechanisms of distributed transactions typically fall in two categories~\cite{bernstein1981concurrency}.
+%One category uses \textit{locks} to protect accesses to shared resources.
+%In this way, the transaction throughput is bounded by the RTT between clients and storage sites.
+%The other category is \textit{timestamp ordering}, which assigns a \textit{timestamp} to each transaction, and transactions are serialized according to timestamp order~\cite{kung1981optimistic,bernstein1983multiversion}.
+%Due to variable network delay and multiple paths in the network, sites may receive transactions out-of-order.
+%Out-of-order transactions are aborted and retried with a higher timestamp.
+%The abort rate increases with the number of concurrent conflicting transactions, and the effective throughput does not scale~\cite{yu2014staring}.
+%In addition, timestamp assignment often requires a centralized sequencer, which limits scalability~\cite{yu2014staring}.
+
+%We follow the timestamp ordering approach.
+%First, we consider one-shot transactions~\cite{kallman2008h} or single round-trip transactions, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
+%For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are one-shot transactions.
+%In \sys, we implement each transaction as a message scattering to multiple sites.
+%Transaction initiator uses the scattering timestamp as the transaction timestamp.
+%\sys guarantees atomicity and isolation, thus solving the concurrency control problem.
+%Transactions would not abort due to out-of-order operations.
+%Because \sys assigns timestamps on senders, there is also no sequencer bottleneck.
+%In this way, one-shot transactions can complete in a single network RTT (if not counting replication and logging).
+%
+%Second, we consider general transactions in which the read set and write set is known at the beginning of transaction.
+%In \sys, each transaction scatters its read and write sets to the involved sites when transaction begins.
+%Each site builds a dependency graph of read and write operations, and executes transactions according to it.
+%During transaction execution, messages do not need to go through \sys.
+%Because each site receives read and write sets in transaction timestamp order, writes would not be reordered with previous reads during transaction execution, thus eliminating transaction aborts caused by write conflicts.
 
 
 \iffalse
@@ -213,14 +222,14 @@ We implement an one-shot transaction as a total-order message scattering, which 
 \subsubsection{Serializable Log Replication}
 \label{subsec:log-replication}
 
-Another ubiquitous application of \sys is \textit{serializable log replication}~\cite{birman1985replication,petersen1997flexible,belaramani2006practi}.
+A canonical application of \sys is \textit{serializable log replication}~\cite{birman1985replication,petersen1997flexible,belaramani2006practi}.
 Distributed databases are replicated for reliability and performance.
 When multiple replicas process write operations in parallel, the consistency among replicas is a paramount challenge.
-The PACELC theorem~\cite{abadi2012consistency} suggests that even when a system has no failure and network partition, one has to choose between latency (L) and consistency (C).
-On one end of the spectrum are strongly consistent systems~\cite{kallman2008h,li2012making,corbett2013spanner}, where each replica processes read operations locally and waits an RTT for write operations to propagate to all replicas.
-Low latency data center networks enable an increasing number of intra-datacenter databases embrace strong consistency.
-On the other end of spectrum are eventually consistent systems~\cite{terry1995managing,lloyd2011don,lloyd2013stronger}, where both read and write operations are processed locally, and conflicting write operations are merged in a deterministic way.
-Due to high latency among data centers, many geographically replicated databases choose eventual consistency.
+%The PACELC theorem~\cite{abadi2012consistency} suggests that even when a system has no failure and network partition, one has to choose between latency (L) and consistency (C).
+%On one end of the spectrum are strongly consistent systems~\cite{kallman2008h,li2012making,corbett2013spanner}, where each replica processes read operations locally and waits an RTT for write operations to propagate to all replicas.
+%Low latency data center networks enable an increasing number of intra-datacenter databases embrace strong consistency.
+%On the other end of spectrum are eventually consistent systems~\cite{terry1995managing,lloyd2011don,lloyd2013stronger}, where both read and write operations are processed locally, and conflicting write operations are merged in a deterministic way.
+%Due to high latency among data centers, many geographically replicated databases choose eventual consistency.
 
 %Due to scalability concerns of log serialization~\cite{anna}, there has been extensive work to track dependency and ensure convergent conflict resolution at application level~\cite{lloyd2011don,lloyd2013stronger}.
 %First, most of these approaches do not ensure all 
@@ -269,13 +278,13 @@ In Sec.\ref{subsec:transactional-kvs}, we introduce a novel message scattering p
 \subsection{Existing Approaches}
 \label{subsec:existing-approaches}
 
-There has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
+There has been extensive research in ordered communication, mostly providing a multicast or broadcast primitive.
 Efficiency and scalability is considered a fundamental trade-off for total order multicast~\cite{defago2004total}.
 For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable}, use Lamport timestamps~\cite{lamport1978time} or run a consensus protocol among receivers~\cite{lamport1998part}.
 
-Critics of total order communication blame the lack of atomicity and limited scalability and efficiency~\cite{cheriton1994understanding}.
-\sys provides atomicity by proposing a message scattering primitive. \sys also achieves scalability with in-network computation and incurs little overhead.
+Critics and proponents of causal and totally ordered communication have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding}~\cite{}. 
+\sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the most serious criticism of this primitive.
 
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
 Mostly-Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
