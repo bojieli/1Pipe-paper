@@ -47,9 +47,9 @@ In this section, we assume that the network is reliable. There is no host, link 
 \vspace{-0.9em}
 \end{figure}
 
-\parab{In-order processing based on message timestamp.}\sys assigns the explicit timestamp for each message. When a sender scatters a group of messages, it assigns an identical timestamp for all the messages. Each sender assigns monotonically increasing message timestamps, \textit{e.g.}, synchronized physical time, to different scatterings. Message timestamp determines the processing order at receiver. If all the receivers process arrival meesages in ascending order of message timestamps, we can achieve total order message scattering.        
+\parab{In-order processing based on message timestamp.}\sys assigns the explicit timestamp for each message. When a sender scatters a group of messages, it assigns an identical timestamp for all the messages. Each sender assigns monotonically increasing message timestamps, \textit{e.g.}, synchronized physical time, to different scatterings. Message timestamp determines the processing order at receiver. To achive reliable order message scattering, all the receivers should process arrival meesages in ascending order of message timestamps.
 
-\parab{Barrier timestamp.}However, it is challenging to proceess messages as described above. When a receiver wants to process a message with the timestamp $t$, it must guaranteee that it has received all the messages whose message timestamps are smaller than $t$. To this end, we introduce \emph{barrier timestamp, which is the minimum message timestamp of all future arrival messages}. Each receiver can maintain its own barrier timestamp and process the messages whose timestamps are smaller than the barrier timestamp value.
+\parab{Barrier timestamp.}However, it is challenging to proceess messages as described above. When a receiver wants to process a message with the timestamp $t$, it must guaranteee that it has received all the messages whose message timestamps are smaller than $t$. To this end, we introduce \emph{barrier timestamp, which is the lower bound of message timestamps of all future arrival messages}. Each receiver can maintain its own barrier timestamp and process the messages whose timestamps are smaller than the barrier timestamp value.
 
 We use a simple example to show how to derive the barrier timestamp. In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. The message timestamp is $T_R$. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. The message timestamp is $T_W$. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic message timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) derives a barrier timestamp $\min(T_R, T_W)$ and it can process all messages with timestamp $T \le \min(T_R, T_W)$.
 
@@ -59,7 +59,7 @@ We use a simple example to show how to derive the barrier timestamp. In Figure~\
 
 %In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
 
-\parab{Hierahical aggregation of barrier timestamp.}As shown above, barrier timestamp can be derived with all-to-all communication. However, this approach does not scale well in production data centers. Hence, \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information. Given the limited switch buffer resource, \sys does not reorder messages in the network. Instead, \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
+\parab{Hierahical aggregation of barrier timestamp.}As shown above, barrier timestamp can be derived with all-to-all communication. However, this approach does not scale well in production data centers. To this end, \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information, thus forming the "control plane". Given the limited switch buffer resource, \sys does not reorder messages in the network. Instead, on the "data plane", \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
 
 In \sys, we attach two timestamp fields to each message packet. The first one is \textit{message timestamp} field, which is set by the sender and will not be modified. The second one is \textit{barrier timestamp} field, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp field is:
 
@@ -111,22 +111,17 @@ To avoid idle links, we send \textit{beacons} periodically on every link.
 
 \parab{What is beacon?}Unlike the message packet, the beacon packet only carries the barrier timestamp field and has no payload data, thus minimizing network overhead. 
 
-\parab{How to send beacons?}
-A simple approach is to let all the senders to send beacons to all the receivers.
-This approach has two limitations.
-First, it causes high bandwidth overhead as a link may be covered by multiple beacons.
-Second, it cannot guarantee to cover every link.
+\parab{How to send beacons?}A simple approach is to let all the senders to send beacons to all the receivers. This approach has two limitations. First, it causes high bandwidth overhead as a link may be covered by multiple beacons. Second, it cannot guarantee to cover every link.
 
-To this end, we send beacon packets in a per-{idle-link style.
+To this end, we send beacon packets in a per-idle-link style.
 The beacon packet can be sent by both the host and the switch.
-But the destination must be its one-hop neighbors.
-For the beacon generated by the host, the barrier timestamp field is initialized in the same way as the regular message packet.
-For the beacon generated by the switch, the barrier timestamp field is initialized according to Equation \ref{equ:derive_barriers} and \ref{equ:derive_barriers1}.
+But the destination must be its one-hop neighbors. For the beacon generated by the host, the barrier timestamp field is initialized in the same way as the regular message packet. For the beacon generated by the switch, the barrier timestamp field is initialized according to Equation \ref{equ:derive_barriers} and \ref{equ:derive_barriers1}.
 
 \parab{When to send beacons?}
-We introduce a beacon interval $T_{beacon}$.
-When a host or a switch output link does not observe any message packet for $T_{beacon}$ time, it generates a beacon packet.
-The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay. The reordering delay may increase by at most $T_{beacon}$ because the receiver of an idle link can only increase its barrier timestamp every time it receives a beacon.
+We introduce a beacon interval $T_{beacon}$. When a host or a switch output link does not observe any message packet for $T_{beacon}$ time, it generates a beacon packet. We should choose a suitable $T_{beacon}$ to balance the trade off between overhead and reordering delay.  
+
+%The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.
+%The reordering delay may increase by at most $T_{beacon}$ because the receiver of an idle link can only increase its barrier timestamp every time it receives a beacon.
 
 %There are two ways: (1) let the sender send a signal packet to shutdown the link temporarily; (2) ensure the link is always busy by sending periodic \textit{beacons}.
 
@@ -208,16 +203,9 @@ This is a trade-off between beacon overhead and system rejoin latency.
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
 
 \parab{Physical time does not work well.}
-The next challenge is how to assign message timestamps.
-Given recent efforts on accurate clock syncrhonization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward approach is using \emph{physical} time.
-When a host scatters a group of messages, it gets current physical time and uses this to initialize message timestamp and barrier timestamp fields of all packets in this scattering.
+The next challenge is how to assign message timestamps. Given recent efforts on accurate clock syncrhonization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward approach is using \emph{physical} time. When a host scatters a group of messages, it gets current physical time and uses this to initialize message timestamp and barrier timestamp fields of all packets in this scattering.
 
-However, this approach does not consider the delay variance of different network paths.
-Delay variance is caused by different processing delays in OS kernel, different queueing delays at the switch and different number of hops.
-The delay variance causes straggler problem.
-For example, two messages are transmitted from two senders to the same receiver at the same physical time.
-However, they arrive at different times due to different network delays.
-As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
+However, this approach does not consider the delay variance of different network paths. Delay variance is caused by different processing delays in OS kernel, different queueing delays at the switch and different number of hops. The delay variance causes straggler problem. For example, two messages are transmitted from two senders to the same receiver at the same physical time. However, they arrive at different times due to different network delays. As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
 %The next challenge is how to assign timestamps to messages.
 %Clock synchronization in data centers becomes increasingly accurate leveraging NIC timestamps~\cite{correll2005design}, GPS~\cite{corbett2013spanner}, PHY~\cite{lee2016globally} and network effects~\cite{geng2018exploiting}.

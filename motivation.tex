@@ -283,7 +283,7 @@ Efficiency and scalability is considered a fundamental trade-off for total order
 For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable}, use Lamport timestamps~\cite{lamport1978time} or run a consensus protocol among receivers~\cite{lamport1998part}.
 
-Critics and proponents of causal and totally ordered communication have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding}~\cite{}. 
+Critics and proponents of causal and totally ordered communication have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
 \sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the most serious criticism of this primitive.
 
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
