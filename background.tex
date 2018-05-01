@@ -45,8 +45,8 @@
 \vspace{-1.5em}
 \end{figure}
 
-Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of end hosts.
-Shortest-path routing between two hosts in a multi-rooted tree first goes up layers of switches to one of their common ancestors, then goes down layers of switches.
+Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. In a multi-rooted tree topology, the shortest path between two hosts first goes up to one of the lowest common ancestor switches, then goes down to the destination.
+%Shortest-path between two hosts in a multi-rooted tree first goes up layers of switches to one of their lowest common ancestors, then goes down layers of switches.
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
 This loop-free topology enables hierarchical aggregation of barrier timestamps, as discussed in \ref{sec:ideal}.
 
@@ -57,24 +57,17 @@ This loop-free topology enables hierarchical aggregation of barrier timestamps, 
 
 \subsection{Programmable Switches}
 \label{sec:programmable-switches}
-
-
-A typical data center switch consists of a switching chip~\cite{broadcom} and a CPU (Figure~\ref{fig:switch}).
-The switch operating system~\cite{arista-eos} software running on the CPU controls the switching chip (\textit{e.g.} configure chip register values).
-The switching chip can forward selected traffic (typically control plane packets, such as DHCP and BGP) to CPU via a virtual NIC.
+The switch consists of a switching chip~\cite{broadcom,tofino} and a CPU (Figure~\ref{fig:switch}). The switch operating system~\cite{arista-eos} runs on the CPU to control the switching chip (\textit{e.g.} configure chip registers). The switching chip forwards selected traffic (typically control plane traffic, \textit{e.g.}, DHCP and BGP) to the CPU for processing via a virtual NIC. 
 
 The switching chip is composed of an ingress pipeline, multiple FIFO queues and an egress pipeline.
 When a packet is received from an \textit{input link}, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
 The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to \textit{output links}.
-This queueing model ensures FIFO property for packets with the same priority.
-In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
+This queueing model ensures FIFO property for packets with the same priority. In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
-The data center switch can provide good programmability.
-First, the CPU can be used to co-process (a small amount of) data plane packets with high flexibility~\cite{lu2011serverswitch}.
-Second, the switching chip is becoming more and more programmable in recent years.
-For example, Tofino chip from Barefoot networks~\cite{tofino} 
+The data center switch can provide good programmability. First, the CPU can be used to co-process (a small amount of) data plane packets with high flexibility~\cite{lu2011serverswitch}.
+Second, the switching chip is becoming more and more reconfigurable in recent years. For example, Tofino chip from Barefoot networks~\cite{tofino} 
 %uses RMT architecture~\cite{bosshart2013forwarding} with 
-has flexible packet parsers and reconfigurable match action table pipelines that can be programmed using P4~\cite{bosshart2014p4} to achieve \textit{flexible per-packet processing}.
+supports flexible packet parsers, reconfigurable pipelines of match action tables and some stateful memory (\textit{e.g.}, counters and registers). Users can program Tofino using P4~\cite{bosshart2014p4} to achieve \textit{flexible per-packet processing}.
 
 Despite good programmability, the data center switch typically has limited buffer resource.
 The average per-port on-chip buffer is typically hundreds of kilobytes~\cite{bai2017congestion} in size.
