@@ -206,7 +206,7 @@ This is a trade-off between beacon overhead and system rejoin latency.
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
 
 \parab{Timestamp Assignment.}
-An immediate question is how to assign message timestamps. Given recent efforts on accurate clock synchronization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward solution is to use \emph{physical} time. When a host scatters a group of messages, it use current physical time to initialize message timestamp and barrier timestamp fields of all packets.
+An immediate question is how to assign message timestamps. Given recent efforts on accurate clock synchronization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward solution is to use \emph{physical} time. When a host scatters a group of messages, it uses current physical time to initialize message timestamp and barrier timestamp fields of all packets.
 
 However, this approach does not take into account the delay variance of different network paths. Delay variance is caused by the variance of processing delays in OS kernel, queuing delays at the switch and different number of network hops. The delay variance causes straggler problem. Consider two independent messages being sent from two senders to the same receiver at the same physical time. They might arrive at different times due to different network delays. As a result, the earlier message must wait for the later one to be processed together, which increases reordering delay.
 
