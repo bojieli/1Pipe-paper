@@ -84,7 +84,10 @@ First, the \textit{reordering delay}, which is the time interval beween message 
 \vspace{-1.5em}
 \end{figure}
 
-Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. Shortest-path routing between two hosts in a multi-rooted tree first goes up layers of switches to one of their lowest common ancestors, then goes down layers of switches.
+Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. In a multi-rooted tree topology, the shortest path between two hosts first goes up to one of their lowest common ancestor switch, then goes down  
+
+%Shortest-path between two hosts in a multi-rooted tree first goes up layers of switches to one of their lowest common ancestors, then goes down layers of switches.
+
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
 This loop-free topology enables hierarchical aggregation of barrier timestamps, as discussed in \ref{sec:ideal}.
 
