@@ -1,17 +1,18 @@
 \section{Implementation}
 \label{sec:impl}
 
-At the end host, \sys requires a reliable transport. %The transport can be built over any at-most-once packet transmission interfaces, \textit{e.g.}, UDP, UNIX raw socket, RDMA unreliable datagram~\cite{infinibandrocev2} or netmap~\cite{rizzo2012netmap}.
-We implement the transport on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
+%At the end host, \sys requires a reliable transport. The transport can be built over any at-most-once packet transmission interfaces, \textit{e.g.}, UDP, UNIX raw socket, RDMA unreliable datagram~\cite{infinibandrocev2} or netmap~\cite{rizzo2012netmap}. We implement the message transport on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
 
-In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities.
+We implement a reliable transport at the end host to deliver messages. Our implementation is built on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
+
+In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities. 
 
 \begin{figure*}[t]
 \centering
 \subfloat[Reconfigurable swithing chips.\label{fig:p4}]
 {\includegraphics[width=.3\textwidth]{images/p4_implementation.pdf}}
 \hspace{0.04\textwidth}
-\subfloat[CPU on commodity switches.\label{fig:commodity}]
+\subfloat[Switch CPU\label{fig:commodity}]
 {\includegraphics[width=.3\textwidth]{images/commodity_implementation.pdf}}
 \hspace{0.04\textwidth}
 \subfloat[End hosts only.\label{fig:end-host}]
@@ -21,32 +22,27 @@ In the following, we present implementations of in-network processing at three t
 \vspace{-1em}
 \end{figure*}
 
-\subsection{Reconfigurable Switches}
+\subsection{Reconfigurable Switcing Chips}
 \label{sec:p4}
+The reconfigurable switching chip is able to maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, for the switch with a reconfigurable chip, we can implement the in-network processing logics on the chip. 
 
+We choose Barefoot Tofino~\cite{tofino} for the implementation. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carry three timestamp fields: message timestamp, unreliable barrier and commit barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
+A timestamp is a 6-byte integer, indicating the number of nanoseconds passed on the host. Since the timestamps wrap around in 7.8 hours, we use PAWS~\cite{jacobson1992tcp} to compare timestamps: If $s$ and $t$ are timestamps, $s < t$ if and only if $0 < t - s < 2^{47}$, computed in 48-bit unsigned arithmetic. As shown in Figure~\ref{fig:p4}, the beacon packets carry not only the same set of timestamps and flag as data packets, but also information for minimax clock synchronization (Algorithm~\ref{alg:minimax}).
 
-A data-plane programmable switch is able to maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$.
-\sys needs 8 state registers per input link and 5 state registers per output link.
-Each data packet carry three timestamps: message timestamp, unreliable barrier and commit barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
-A timestamp is a 6-byte integer, indicating the number of nanoseconds passed on the host.
-Since the timestamps wrap around in 7.8 hours, we use PAWS~\cite{jacobson1992tcp} to compare timestamps: If $s$ and $t$ are timestamps, $s < t$ if and only if $0 < t - s < 2^{47}$, computed in 48-bit unsigned arithmetic.
-As shown in Figure~\ref{fig:p4}, the beacon packets carry not only the same set of timestamps and flag as data packets, but also information for minimax clock synchronization (Algorithm~\ref{alg:minimax}).
-
-\subsection{CPU on Fixed Function Switches}
+\subsection{Switch CPU}
 \label{sec:commodity}
 
-Data-plane programmable switches are currently not widely available in data centers.
-Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
-Compared to server CPUs and NICs, the switch CPUs are typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
+For the switch, \textit{e.g.,} Arista \RED{model number TBA} without a reconfigurable switching chip, we can implement our in-network processing logics using the switch CPU. 
+%Data-plane programmable switches are currently not widely available in data centers.
+%Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
+Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
 
-Because the CPU is not capable of processing every data packet, we follow the principle of separating control from data.
-The control consists of beacon packets carrying timestamp information.
-As shown in Figure~\ref{fig:commodity}, data packets are forwarded by the switch as if there were no \sys service, and stored in reorder buffer on end-host receivers.
+Because the CPU cannot process every data packet, we follow the principle of separating control from data\RED{plane or packet?}.
+The control consists of beacon packets carrying timestamp information. \RED{How about data plane?}As shown in Figure~\ref{fig:commodity}, data packets are forwarded by the switching chip as if there were no \sys service, and stored in reorder buffer on end-host receivers.
 The CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
-Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved.
-On receiver hosts, buffered data packets are delivered to the application according to barriers in beacon packets.
+Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 
-Compared with reconfigurable switches, this approach slacks the barriers in two aspects.
+Compared with the reconfigurable switching chip, this approach slacks the barriers in two aspects.
 First, the barriers are updated by periodical beacons instead of by every packet.
 Second, the processing delay of beacon packets in switch CPU is longer than the processing delay of data packets by switching chip.
 Consequently, the additional reordering delay is (processing delay $\times$ number of hops + beacon interval).
@@ -54,8 +50,7 @@ Consequently, the additional reordering delay is (processing delay $\times$ numb
 \subsection{Delegate Switch Processing to a Host}
 \label{sec:end-host}
 
-In case the switch vendor does not support programming in switch CPUs, we can still implement \sys by offloading the beacon processing to end hosts.
-The challenge is to maintain the FIFO property.
+In case that the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. The challenge is to maintain the FIFO property.
 Beacons with barrier timestamps on a network link $L$ must pass through $L$.
 To this end, we designate an \textit{end-host representative} for each network switch.
 The location of the representative is arbitrary and does not need to be unique.
