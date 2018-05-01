@@ -439,18 +439,18 @@ Since retransmitted packets may violate the barrier property, we add a special m
 Due to packet loss, the barrier timestamp is no longer sufficient for message delivery because message might get dropped and retransmitted. If messages are immediately delivered when their timestamp is below the barrier, a retransmitted message with lower timestamp may get delivered out of order.
 Our aim is to deliver messages in one-way network delay when no packet loss is encountered, and fall back to two-phase commit (2PC) with three one-way delays when loss occurs.
 
-In \sys, we rename the original barrier to \textit{unreliable barrier} and add a \textit{commit barrier} and a \textit{loss encountered} flag alongside it.
-Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below commit barrier has been delivered.
-Figure~\ref{fig:ack-barrier} shows an example of commit barrier.\RED{Should I rename ACK barrier to commit barrier in Fig.~\ref{fig:ack-barrier}?}
+In \sys, we rename the original barrier to \textit{unreliable barrier} and add a \textit{delivery barrier} and a \textit{loss encountered} flag alongside it.
+Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below delivery barrier has been delivered.
+Figure~\ref{fig:ack-barrier} shows an example of delivery barrier.\RED{Should I rename ACK barrier to delivery barrier in Fig.~\ref{fig:ack-barrier}?}
 When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier.
-Otherwise, it delivers based on commit barrier.
+Otherwise, it delivers based on delivery barrier.
 
-When packet loss is encountered, we use a protocol similar to 2PC to update the commit barrier. 
+When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
 In a traditional 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message.
-Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, the sender send a \textit{commit barriers} update message instead of multicast commit messages. \sys hierarchically aggregate the commit barriers in network so that the receivers know the timestamp lower bound of all delivered messages.
+Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, the sender sends a \textit{delivery barrier} message instead of multicasts commit messages. \sys hierarchically aggregate the delivery barriers in network so that the receivers know the timestamp lower bound of all delivered messages.
 
-When commit barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
-At this time, messages below commit barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
+When delivery barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
+At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
 
 
 
@@ -469,7 +469,7 @@ At this time, messages below commit barrier are received and messages above that
  \If{\textnormal{Receive beacon from input link $i$}}{
  	$RLE_i \leftarrow$ loss encounter flag in the packet\;
     $UB_i \leftarrow$ unreliable barrier in the packet\;
-    $CB_i \leftarrow$ commit barrier in the packet\;
+    $CB_i \leftarrow$ delivery barrier in the packet\;
     \If{$LC_i \neq C(i)$}{
     	$LE_i \leftarrow \textnormal{True}$\;
         $LB_i \leftarrow UB_i$\;
@@ -496,7 +496,7 @@ At this time, messages below commit barrier are received and messages above that
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.45\textwidth]{images/loss_detection.pdf}
-\caption{Loss recovery and commit barriers.}
+\caption{Loss recovery and delivery barriers.}
 \label{fig:ack-barrier}
 \vspace{-0.4em}
 \end{figure}
@@ -519,11 +519,11 @@ Because failures and packet loss can be detected, achieving atomicity is much ea
 First, we deal with host failure.
 When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets.
 A receiver discards messages from the failed node in reordering buffer.
-To ensure message scattering atomicity, a sender checks uncommitted messages and send \textit{recall} messages to other receivers.
+To ensure message scattering atomicity, a sender checks undelivered messages and send \textit{recall} messages to other receivers.
 Upon receiving \textit{recall}, \RED{`it' is ambiguous here, should use receiver explicitly}it discards the message in reordering buffer and responds ACK.
-The sender then discards the uncommitted message when all healthy receivers have recalled.
+The sender then discards the undelivered message when all healthy receivers have recalled.
 We admit that \sys shares a same limitation with standard two-phase commit.
-If a receiver fails after commit message has been sent, \sys cannot recall committed messages from other receivers.
+If a receiver fails after delivery barrier has been sent, \sys cannot recall delivered messages from other receivers.
 
 When a host recovers from failure, it needs to join \sys system as a new host.
 Recovering lost messages during failure requires persistence or replication, which incurs high cost\REDBLU{. So the best choice is to let applications determine, }{ and the best choice should be determined by applications }rather than \sys transport.
