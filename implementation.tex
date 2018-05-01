@@ -10,10 +10,10 @@ In the following, we present implementations of in-network processing at three t
 \begin{figure*}[t]
 \centering
 \subfloat[Reconfigurable swithing chips.\label{fig:p4}]
-{\includegraphics[width=.3\textwidth]{images/p4_implementation.pdf}}
+{\includegraphics[width=.25\textwidth]{images/p4_implementation.pdf}}
 \hspace{0.04\textwidth}
 \subfloat[Switch CPU\label{fig:commodity}]
-{\includegraphics[width=.3\textwidth]{images/commodity_implementation.pdf}}
+{\includegraphics[width=.28\textwidth]{images/commodity_implementation.pdf}}
 \hspace{0.04\textwidth}
 \subfloat[End hosts only.\label{fig:end-host}]
 {\includegraphics[width=.3\textwidth]{images/endhostonly_implementation.pdf}}
@@ -32,13 +32,12 @@ A timestamp is a 6-byte integer, indicating the number of nanoseconds passed on 
 \subsection{Switch CPU}
 \label{sec:commodity}
 
-For the switch, \textit{e.g.,} Arista \RED{model number TBA} without a reconfigurable switching chip, we can implement our in-network processing logics using the switch CPU. 
+For the switch, \textit{e.g.,} Arista DCS-7060CX-32S without a reconfigurable switching chip, we can implement our in-network processing logics using the switch CPU. 
 %Data-plane programmable switches are currently not widely available in data centers.
 %Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
 
-Because the CPU cannot process every data packet, we follow the principle of separating control from data\RED{plane or packet?}.
-The control consists of beacon packets carrying timestamp information. \RED{How about data plane?}As shown in Figure~\ref{fig:commodity}, data packets are forwarded by the switching chip as if there were no \sys service, and stored in reorder buffer on end-host receivers.
+Because the CPU cannot process every data packet, as shown in Figure~\ref{fig:commodity}, data packets are forwarded by the switching chip as if there were no \sys service, and stored in reorder buffer on end-host receivers.
 The CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 

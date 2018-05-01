@@ -52,7 +52,7 @@ Message timestamp determines the processing order at receiver. To achieve ordere
 
 \parab{Barrier timestamp.} When a receiver wants to process a message with the timestamp $t$, it must be sure that it has received and processed all the messages whose timestamps are smaller than $t$. Since messages can be received out of order, this is nontrivial. To this end, we introduce the concept of \emph{barrier timestamp}. A barrier timestamp is associated with either a link or a node (i.e. a switch or an end host) in the routing graph. The barrier timestamp is the lower bound of message timestamps of all future arrival messages from the link, or at the node. Each receiver can maintain its own barrier timestamp and process the messages whose timestamps are smaller than the barrier timestamp.
 
-Due to non-decreasing timestamp assignment, in a FIFO network (such as by using TCP transport), a receiver can easily figure out the barrier if it has received messages from all the senders: the barrier is just the minimum timestamp of the latest messages from each senders. Therefore, a naive solution would be for every sender to send periodic beacons to every receiver so that the receivers can figure out the barrier and process messages. Unfortunately, such a solution requires quadratic beacons.
+Due to non-decreasing timestamp assignment, in a FIFO network (such as by using TCP transport), a receiver can easily figure out the barrier if it has received messages from all senders: the barrier is the minimum timestamp of latest messages from each sender. Therefore, a naive solution would be for every sender to send periodic beacons to every receiver so that the receivers can figure out the barrier and process messages. Unfortunately, such a solution requires quadratic beacons.
 
 %We use a simple example to show how to derive the barrier timestamp. In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. The message timestamp is $T_R$. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. The message timestamp is $T_W$. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic message timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) derives a barrier timestamp $\min(T_R, T_W)$ and it can process all messages with timestamp $T \le \min(T_R, T_W)$.
 
@@ -139,9 +139,6 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
 %$B_{min}$ is set to the estimated maximum path delay variance, while $B_{max}$ is the desired beacon interval.
 %Choosing $B_{max}$ is a trade-off between the network/CPU overhead and reordering delay.
 
-\textcolor{red}{Move to section 5.2}
-When a host stops using \sys, it can notify the switch its exit and stop sending beacons, but it must rejoin (need an RTT, see Sec.\ref{sec:failure}) before sending messages again.
-This is a trade-off between beacon overhead and system rejoin latency.
 
 \iffalse
 %Remove the algorithm because it does not contain much information and takes too much space.
@@ -520,13 +517,13 @@ First, we deal with host failure.
 When a host fails, the nearby switch will detect it via beacon timeout and broadcast the failure in beacon packets.
 A receiver discards messages from the failed node in reordering buffer.
 To ensure message scattering atomicity, a sender checks undelivered messages and send \textit{recall} messages to other receivers.
-Upon receiving \textit{recall}, \RED{`it' is ambiguous here, should use receiver explicitly}it discards the message in reordering buffer and responds ACK.
+Upon receiving \textit{recall}, the receiver discards the message in reordering buffer and responds ACK.
 The sender then discards the undelivered message when all healthy receivers have recalled.
 We admit that \sys shares a same limitation with standard two-phase commit.
 If a receiver fails after delivery barrier has been sent, \sys cannot recall delivered messages from other receivers.
 
 When a host recovers from failure, it needs to join \sys system as a new host.
-Recovering lost messages during failure requires persistence or replication, which incurs high cost\REDBLU{. So the best choice is to let applications determine, }{ and the best choice should be determined by applications }rather than \sys transport.
+Recovering lost messages during failure requires persistence or replication, which incurs high cost. So the best choice is to let applications determine, rather than \sys transport.
 
 Next, we deal with failure of network switches or links.
 If a failure does not block communication between any pair of hosts, it only causes a brief interval of packet losses.
@@ -543,19 +540,15 @@ In the extreme case of network partition, all cross-partition scatterings will f
 
 %When an end host or switch needs to join a \sys system, it first initializes a \sys system by itself (all the timestamps are initialized arbitrarily). Therefore, the joining process is reduced to connecting two existing \sys systems with a new network link.
 
+
 Failure recovery and incremental deployment requires new hosts, switches and links to join a \sys system efficiently.
-All these cases \REDBLU{can be reduced}{reduce} to adding a link $L$ between two nodes.
+All these cases can be reduced to adding a link $L$ between two nodes.
 Initially, the nodes block all data packets on $L$ and only allow beacon packets carrying barriers and clock synchronizations.
-\REDBLU{
-	A node adds $L$ to its input links list only when the barrier from $L$ isn't smaller than the minimum barrier of existing input links.
-}
-{
-A challenge comes from existing input links of the nodes.
-Because barrier timestamps are monotonic, a barrier from newly added link must not reduce the minimum barrier of existing input links.
-For this reason, a node adds $L$ to the list of input links only when this condition is met.}
+A node adds $L$ to its input links list only when the barrier from $L$ isn't smaller than the minimum barrier of existing input links.
 
 With minimax clock synchronization, the entire network synchronize clocks in one RTT, since then the barriers would meet the condition.
 Consequently, only one RTT is required for failure recovery and adding new nodes.
+Since adding a host has low latency overhead, when a host stops using \sys, it can notify the switch its exit and stop sending beacons, but it must rejoin before sending messages again.
 
 \iffalse
 \subsection{Inter-DC Topology}
