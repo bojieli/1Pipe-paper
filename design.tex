@@ -462,7 +462,7 @@ When packet loss is encountered, we use a protocol similar to 2PC to update the 
 In a traditional 2PC, each receiver responds an ACK to a data message, the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message.
 In \sys, like 2PC, receivers still ACK to the sender when they receives a message. Such a message is prepared but not delivered. Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, instead of multicasts commit messages, the sender sends \textit{update delivery barrier} messages. \sys hierarchically aggregate the updated delivery barriers in network so that the receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
 
-When delivery barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
+When delivery barrier catches up with loss-free barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
 At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
 
 
@@ -471,17 +471,17 @@ At this time, messages below delivery barrier are received and messages above th
 \setlength{\textfloatsep}{1em}
 \begin{algorithm}[t]
  \DontPrintSemicolon
- \textbf{States:} Unreliable barrier $UB_i, i \in \mathcal{I}$\;
- 	\qquad Commit barrier $CB_i, i \in \mathcal{I}$\;
+ \textbf{States:} Loss-free barrier $UB_i, i \in \mathcal{I}$\;
+ 	\qquad Delivery barrier $CB_i, i \in \mathcal{I}$\;
     \qquad Received loss encountered flag $RLE_i, i \in \mathcal{I}$\;
  	\qquad Last-hop loss encountered flag $LE_i, i \in \mathcal{I}$\;
-    \qquad Unreliable barrier at last loss $LB_i, i \in \mathcal{I}$\;
+    \qquad Loss-free barrier at last loss $LB_i, i \in \mathcal{I}$\;
     \qquad Last loss counter $LC_i, i \in \mathcal{I}$\;
     \qquad Current loss counter, fetched via $C(i), i \in \mathcal{I}$\;
  \textbf{Event processing:}\\
  \If{\textnormal{Receive beacon from input link $i$}}{
  	$RLE_i \leftarrow$ loss encounter flag in the packet\;
-    $UB_i \leftarrow$ unreliable barrier in the packet\;
+    $UB_i \leftarrow$ loss-free barrier in the packet\;
     $CB_i \leftarrow$ delivery barrier in the packet\;
     \If{$LC_i \neq C(i)$}{
     	$LE_i \leftarrow \textnormal{True}$\;
@@ -493,8 +493,8 @@ At this time, messages below delivery barrier are received and messages above th
     }
  }
  \ElseIf{\textnormal{Send beacon to output link $o$}}{
-    Unreliable barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
-    Commit barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
+    Loss-free barrier $\leftarrow \min \{ UB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
+	Delivery barrier $\leftarrow \min \{ CB_i | i \in \mathcal{I} \wedge i \rightarrow o \}$\;
     Loss encountered flag $\leftarrow \exists i \in \mathcal{I} \wedge (i \rightarrow o) \wedge (LE_i \vee RLE_i)$\;
  }
  \caption{Hop-by-hop loss detection in network switches.}
