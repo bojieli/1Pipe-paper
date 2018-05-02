@@ -216,11 +216,11 @@ However, this approach does not take into account the delay variance of differen
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
 \parab{Logical time.}In \sys, we use \emph{logical time} as the message timestamp. Loosely speaking, logical time is essentially the estimated message arrival time, \emph{i.e.}, receiver's clock time plus one way delay from the sender to the receiver.
-Logical time roughly increases at the same rate as the clock time, therefore, in practice, we represent logical time as local clock time plus an offset, and track and adjust the offset instead. 
+Logical time roughly increases at the same rate as the clock time, therefore, in practice, we represent logical time as local clock time plus an offset, and track and adjust the offset instead.
 
-\parab{Logical time synchronization.}We observe that clock drift is small (relative error less than $10^{-5}$~\cite{corbett2013spanner,geng2018exploiting}), and consider physical clocks precise enough to measure short intervals. We begin with the simplest case with a single sender $S$ with its local clock $T_s$ and a single receiver $R$ with local clock $T_r$. We want to find an adjustment offset $O_s$ such that if $T = T_s + O_s$ is used as the message timestamp at $S$, when the message arrives at $R$, $R$'s local time $T_r$ is equal to $T$. In a network, measuring one way delay directly from $S$ to $R$ or from $R$ to $S$ is hard, but round-trip time between two nodes is easy to measure and we assume it is know as $RTT_sr$.
+\parab{Logical time synchronization.}We observe that clock drift is small (relative error less than $10^{-5}$~\cite{corbett2013spanner,geng2018exploiting}), and consider physical clocks precise enough to measure short intervals. We begin with the simplest case with a single sender $S$ with its local clock $T_s$ and a single receiver $R$ with local clock $T_r$. We want to find an adjustment offset $O_s$ such that if $T = T_s + O_s$ is used as the message timestamp at $S$, when the message arrives at $R$, $R$'s local time $T_r$ is equal to $T$. In the network, measuring the one way delay directly from $S$ to $R$ or from $R$ to $S$ is hard, but the round-trip time between two nodes is easy to measure, and we assume it is known as $RTT_{sr}$.
 
-We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync message to $S$ at time $T_{r0}$ and attach the value of $T_{r0}$ in the message. $S$ receives it at $T_{s0}$ according to its local clock. Imagine that $S$ immediately reply the message to $R$ with timestamp $T = T_{s0} + O_s$, then $R$ will receive the reply at $T' = T_{r0} + RTT_{sr}$. To make $T$ equals $T'$, we only need to adjust $O_s$ to be $T_{r0} + RTT_{sr} - T_{s0}$. Since $S$ knows $T_{s0}$ when it receives the message, and can obtain $T_{r0}$ from the message, it can adjust $O_s$ as soon as it receives the clock sync message.
+We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync message to $S$ at time $T_{r0}$ and attach the value of $T_{r0}$ in the message. $S$ receives it at $T_{s0}$ according to its local clock. Imagine that $S$ immediately replies the message to $R$ with timestamp $T = T_{s0} + O_s$, then $R$ will receive the reply at $T' = T_{r0} + RTT_{sr}$. To make $T$ equals $T'$, we only need to adjust $O_s$ to be $T_{r0} + RTT_{sr} - T_{s0}$. Since $S$ knows $T_{s0}$ when it receives the message, and can obtain $T_{r0}$ from the message, it can adjust $O_s$ as soon as it receives the clock sync message.
 
 
 
@@ -241,43 +241,60 @@ We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync
 %Our goal is achieved.
 %}
 
-\begin{algorithm}[t]
- \DontPrintSemicolon
- \textbf{States:} Clock adjustment offset $off$\;
- \qquad Last assigned timestamp $T_{last}$\;
- \qquad Local physical clock, fetched via $time()$\;
- \textbf{Event processing:}\;
- \If{received sync timestamp $T_{sync}$}{
- 	$off \leftarrow T_{sync} - time()$\;
- }
- \ElseIf{a total-ordered event occurs}{
-    TS $\leftarrow \max (T_{last} + 1, time() + off)$\;
-    $T_{last} \leftarrow$ TS\;
- }
- \caption{Clock adjustment and timestamp assignment on each end host.\RED{To be revised}}
- \label{alg:clock}
-\end{algorithm}
+%\begin{algorithm}[t]
+% \DontPrintSemicolon
+% \textbf{States:} Clock adjustment offset $off$\;
+% \qquad Last assigned timestamp $T_{last}$\;
+% \qquad Local physical clock, fetched via $time()$\;
+% \textbf{Event processing:}\;
+% \If{received sync timestamp $T_{sync}$}{
+% 	$off \leftarrow T_{sync} - time()$\;
+% }
+% \ElseIf{a total-ordered event occurs}{
+%    TS $\leftarrow \max (T_{last} + 1, time() + off)$\;
+%    $T_{last} \leftarrow$ TS\;
+% }
+% \caption{Clock adjustment and timestamp assignment on each end host.\RED{To be revised}}
+% \label{alg:clock}
+%\end{algorithm}
 
+\begin{algorithm}[t]
+\DontPrintSemicolon
+\textbf{Variables:}\;
+Logical time adjustment offset $S$: $O_{s}$\;
+Local physical clock time: $time()$\;
+Round-trip time between $S$ and $R$: $RTT_{sr}$\;
+Message timestamp: $T$\;
+Last assigned message timestamp: $T_{last}$ \;
+\;
+\textbf{Event processing:}\;
+\If{receive a clock sync message from host $R$ with $T_{r0}$}{
+	$O_{s} \leftarrow T_{r0} + RTT_{sr}  - time()$\;	
+}
+\ElseIf{scatter a group of messages}{
+	$T \leftarrow \max(T_{last} + 1, time() + O_{s})$\;
+    $T_{last} \leftarrow T$
+}
+\caption{Logical time synchronization and timestamp assignment at the host $S$}
+\label{alg:clock}
+\end{algorithm}
 
 %\parab{Adjust logical time}
 Because message timestamps can not decrease, when the new offset $O_s^{new}$ is smaller than $O_s^{old}$, the system has to ``stall'' the logical clock rather than decrease it.
-During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. 
-This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$.
-Algorithm~\ref{alg:clock} shows the procedure.
+During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. Algorithm~\ref{alg:clock} shows the procedure. This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$, \textcolor{red}{making all the senders be synchronized to the receiver's local clock time.}
 
 Now we extend to multiple receivers $R_i \in \mathcal{R}$.
 %In a data center, each sender is also a receiver, but we denote the send and receive roles separately for clarity.
-Assume the one-way forward delays are $f_{ij}$ for $S_i \rightarrow R_j$ and backward delays $b_{ij}$ for $R_j \rightarrow S_i$, and we can measure $RTT_{ij} = f_{ij} + b_{ij}$.
+Assume the one-way forward delay is $f_{ij}$ for $S_i \rightarrow R_j$ and backward delay is $b_{ij}$ for $R_j \rightarrow S_i$, and we can measure $RTT_{ij} = f_{ij} + b_{ij}$.
 If we want to follow the approach above for each receiver, we need to synchronize the clocks of receivers first.
-In this regard, we add a \textit{forward pass} in which $S_i$ send clock sync messages to $R_j$ and synchronize clocks of $R_j$, then run the \textit{backward pass} like above from $R_j$ to $S_i$.
+In this regard, we add a \textit{forward pass} in which every sender $S_i$ sends clock sync messages to every receiver $R_j$ to synchronize the clock of $R_j$, then run the \textit{backward pass} like above from $R_j$ to $S_i$.
 In both passes, each node can calculate potentially different offset adjustments from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}.
 Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ should be:
 
 \vspace{-1em}
 \begin{equation*}
 \begin{aligned}
-T'_k & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i - d_{ij} \} - r_{jk} + RTT_{kj} \} \\
-     & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i - d_{ij} \} + d_{kj} \}
+T'_k & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i | i \in \mathcal{S} \} + RTT_{kj} | j \in \mathcal{R} \}
 \end{aligned}
 \end{equation*}
 
