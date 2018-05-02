@@ -258,10 +258,9 @@ We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync
  \label{alg:clock}
 \end{algorithm}
 
-
 %\parab{Adjust logical time}
 Because message timestamps can not decrease, when the new offset $O_s^{new}$ is smaller than $O_s^{old}$, the system has to ``stall'' the logical clock rather than decrease it.
-During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. 
+During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 \RED{what is the unit?} per scattering until it reaches the target offset $O_s^{new}$. 
 This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$.
 Algorithm~\ref{alg:clock} shows the procedure.
 
