@@ -216,11 +216,11 @@ However, this approach does not take into account the delay variance of differen
 %As a result, the earlier one must wait for the later one to be processed together, which increases reordering delay.
 
 \parab{Logical time.}In \sys, we use \emph{logical time} as the message timestamp. Loosely speaking, logical time is essentially the estimated message arrival time, \emph{i.e.}, receiver's clock time plus one way delay from the sender to the receiver.
-Logical time roughly increases at the same rate as the clock time, therefore, in practice, we represent logical time as local clock time \RED{nanosecond level, is specifying time unit here sufficient?} plus an offset, and track and adjust the offset instead.
+Logical time roughly increases at the same rate as the clock time, therefore, in practice, we represent logical time as local clock time plus an offset, and track and adjust the offset instead.
 
 \parab{Logical time synchronization.}We observe that clock drift is small (relative error less than $10^{-5}$~\cite{corbett2013spanner,geng2018exploiting}), and consider physical clocks precise enough to measure short intervals. We begin with the simplest case with a single sender $S$ with its local clock $T_s$ and a single receiver $R$ with local clock $T_r$. We want to find an adjustment offset $O_s$ such that if $T = T_s + O_s$ is used as the message timestamp at $S$, when the message arrives at $R$, $R$'s local time $T_r$ is equal to $T$. In the network, measuring the one way delay directly from $S$ to $R$ or from $R$ to $S$ is hard, but the round-trip time between two nodes is easy to measure, and we assume it is known as $RTT_{sr}$.
 
-We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync message to $S$ at time $T_{r0}$ and attach the value of $T_{r0}$ in the message. $S$ receives it at $T_{s0}$ according to its local clock. Imagine that $S$ immediately reply the message to $R$ with timestamp $T = T_{s0} + O_s$, then $R$ will receive the reply at $T' = T_{r0} + RTT_{sr}$. To make $T$ equals $T'$, we only need to adjust $O_s$ to be $T_{r0} + RTT_{sr} - T_{s0}$. Since $S$ knows $T_{s0}$ when it receives the message, and can obtain $T_{r0}$ from the message, it can adjust $O_s$ as soon as it receives the clock sync message.
+We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync message to $S$ at time $T_{r0}$ and attach the value of $T_{r0}$ in the message. $S$ receives it at $T_{s0}$ according to its local clock. Imagine that $S$ immediately replies the message to $R$ with timestamp $T = T_{s0} + O_s$, then $R$ will receive the reply at $T' = T_{r0} + RTT_{sr}$. To make $T$ equals $T'$, we only need to adjust $O_s$ to be $T_{r0} + RTT_{sr} - T_{s0}$. Since $S$ knows $T_{s0}$ when it receives the message, and can obtain $T_{r0}$ from the message, it can adjust $O_s$ as soon as it receives the clock sync message.
 
 
 
@@ -241,26 +241,47 @@ We can use the following protocol to figure out $O_s$. Let $R$ send a clock sync
 %Our goal is achieved.
 %}
 
+%\begin{algorithm}[t]
+% \DontPrintSemicolon
+% \textbf{States:} Clock adjustment offset $off$\;
+% \qquad Last assigned timestamp $T_{last}$\;
+% \qquad Local physical clock, fetched via $time()$\;
+% \textbf{Event processing:}\;
+% \If{received sync timestamp $T_{sync}$}{
+% 	$off \leftarrow T_{sync} - time()$\;
+% }
+% \ElseIf{a total-ordered event occurs}{
+%    TS $\leftarrow \max (T_{last} + 1, time() + off)$\;
+%    $T_{last} \leftarrow$ TS\;
+% }
+% \caption{Clock adjustment and timestamp assignment on each end host.\RED{To be revised}}
+% \label{alg:clock}
+%\end{algorithm}
+
 \begin{algorithm}[t]
- \DontPrintSemicolon
- \textbf{States:} Clock adjustment offset $off$\;
- \qquad Last assigned timestamp $T_{last}$\;
- \qquad Local physical clock, fetched via $time()$\;
- \textbf{Event processing:}\;
- \If{received sync timestamp $T_{sync}$}{
- 	$off \leftarrow T_{sync} - time()$\;
- }
- \ElseIf{a total-ordered event occurs}{
-    TS $\leftarrow \max (T_{last} + 1, time() + off)$\;
-    $T_{last} \leftarrow$ TS\;
- }
- \caption{Clock adjustment and timestamp assignment on each end host.\RED{To be revised}}
- \label{alg:clock}
+\DontPrintSemicolon
+\textbf{Variables:}\;
+Logical time adjustment offset $S$: $O_{s}$\;
+Local physical clock time: $time()$\;
+Round-trip time between $S$ and $R$: $RTT_{sr}$\;
+Message timestamp: $T$\;
+Last assigned message timestamp: $T_{last}$ \;
+\;
+\textbf{Event processing:}\;
+\If{receive a clock sync message from host $R$ with $T_{r0}$}{
+	$O_{s} \leftarrow T_{r0} + RTT_{sr}  - time()$\;	
+}
+\ElseIf{scatter a group of messages}{
+	$T \leftarrow \max(T_{last} + 1, time() + O_{s})$\;
+    $T_{last} \leftarrow T$
+}
+\caption{Logical time synchronization and timestamp assignment at the host $S$}
+\label{alg:clock}
 \end{algorithm}
 
 %\parab{Adjust logical time}
 Because message timestamps can not decrease, when the new offset $O_s^{new}$ is smaller than $O_s^{old}$, the system has to ``stall'' the logical clock rather than decrease it.
-During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 \RED{what is the unit?} per scattering until it reaches the target offset $O_s^{new}$. 
+During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. 
 This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$.
 Algorithm~\ref{alg:clock} shows the procedure.
 
