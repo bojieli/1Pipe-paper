@@ -433,17 +433,17 @@ Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on 
 Since retransmitted packets may violate the barrier property, we add a special mark to them.
 
 Due to packet loss, the barrier timestamp is no longer sufficient for message delivery because message might get dropped and retransmitted. If messages are immediately delivered when their timestamp is below the barrier, a retransmitted message with lower timestamp may get delivered out of order.
-Our aim is to deliver messages in one-way network delay when no packet loss is encountered, and fall back to two-phase commit (2PC) with three one-way delays when loss occurs.
+Our aim is to deliver messages in one-way network delay when no packet loss is encountered, and fall back to a protocol similar to two-phase commit (2PC) with three one-way delays when loss occurs.
 
-In \sys, we rename the original barrier to \textit{unreliable barrier} and add a \textit{delivery barrier} and a \textit{loss encountered} flag alongside it.
-Commit barrier carries accumulative commit timestamp from the sender, which means that all messages sent by the sender and below delivery barrier has been delivered.
-Figure~\ref{fig:ack-barrier} shows an example of delivery barrier.\RED{Should I rename ACK barrier to delivery barrier in Fig.~\ref{fig:ack-barrier}?}
-When loss encountered flag is off, a receiver can deliver messages according to unreliable barrier.
+In \sys, we rename the original barrier to \textit{loss-free barrier} and add a \textit{delivery barrier} and a \textit{loss encountered} flag alongside it.
+Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier has been delivered.
+Figure~\ref{fig:ack-barrier} shows an example of delivery barrier.
+When loss encountered flag is off, a receiver can deliver messages according to the loss-free barrier.
 Otherwise, it delivers based on delivery barrier.
 
 When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
-In a traditional 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message.
-Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, the sender sends a \textit{delivery barrier} message instead of multicasts commit messages. \sys hierarchically aggregate the delivery barriers in network so that the receivers know the timestamp lower bound of all delivered messages.
+In a traditional 2PC, each receiver responds an ACK to a data message, the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message.
+In \sys, like 2PC, receivers still ACK to the sender when they receives a message. Such a message is prepared but not delivered. Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, instead of multicasts commit messages, the sender sends \textit{update delivery barrier} messages. \sys hierarchically aggregate the updated delivery barriers in network so that the receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
 
 When delivery barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
 At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
