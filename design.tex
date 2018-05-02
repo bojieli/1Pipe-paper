@@ -289,7 +289,7 @@ Assume the one-way forward delay is $f_{ij}$ for $S_i \rightarrow R_j$ and backw
 If we want to follow the approach above for each receiver, we need to synchronize the clocks of receivers first.
 In this regard, we add a \textit{forward pass} in which every sender $S_i$ sends clock sync messages to every receiver $R_j$ to synchronize the clock of $R_j$, then run the \textit{backward pass} like above from $R_j$ to $S_i$.
 In both passes, each node can calculate potentially different offset adjustments from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}.
-Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ should be:
+Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ after two passes should be:
 
 \vspace{-1em}
 \begin{equation*}
