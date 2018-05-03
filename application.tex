@@ -99,7 +99,7 @@ Now we apply \sys to concurrent control in one-shot transactions.
 We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 To evaluate different concurrency control algorithms, we use 4 warehouses. 
 As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale beyond the number of warehouses, because each Payment transaction
-updates its corresponding warehouse entry and each NewOrder
+updates its corresponding warehouse entry and each New-Order reads it
 
 
 \begin{figure*}[t]
