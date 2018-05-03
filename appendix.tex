@@ -204,7 +204,6 @@ From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in
 \begin{note}
 	If there are switches, the above proof still holds.
 	Because the \textbf{min} and \textbf{max} are aggregate operations having associative property.
-	So switches introduced in Algorithm~\ref{alg:minimax} don't affect the results.
 \end{note}
 
 \begin{note}
@@ -214,7 +213,7 @@ From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in
 \begin{note}
 	We give but won't prove the drawbacks of choosing \textbf{max} or \textbf{avg} as $\texttt{BackFunc}$.
 	If choose \textbf{max}, there exists conditions where logical timestamps may grow faster than physical clock.
-	What worse is that the growth rate isn't constant, so we can't compensate link delay well without a steady clock.
-	If choose \textbf{avg}, several faster timestamp may be held by many slower timestamp for a very long time.
+	What worse is that the growth rate isn't constant, so we can't estimate link delay well without a steady clock.
+	If choose \textbf{avg}, several faster timestamp may be held by many slower timestamp, which leads to a very long convergence time.
 	This is unacceptable when merging two established clusters.
 \end{note}
