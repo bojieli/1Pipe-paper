@@ -4,13 +4,14 @@
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
 Our evaluation centers around four aspects:
 
-\parab{Efficiency.} First, \sys achieves low reordering delay, which is the delay from receiving to delivering a packet. With beacon interval of 100$\mu$s, we achieve 
+\parab{Low reordering delay.} Reordering delay is the delay from receiving to delivering a packet.
 
-\parab{Scalability.}
+\parab{Low bandwidth and computation overhead.}
 
-\parab{Fault tolerance.}
+\parab{Scalability.} 
 
-\parab{Real-world application.}
+\parab{Fault tolerance.} We simulate the failure of a host or switch.
+
 
 we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions.
 Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
@@ -20,15 +21,17 @@ Then we deep dive into the behavior of \sys under packet loss, failure and incre
 
 We build two testbeds in two data centers.
 The first one has 3 servers connected to a Barefoot Tofino 100G switch~\cite{tofino}.
-The second one has 32 servers and 10 Arista 7060CX 100G switches~\cite{arista}, forming a fat-tree topology.
+The second one has 8 servers and 4 Arista 7060CX 100G switches~\cite{arista}, forming a fat-tree topology.
 Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~\cite{infinibandrocev2}.
 
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
-In throughput tests, each server uses 8 send cores and 8 receive cores in parallel.
-To minimize inter-core synchronization, each pair of send and receive cores is considered a unique host which maintains timestamps independently and processes unreliable datagrams via a separate RDMA queue pair.
+In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for send and receive, respectively.
+For experiments with 16$\sim$128 hosts, we use each physical server as 16 logical servers. Each logical server has a pair of dedicated cores, maintains timestamps independently and communicates via separate RDMA queue pairs.
+To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator.
+
 
 \iffalse
 \begin{table}[t]

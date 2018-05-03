@@ -459,9 +459,9 @@ In \sys, we rename the original barrier to \textit{loss-free barrier} and add a 
 Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages according to the loss-free barrier. Otherwise, it delivers based on delivery barrier.
 
 When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
-In \sys, receivers ACK\RED{send ACKs?} to the sender when they receives a message. Such a message is prepared but not delivered. Different from regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, instead of multicasts commit messages, the sender sends \textit{update delivery barrier} messages. \sys hierarchically aggregate the updated delivery barriers in network so that the receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
+In \sys, the receiver ACK\RED{send ACKs?} to the sender when it receives a message. Such a message is buffered but not delivered. Unlike regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, instead of multicasts commit messages, the sender sends \textit{update delivery barrier} messages. \sys hierarchically aggregate the updated delivery barriers in network so that the receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.\RED{Rewrite}
 
-When delivery barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
+When delivery barrier catches up with unreliable barrier recorded at last packet loss, the switch clears loss encountered flag, thus enabling receivers to deliver messages without waiting for an additional RTT.
 At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
 
 
