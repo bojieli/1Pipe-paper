@@ -25,7 +25,7 @@ Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
-In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for send and receive, respectively.
+In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for sending and receiving, respectively.
 For experiments with 16$\sim$128 hosts, we use each physical server as 16 logical servers. Each logical server has a pair of dedicated cores, maintains timestamps independently and communicates via separate RDMA queue pairs.
 To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator.
 We choose beacon interval to be 10~$\mu$s.
@@ -126,14 +126,14 @@ In timestamp-based ordering, a receiver waits for timestamps from  other receive
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
 Reordering delay is the time from receiving a message to delivering it.
 Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
-As the number of network layers increase, the reordering delay increase, due to beacon processing delay at each switch.
-The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times.
+As the number of network layers increases, the reordering delay increases, due to beacon processing delay at each switch.
+\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
 For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
 
-Figure~\ref{fig:reorder-simulation} compares how minimax clock synchronization adapts to imbalanced link or host delays.
+Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays.
 We simulate two senders and two receivers connected via 4 links.
 When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
-When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.
+When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.\RED{maximum delay in Figure~\ref{fig:reorder-simulation} is 20us, not 100us}
 When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
