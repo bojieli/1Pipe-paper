@@ -109,11 +109,11 @@ We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}.
     \hspace{0.02\textwidth}
     \subfloat[New-Order 100\%.\label{fig:tpc-c-payment}]
 	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
-\caption{[Testbed] TPC-C benchmark with 4 districts.}
+\caption{TPC-C benchmark with 4 warehouses.}
 \label{fig:tpc-c}
 \end{figure*}
 
-Performance with 4 districts.
+Performance with 4 warehouses.
 X axis: number of concurrent clients.~\cite{yu2014staring}.
 For Payment transaction, throughput cannot scale with number of concurrent clients, because all payment transactions updates a shared field.
 
