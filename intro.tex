@@ -15,7 +15,7 @@
 \fi
 
 %Today's data centers host a variety of distributed systems~\textcolor{red}{cite some papers here} to provide service for global users. 
-Traditionally, in a network with arbitrary delays, messages are not guaranteed to be delivered in a consistent order.
+In a network with arbitrary delays, messages are not guaranteed to be delivered in a consistent order.
 For example, multiple shards of a distributed database generate logs to multiple replicas.
 Each replica may receive logs from shards in a different order.
 Without special care, such inconsistent ordering may violate data consistency.
@@ -79,7 +79,7 @@ At its core, \sys separates the bookkeeping of order information from message fo
 %\sys attaches a timestamp to each message at the sender side, forwards them as usual in the network, and buffers them at the receiver side.
 The switch aggregates timestamp information of all messages to derive the \textit{barrier} for each receiver.
 The barrier is essentially the \textit{lower bound} of the timestamps of all future arrival packets.
-With this information, the receiver reorders messages below the barrier and deliver them to applications.
+With this information, the receiver can deliver the messages with timestamps below the barrier in order.
 %\sys is scalable as the switches and end hosts form a decentralized system where control plane communication only takes place between directly connected nodes.
 
 To ensure \sys's efficiency and reliability, we still need to solve three main challenges: 1) How to derive timestamp barriers? 2) How to assign event timestamps? and 3) How to handle packet losses and node failures?

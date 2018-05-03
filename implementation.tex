@@ -1,26 +1,26 @@
 \section{Implementation}
 \label{sec:impl}
 
+\begin{figure*}[t]
+	\centering
+	\subfloat[Reconfigurable swithing chips.\label{fig:p4}]
+	{\includegraphics[width=.25\textwidth]{images/p4_implementation.pdf}}
+	\hspace{0.04\textwidth}
+	\subfloat[Switch CPU\label{fig:commodity}]
+	{\includegraphics[width=.28\textwidth]{images/commodity_implementation.pdf}}
+	\hspace{0.04\textwidth}
+	\subfloat[End hosts only.\label{fig:end-host}]
+	{\includegraphics[width=.3\textwidth]{images/endhostonly_implementation.pdf}}
+	\caption{\sys dataflow in networks with different programming capabilities.}
+	\label{fig:impl}
+	\vspace{-1em}
+\end{figure*}
+
 %At the end host, \sys requires a reliable transport. The transport can be built over any at-most-once packet transmission interfaces, \textit{e.g.}, UDP, UNIX raw socket, RDMA unreliable datagram~\cite{infinibandrocev2} or netmap~\cite{rizzo2012netmap}. We implement the message transport on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
 
 We implement a reliable transport at the end host to deliver messages. Our implementation is built on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
 
 In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities. 
-
-\begin{figure*}[t]
-\centering
-\subfloat[Reconfigurable swithing chips.\label{fig:p4}]
-{\includegraphics[width=.25\textwidth]{images/p4_implementation.pdf}}
-\hspace{0.04\textwidth}
-\subfloat[Switch CPU\label{fig:commodity}]
-{\includegraphics[width=.28\textwidth]{images/commodity_implementation.pdf}}
-\hspace{0.04\textwidth}
-\subfloat[End hosts only.\label{fig:end-host}]
-{\includegraphics[width=.3\textwidth]{images/endhostonly_implementation.pdf}}
-\caption{\sys dataflow in networks with different programming capabilities.}
-\label{fig:impl}
-\vspace{-1em}
-\end{figure*}
 
 \subsection{Reconfigurable Switching Chips}
 \label{sec:p4}

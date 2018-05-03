@@ -36,7 +36,7 @@ In this section, we assume that the network is reliable. There is no host, link 
 
 
 %\subsection{Hierarchical Merge of Barriers}
-\subsection{Barrier Timestamp}
+\subsection{Message and Barrier Timestamp}
 \label{sec:ideal}
 
 \begin{figure}[t]
@@ -48,9 +48,9 @@ In this section, we assume that the network is reliable. There is no host, link 
 \end{figure}
 
 \parab{Message timestamp.}\sys assigns a non-decreasing timestamp for each message. A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps. %Each sender assigns monotonically increasing message timestamps, \textit{e.g.}, synchronized physical time, to different scatterings. 
-Message timestamp determines the processing order at receiver. To achieve ordered message scattering, the receivers should process arrival messages in ascending order of their timestamps. Here we use process and message delivery interchangeably. 
+Message timestamp determines the processing order at receiver. To achieve ordered message scattering, the receivers should process arrival messages in ascending order of their timestamps (ties are broken through host ID). Here we use ``process'' and ``delivery'' interchangeably. 
 
-\parab{Barrier timestamp.} When a receiver wants to process a message with the timestamp $t$, it must be sure that it has received and processed all the messages whose timestamps are smaller than $t$. Since messages can be received out of order, this is nontrivial. To this end, we introduce the concept of \emph{barrier timestamp}. A barrier timestamp is associated with either a link or a node (i.e. a switch or an end host) in the routing graph. The barrier timestamp is the lower bound of message timestamps of all future arrival messages from the link, or at the node. Each receiver can maintain its own barrier timestamp and process the messages whose timestamps are smaller than the barrier timestamp.
+\parab{Barrier timestamp.} When a receiver wants to process a message with timestamp $t$, it must be sure that it has received and processed all the messages whose timestamps are smaller than $t$. Since messages can be received out of order, this is nontrivial. To this end, we introduce the concept of \emph{barrier timestamp}. A barrier timestamp is associated with either a link or a node (i.e. a switch or an end host) in the routing graph. The barrier timestamp is the lower bound of message timestamps of all \emph{future arrival messages} from the link, or at the node. Each receiver can maintain its own barrier timestamp and process the messages whose timestamps are smaller than the barrier timestamp.
 
 Due to non-decreasing timestamp assignment, in a FIFO network (such as by using TCP transport), a receiver can easily figure out the barrier if it has received messages from all senders: the barrier is the minimum timestamp of latest messages from each sender. Therefore, a naive solution would be for every sender to send periodic beacons to every receiver so that the receivers can figure out the barrier and process messages. Unfortunately, such a solution requires quadratic beacons.
 
@@ -62,7 +62,7 @@ Due to non-decreasing timestamp assignment, in a FIFO network (such as by using 
 
 %In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
 
-\parab{Hierahical barrier timestamp aggregation.} The naive solution discussed before does not scale well in production data centers. To this end, \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information. Given the limited switch buffer resource, \sys does not reorder messages in the network. Instead, \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
+\parab{Hierahical barrier timestamp aggregation.} The naive solution discussed does not scale in production data centers. \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information. Given the limited switch buffer resource, \sys does not reorder messages in the network. Instead, \sys forwards messages in the network as usual, but reorders and processes them at the receiver side based on the barrier timestamp information provided by the switch.
 
 In \sys, we attach two timestamp fields to each message packet. The first is \textit{message timestamp} field, which is set by the sender and will not be modified. The second field is \textit{barrier timestamp}, which is initialized by the sender but will be modified by switches along the network path. The property of the barrier timestamp field is:
 

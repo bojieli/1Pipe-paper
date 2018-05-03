@@ -44,10 +44,11 @@ When $B$ receives the notification, it issues read command to $O$, but may not g
 %Asynchronously\textcolor{red}{In the meanwhile?}, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
 
 \parab{Independent read, independent write (IRIW)}.
-$A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written. IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. %Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
+Host $A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written.
+%IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. %Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
 
 \parab{Independent multi-write (IMW)}.
-$A$ scatters writes to both $O_1$ and $O_2$. Concurrently, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different, causing inconsistency. % For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
+Host $A$ scatters writes to both $O_1$ and $O_2$. Concurrently, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different, causing inconsistency. % For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
 %$S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request.
 %The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
 
@@ -112,7 +113,7 @@ Therefore, the write operation is delivered before the read operation, thus avoi
 
 In IRIW and IMW hazards, messages $A \rightarrow O_1$ and $A \rightarrow O_2$ belong to a same scattering $S_1$, and $B \rightarrow O_1$ and $B \rightarrow O_2$ belong to another scattering $S_2$.
 By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarrow O_1$ if and only if $O_2$ delivers $A \rightarrow O_2$ before $B \rightarrow O_2$.
-Together with atomicity, \sys ensures consistency between metadata and data (in IRIW hazard) and consistent history among replicas (in IMW hazard).
+Therefore, \sys ensures consistency between metadata and data (in IRIW hazard) and consistent history among replicas (in IMW hazard).
 
 %We implement the total order of message scatterings using explicit timestamps.
 %Each sender assigns a monotonically increasing timestamp to each message scattering.
@@ -128,14 +129,14 @@ By avoiding WAW hazard, \sys improves consistency in distributed shared memory.
 
 \subsubsection{Distributed One Shot Transactions}
 \label{subsec:transactional-kvs}
-We consider one-shot transactions~\cite{kallman2008h} or single round-trip transactions, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
+We consider \emph{one-shot transactions}~\cite{kallman2008h} or \emph{single round-trip transactions}, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
 For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are one-shot transactions.
 In \sys, we implement each transaction as a message scattering to multiple sites.
 Transaction initiator uses the scattering timestamp as the transaction timestamp.
 \sys guarantees atomicity and isolation, thus solving the concurrency control problem.
 Transactions would not abort due to out-of-order operations.
 Because \sys assigns timestamps on senders, there is also no sequencer bottleneck.
-In this way, one-shot transactions can complete in a single network RTT (if not counting replication and logging).
+In this way, one-shot transactions can complete in a single network RTT.% (if not counting replication and logging).
 
 %Concurrency control mechanisms of distributed transactions typically fall in two categories~\cite{bernstein1981concurrency}.
 %One category uses \textit{locks} to protect accesses to shared resources.
@@ -241,9 +242,9 @@ By removing IMW hazard, \sys ensures that each replica receives an identical seq
 If write operations are blocked until receiving potentially conflicting writes, \textit{i.e.} insert a memory barrier after each write, the system is sequentially consistent because each operation can be serialized at its beginning time~\cite{lu2016snow}.
 If write operations are returned immediately while changes propagate, because local read operations may occur during propagation, the system is not sequentially consistent, but causality is preserved~\cite{terry1995managing}.
 Further, applying the Thomas write rule~\cite{thomas1979majority} on the timestamps of local and remote updates achieves eventual consistency.
-The reasoning above assumes reads are local and writes are propagated.
-Similar reasoning applies to write-intensive systems where writes are local, while each read operation retrieves from multiple replicas and return the latest version.
-\sys also ensures sequential consistency in this case.
+%The reasoning above assumes reads are local and writes are propagated.
+%Similar reasoning applies to write-intensive systems where writes are local, while each read operation retrieves from multiple replicas and return the latest version.
+%\sys also ensures sequential consistency in this case.
 
 \subsubsection{Total Store Ordering in DSM}
 

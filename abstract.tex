@@ -3,7 +3,7 @@
 The ability to have reliable and ordered delivery of a group of messages can facilitate and simplify many distributed applications.
 To achieve ordering, existing approaches either employ centralized sequencers or tokens, thus suffer from limited scalability, or use distributed consensus protocols, which incurs high overhead in bandwidth and delay.
 
-In this paper, we propose Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in serializable order via data center network.
+This paper describes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in serializable order via data center network.
 \sys is scalable
 %and fault tolerant 
 as it distributes work to each switch and end host. It is reliable in the sense that a message is guaranteed to be delivered exactly once to a non-faulty host.
@@ -11,7 +11,7 @@ At its core, \sys separates the bookkeeping of order information from message fo
 \sys aggregates order information using in-network computation at switches.
 This forms the ``control plane'' of the system.
 On the ``data plane'', \sys forwards messages in the network as usual and reorders them at the receiver-end based on the order information.
-In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
+%In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
 
 %The ability to have total ordering of events and messages can simplify and accelerate many distributed applications. Traditional approaches to achieve total ordering either employs centralized sequencers or tokens with limited scalability, or use fully distributed consensus protocols with bandwidth and latency overheads.
 
