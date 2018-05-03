@@ -69,17 +69,46 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \subsection{Scalability}
 
-\begin{figure}[t]
-\centering
-\subfloat[Throughput]{
-	\includegraphics[width=.24\textwidth]{gnuplot/total_order.eps}
-}
-\subfloat[Latency]{
-	\includegraphics[width=.24\textwidth]{gnuplot/total_order_lat.eps}
-}
-\caption{Scalability comparison of total order algorithms.}
-\label{fig:total-order}
-\end{figure}
+\begin{figure*}[t]
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Throughput]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+		}
+		\newline
+		\subfloat[Latency]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
+		}
+		\caption{Scalability comparison of total order algorithms.}
+		\label{fig:total-order}
+	\end{minipage}
+	\hspace{0.01\textheight}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Process beacon packets with switch CPU or end hosts in 5 system scales.\label{fig:reorder-testbed}]
+		{\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
+		\newline
+		\subfloat[Simulation with different end-host delays.
+		T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
+		{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
+		\caption{Average reordering delay. Beacon interval is 100~$\mu$s.}
+		\label{fig:reorder-delay}
+	\end{minipage}
+	\hspace{0.01\textwidth}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
+		{\includegraphics[width=\textwidth]{gnuplot/beacon_network_overhead.eps}}
+		\newline
+		\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
+		{\includegraphics[width=\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
+		\caption{
+			Beacon overhead under different beacon intervals and network throughput.
+			CPU processing overhead for Arista switch is extrapolated.
+		}
+		\label{fig:overhead}
+	\end{minipage}
+\end{figure*}
 
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
 Overall, the throughput is bottlenecked by CPU processing and RDMA messaging rate.
@@ -97,20 +126,6 @@ In timestamp-based ordering, a receiver waits for timestamps from  other receive
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP).
 
-
-\begin{figure}[t]
-\centering
-	\subfloat[Process beacon packets with switch CPU or end hosts in 5 system scales.\label{fig:reorder-testbed}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_testbed.eps}}
-	\hspace{0.01\textwidth}
-	\subfloat[Simulation with different end-host delays.
-	T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_simulation.eps}}
-	\caption{Average reordering delay. Beacon interval is 100~$\mu$s.}
-    \vspace{-5pt}
-\label{fig:reorder-delay}
-\end{figure}
-
 \subsubsection{Reordering Delay}
 \label{sec:eval-delay}
 
@@ -127,21 +142,6 @@ When one sender $S_1$ has 100~$\mu$s more delay due to background traffic, minim
 When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.
 When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
-
-
-\begin{figure}[t]
-\centering
-	\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_network_overhead.eps}}
-	\hspace{0.01\textwidth}
-	\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
-	\caption{
-		Beacon overhead under different beacon intervals and network throughput.
-		CPU processing overhead for Arista switch is extrapolated.
-	}
-\label{fig:overhead}
-\end{figure}
 
 
 %\begin{figure}[t]
