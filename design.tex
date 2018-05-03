@@ -530,7 +530,7 @@ At this time, messages below delivery barrier are received and messages above th
 
 Previous section retransmits lost packets with end hosts.
 When a host, switch or network link fails, barrier timestamps and message delivery stall.
-We detect failures using beacon timeout and removes failed nodes to resume progress of rest of the system.
+We detect failures using beacon timeout and remove failed nodes to resume progress of rest of the system.
 Because failures and packet loss can be detected, achieving atomicity is much easier than consensus in general distributed systems.
 
 First, we deal with host failure.
@@ -539,7 +539,7 @@ A receiver discards messages from the failed node in reordering buffer.
 To ensure message scattering atomicity, a sender checks undelivered messages and send \textit{recall} messages to other receivers.
 Upon receiving \textit{recall}, the receiver discards the message in reordering buffer and responds ACK.
 The sender then discards the undelivered message when all healthy receivers have recalled.
-We admit that \sys shares a same limitation with standard two-phase commit.
+We admit that \sys shares the same limitation with standard two-phase commit.
 If a receiver fails after delivery barrier has been sent, \sys cannot recall delivered messages from other receivers.
 
 When a host recovers from failure, it needs to join \sys system as a new host.
