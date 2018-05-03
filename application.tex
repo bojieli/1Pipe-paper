@@ -2,41 +2,19 @@
 \label{sec:application}
 
 
-\begin{figure*}[t!]
-	\begin{minipage}{.31\textwidth}
-    	\centering
-		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
-		\caption{Reordering CPU and memory overhead on hosts.}
-		\label{fig:reorder-overhead}
 
-		\centering
-		\includegraphics[width=\textwidth]{gnuplot/reordering_delay.eps}
-		\caption{Reordering delay with clock synchronization methods and background traffic (BG).}
-		\label{fig:clock-sync}
-	\end{minipage}
-	\hspace{0.01\textwidth}
-    \begin{minipage}{.31\textwidth}
-      \centering
-      \subfloat[Throughput.\label{fig:loss-throughput}]
-      {\includegraphics[width=\textwidth]{gnuplot/loss_tput.eps}}
-      \vspace{0.01\textwidth}
-      \subfloat[Latency.\label{fig:loss-latency}]
-      {\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}}
-      \caption{Comparison of reliable \sys and application-layer transaction rollback.}
-      \label{fig:ycsb-loss}
-    \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}{.31\textwidth}
-    	\centering
-		\includegraphics[width=\textwidth]{gnuplot/ycsb.eps}
-		\caption{Throughput and latency of YCSB+T transactional key-value stores.}
-		\label{fig:ycsb}
-
-		\centering
-		\includegraphics[width=\textwidth]{gnuplot/multishard.eps}
-		\caption{Throughput of multiple keys per transaction.}
-		\label{fig:multishard}
-    \end{minipage}
+\begin{figure*}[t]
+\centering
+	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpc-c-new-order}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
+	\hspace{0.02\textwidth}
+	\subfloat[Payment 100\%.\label{fig:tpc-c-payment}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-payment.eps}}
+    \hspace{0.02\textwidth}
+    \subfloat[New-Order 100\%.\label{fig:tpc-c-payment}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
+\caption{TPC-C benchmark with 4 warehouses.}
+\label{fig:tpc-c}
 \end{figure*}
 
 
@@ -98,30 +76,10 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 Now we apply \sys to concurrent control in one-shot transactions.
 We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 To evaluate different concurrency control algorithms, we use 4 warehouses. 
-As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale beyond the number of warehouses, because each Payment transaction
-updates its corresponding warehouse entry and each New-Order reads it
+As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale, because each Payment transaction updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
+The throughput of \sys scales linearly with number of host
 
 
-\begin{figure*}[t]
-\centering
-	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpc-c-new-order}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
-	\hspace{0.02\textwidth}
-	\subfloat[Payment 100\%.\label{fig:tpc-c-payment}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-payment.eps}}
-    \hspace{0.02\textwidth}
-    \subfloat[New-Order 100\%.\label{fig:tpc-c-payment}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
-\caption{TPC-C benchmark with 4 warehouses.}
-\label{fig:tpc-c}
-\end{figure*}
-
-Performance with 4 warehouses.
-X axis: number of concurrent clients.~\cite{yu2014staring}.
-For Payment transaction, throughput cannot scale with number of concurrent clients, because all payment transactions updates a shared field.
-
-With 1024 districts.
-OCC peak at X due to timestamp assignment.~\cite{yu2014staring} Ours can still scale because no centralized timestamp assignment.
 
 
 %\subsection{Multiple Round-Trip Transactions}

@@ -1,15 +1,56 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
-We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around five aspects:
+\begin{figure*}[t]
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Throughput]{
+                        \includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+                }
+                \newline
+                \subfloat[Latency]{
+                        \includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
+                }
+                \caption{Scalability comparison of total order algorithms.}
+                \label{fig:total-order}
+        \end{minipage}
+        \hspace{0.01\textheight}
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Reconfigurable chip, switch CPU and end hosts.\label{fig:reorder-testbed}]
+                {\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
+                \newline
+                \subfloat[Simulation with different end-host delays.
+                T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
+                {\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
+                \caption{Average reordering delay.}
+                \label{fig:reorder-delay}
+        \end{minipage}
+        \hspace{0.01\textwidth}
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
+                {\includegraphics[width=\textwidth]{gnuplot/beacon_network_overhead.eps}}
+                \newline
+                \subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
+                {\includegraphics[width=\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
+                \caption{
+                        Beacon overhead under different beacon intervals and network throughput.
+                        CPU processing overhead for Arista switch is extrapolated.
+                }
+                \label{fig:overhead}
+        \end{minipage}
+\vspace{-1.6em}
+\end{figure*}
+
+
+We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around four aspects:
 
 \parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit, and scales linearly to 1K hosts (Sec.\ref{subsubsec:scalability}).
 
 \parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay (Sec.\ref{sec:eval-delay}).
 
 \parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core (Sec. \ref{sec:eval-overhead} and \ref{sec:eval-cpu-overhead}).
-
-\parab{Fault tolerance.}When a host, switch or link fails, non-failure nodes resumes normal throughput and latency in a beacon timeout (1ms). When a node recovers from failure, it can join the system in one RTT (10$\mu$s).
 
 \parab{Background traffic.}\sys is adaptive to delay variance in the network and the clocks are re-synchronized for every beacon interval. Hence, \sys can share the network fairly with background TCP traffic.
 
@@ -67,53 +108,10 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \subsection{Scalability and Efficiency}
 
-\begin{figure*}[t]
-        \begin{minipage}[t]{.32\textwidth}
-                \centering
-                \subfloat[Throughput]{
-                        \includegraphics[width=\textwidth]{gnuplot/total_order.eps}
-                }
-                \newline
-                \subfloat[Latency]{
-                        \includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
-                }
-                \caption{Scalability comparison of total order algorithms.}
-                \label{fig:total-order}
-        \end{minipage}
-        \hspace{0.01\textheight}
-        \begin{minipage}[t]{.32\textwidth}
-                \centering
-                \subfloat[Reconfigurable chip, switch CPU and end hosts.\label{fig:reorder-testbed}]
-                {\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
-                \newline
-                \subfloat[Simulation with different end-host delays.
-                T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
-                {\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
-                \caption{Average reordering delay.}
-                \label{fig:reorder-delay}
-        \end{minipage}
-        \hspace{0.01\textwidth}
-        \begin{minipage}[t]{.32\textwidth}
-                \centering
-                \subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
-                {\includegraphics[width=\textwidth]{gnuplot/beacon_network_overhead.eps}}
-                \newline
-                \subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
-                {\includegraphics[width=\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
-                \caption{
-                        Beacon overhead under different beacon intervals and network throughput.
-                        CPU processing overhead for Arista switch is extrapolated.
-                }
-                \label{fig:overhead}
-        \end{minipage}
-\vspace{-1.6em}
-\end{figure*}
 
 \subsubsection{Scalability of Total Ordering}\label{subsubsec:scalability}
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
-It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottleneck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. 
-
-Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, we achieve scalable and efficient log replication.
+It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottleneck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, \sys can achieve scalable and efficient log replication.
 
 %Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
 
@@ -140,6 +138,42 @@ Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adap
 %\caption{CDF of end-to-end delay and reordering delay.}
 %\label{fig:cdf-delay}
 %\end{figure}
+\begin{figure*}[t!]
+	\begin{minipage}{.31\textwidth}
+    	\centering
+		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
+		\caption{Reordering CPU and memory overhead on hosts.}
+		\label{fig:reorder-overhead}
+
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/reordering_delay.eps}
+		\caption{Reordering delay with clock synchronization methods and background traffic (BG).}
+		\label{fig:clock-sync}
+	\end{minipage}
+	\hspace{0.01\textwidth}
+    \begin{minipage}{.31\textwidth}
+      \centering
+      \subfloat[Throughput.\label{fig:loss-throughput}]
+      {\includegraphics[width=\textwidth]{gnuplot/loss_tput.eps}}
+      \vspace{0.01\textwidth}
+      \subfloat[Latency.\label{fig:loss-latency}]
+      {\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}}
+      \caption{Comparison of reliable \sys and application-layer transaction rollback.}
+      \label{fig:ycsb-loss}
+    \end{minipage}
+    \hspace{0.01\textwidth}
+    \begin{minipage}{.31\textwidth}
+    	\centering
+		\includegraphics[width=\textwidth]{gnuplot/ycsb.eps}
+		\caption{Throughput and latency of YCSB+T transactional key-value stores.}
+		\label{fig:ycsb}
+
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/multishard.eps}
+		\caption{Throughput of multiple keys per transaction.}
+		\label{fig:multishard}
+    \end{minipage}
+\end{figure*}
 
 
 \subsubsection{Network Overhead}
@@ -156,46 +190,6 @@ Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon proc
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. When \sys co-exists with background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
-
-\subsection{Deep Dive}
-
-Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
-
-\begin{table}
-\centering
-\scalebox{0.9}{
-\begin{tabular}{l|r|r|r|r}
-        \hline
-         & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
-    \hline
-    \hline
-    $S_1$ fail & N/A & N/A & $T_{timeout}$ & $T_{timeout}$ \\
-    \hline
-    $S_1$ recover & RTT & RTT & 0 & 0 \\
-    \hline
-    $R_1$ fail & N/A & $T_{timeout}$ & N/A & $T_{timeout}$ \\
-    \hline
-    $R_1$ recover & RTT & 0 & RTT & 0 \\
-    \hline
-    $SW_1$ fail & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ \\
-    \hline
-    $SW_1$ recover & 0 & 0 & 0 & 0 \\
-    \hline
-\end{tabular}
-}
-\caption{
-        Convergence time after failure and recovery of host and switch.
-        Convergence time is the time since the event occurs until end-to-end delay recovers to normal.
-    Convergence time 0 indicates not affected.
-    $T_{timeout}$ is the beacon timeout for failure detection.
-}
-\label{tab:failure}
-\end{table}
-
-We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ interconnected via two switches $SW_1, SW_2$.
-Each switch is connected to all four hosts.
-Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
-When a node fails, non-failure nodes resume operation after $T_{timeout}$. When a node recovers, it rejoins the network in an RTT, and does not affect other parts of the system.
 
 
 \iffalse

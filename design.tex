@@ -565,6 +565,47 @@ With minimax clock synchronization, the entire network synchronize clocks in one
 Consequently, only one RTT is required for failure recovery and adding new nodes.
 Since adding a host has low latency overhead, when a host stops using \sys, it can notify the switch its exit and stop sending beacons, but it must rejoin before sending messages again.
 
+
+\begin{table}
+\centering
+\scalebox{0.9}{
+\begin{tabular}{l|r|r|r|r}
+        \hline
+         & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
+    \hline
+    \hline
+    $S_1$ fail & N/A & N/A & $T_{timeout}$ & $T_{timeout}$ \\
+    \hline
+    $S_1$ recover & RTT & RTT & 0 & 0 \\
+    \hline
+    $R_1$ fail & N/A & $T_{timeout}$ & N/A & $T_{timeout}$ \\
+    \hline
+    $R_1$ recover & RTT & 0 & RTT & 0 \\
+    \hline
+    $SW_1$ fail & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ \\
+    \hline
+    $SW_1$ recover & 0 & 0 & 0 & 0 \\
+    \hline
+\end{tabular}
+}
+\caption{
+        Convergence time after failure and recovery of host and switch.
+        Convergence time is the time since the event occurs until end-to-end delay recovers to normal.
+    Convergence time 0 indicates not affected.
+    $T_{timeout}$ is the beacon timeout for failure detection.
+}
+\label{tab:failure}
+\end{table}
+
+As a case study, we consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ interconnected via two switches $SW_1, SW_2$.
+Each switch is connected to all four hosts.
+As shown in Table~\ref{tab:failure}, when a node fails, non-failure nodes resume operation after $T_{timeout}$. When a node recovers, it rejoins the network in an RTT, and does not affect other parts of the system.
+
+
+
+
+
+
 \iffalse
 \subsection{Inter-DC Topology}
 \label{sec:inter-dc}
