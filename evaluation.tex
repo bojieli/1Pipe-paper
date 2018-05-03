@@ -155,7 +155,7 @@ Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon proc
 
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
-Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. 
+Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. When \sys co-exists with background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
 
 \subsection{Deep Dive}
 
