@@ -83,7 +83,7 @@ To make simulations faster, each sender only sends one message to a randomly cho
         \hspace{0.01\textheight}
         \begin{minipage}[t]{.32\textwidth}
                 \centering
-                \subfloat[Reconfigurable switch (P4 switch), fixed-function switch (switch CPU) or end hosts.\label{fig:reorder-testbed}]
+                \subfloat[Reconfigurable chip, switch CPU and end hosts.\label{fig:reorder-testbed}]
                 {\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
                 \newline
                 \subfloat[Simulation with different end-host delays.
@@ -124,9 +124,11 @@ It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation
 \label{sec:eval-delay}
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
-Reordering delay is the interval from message arrival to delivery. Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
-As the number of network layers increases, the reordering delay increases, due to beacon processing delay at each switch.
-\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
+Reordering delay is the interval from message arrival to delivery. 
+
+Using end host representatives to process beacons introduces extra forwarding delay from the switch to the end host representative.
+As the number of network layers increases, the reordering delay also increases, due to per-hop beacon processing delay.
+%\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
 For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
 
 Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays.
