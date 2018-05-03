@@ -53,20 +53,13 @@ Clients scatter operations to sites and gather responses.
 %As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 %For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
 
-
-
-
-
-We use the second testbed (commodity switches) as Sec.~\ref{sec:testbed} with 8 sites.
-We set the beacon interval to 10~$\mu$s.
+We use the second testbed (commodity switches).
 Figure~\ref{fig:ycsb} shows the throughput and latency, where each atomic operation accesses two randomly chosen objects.
 \sys achieves 6.4~M transactions per server (0.8~M transactions per core) with 40~$\mu$s latency, close to an non-atomic system (NonTX) where operations are scattered directly without ordering.
 The throughput gap between \sys and NonTX is mainly due to CPU processing of reordering messages.
 The latency gap originates from the reordering delay.
 In comparison, the throughput of locks is limited by RTT.
 The throughput of centralized coordination is bottlenecked by the coordinator.
-
-\RED{Remove TAPIR, Eris in the figures.}
 
 Figure~\ref{fig:multishard} compares the throughput with an increasing number of keys per atomic scattering.
 Now we consider other timestamp-based methods.
@@ -76,18 +69,13 @@ With more keys per scattering, the chance of transaction abort increases, becaus
 %Each transaction accesses 8 unique remote objects.
 %If the 8 objects are on two shards, OCC has 50\% chance of transaction abort, so the throughput is 50\% of non-transactional systems. When the objects are distributed on more shards, OCC has an exponentially higher chance of abort (Sec.~\ref{sec:toms}). The throughputs of other systems are unrelated to number of shards. \sys has 10x transaction throughput than lock-based systems, as well as OCC systems with more than 4 shards per transaction. The throughput of \sys is close to the theoretical bound of non-transactional system.
 
-
-
-
-\RED{Rewrite the following paragraphs.}
-
 Finally, we study the efficiency of our loss detection and recovery mechanism in Sec.~\ref{sec:lossy}.
 Assume 1/10 of the transactions have conflicts, \textit{i.e.}, if a transaction is rollbacked, 1/10 of uncommitted transactions also need rollback.
 Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under different loss ratios.
 With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput.
 If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
 
-On the latency side, reliable \sys adds one RTT of latency to derive the ACK barrier.
+On the latency side, reliable \sys adds one RTT of latency to derive the commit barrier.
 If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
 When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency.
 Under high packet loss probability, however, handling losses in \sys is better.
@@ -114,13 +102,13 @@ We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}.
 \begin{figure*}[t]
 \centering
 	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpc-c-new-order}]
-	{\includegraphics[width=.3\textwidth]{images/fixme.pdf}}
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
 	\hspace{0.02\textwidth}
 	\subfloat[Payment 100\%.\label{fig:tpc-c-payment}]
-	{\includegraphics[width=.3\textwidth]{images/fixme.pdf}}
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-payment.eps}}
     \hspace{0.02\textwidth}
     \subfloat[New-Order 100\%.\label{fig:tpc-c-payment}]
-	{\includegraphics[width=.3\textwidth]{images/fixme.pdf}}
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
 \caption{[Testbed] TPC-C benchmark with 4 districts.}
 \label{fig:tpc-c}
 \end{figure*}

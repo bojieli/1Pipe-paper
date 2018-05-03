@@ -123,7 +123,6 @@ In timestamp-based ordering, a receiver waits for timestamps from  other receive
 \label{sec:eval-delay}
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay in different system scales.
-Because the beacon interval is 100~$\mu$s, the average reordering delay to wait for the next beacon is 50~$\mu$s.
 Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
 As the number of network layers increase, the reordering delay increase, due to beacon processing delay at each switch.
 The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times.
@@ -131,9 +130,9 @@ For three-layer topology, the number of hosts adds slightly to reordering delay,
 
 Figure~\ref{fig:reorder-simulation} compares how minimax clock synchronization adapts to imbalanced link or host delays.
 We simulate two senders and two receivers connected via 4 links.
-When one sender $S_1$ has 100~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
+When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
 When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.
-When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\mu$s more delay, minimax clock synchronization can compensate the change.
+When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
 
