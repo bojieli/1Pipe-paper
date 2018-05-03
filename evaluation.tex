@@ -28,7 +28,112 @@ Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~
 In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for sending and receiving, respectively.
 For experiments with 16$\sim$128 hosts, we use each physical server as 16 logical servers. Each logical server has a pair of dedicated cores, maintains timestamps independently and communicates via separate RDMA queue pairs.
 To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator.
-We chooses~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.\RED{maximum delay in Figure~\ref{fig:reorder-simulation} is 20us, not 100us}
+We choose beacon interval to be 10~$\mu$s.
+
+
+\iffalse
+\begin{table}[t]
+\centering
+\scalebox{0.85}{
+\begin{tabular}{|l|r|r|r|r|r|r|}
+\hline
+Servers & \multicolumn{3}{c|}{Num switches} & \multicolumn{3}{c|}{Num downlinks} \\
+\hline
+Host & ToR & Leaf & Core & ToR & Leaf & Core \\
+\hline
+2        & 1 & 0 & 0 & 2 & 0 & 0 \\
+\hline
+4    & 2 & 2 & 0 & 2 & 2 & 0 \\
+\hline
+8    & 4 & 4 & 2 & 2 & 2 & 4 \\
+\hline
+64    & 8 & 4 & 2 & 8 & 4 & 4 \\
+\hline
+1024  & 64 & 16 & 8 & 16 & 16 & 16 \\
+\hline
+\end{tabular}
+\vspace{-10pt}
+}
+\caption{Network topologies for evaluation.}
+\label{tab:eval-topology}
+\end{table}
+
+We evaluate 5 different system scales in Table~\ref{tab:eval-topology}: testbed consisting of one to three layers of network switches, as well as simulation of three-layer fat-tree topology with 64 or 1024 hosts.
+Topologies in Table~\ref{tab:eval-topology}.
+For large-scale experiments, we use NS-3~\cite{henderson2008network} for simulation.
+The link bandwidth, link delay and processing delay are extracted from three-layer testbed experiments.
+To make simulations faster, each sender only sends one message to a randomly chosen receiver.
+\fi
+
+\subsection{Scalability and Efficiency}
+
+\begin{figure*}[t]
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Throughput]{
+                        \includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+                }
+                \newline
+                \subfloat[Latency]{
+                        \includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
+                }
+                \caption{Scalability comparison of total order algorithms.}
+                \label{fig:total-order}
+        \end{minipage}
+        \hspace{0.01\textheight}
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Reconfigurable switch (P4 switch), fixed-function switch (switch CPU) or end hosts.\label{fig:reorder-testbed}]
+                {\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
+                \newline
+                \subfloat[Simulation with different end-host delays.
+                T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
+                {\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
+                \caption{Average reordering delay.}
+                \label{fig:reorder-delay}
+        \end{minipage}
+        \hspace{0.01\textwidth}
+        \begin{minipage}[t]{.32\textwidth}
+                \centering
+                \subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
+                {\includegraphics[width=\textwidth]{gnuplot/beacon_network_overhead.eps}}
+                \newline
+                \subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
+                {\includegraphics[width=\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
+                \caption{
+                        Beacon overhead under different beacon intervals and network throughput.
+                        CPU processing overhead for Arista switch is extrapolated.
+                }
+                \label{fig:overhead}
+        \end{minipage}
+\vspace{-1.6em}
+\end{figure*}
+
+\subsubsection{Scalability of Total Ordering}
+
+Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
+For \sys, the throughput is bottlenecked by CPU processing and RDMA messaging rate (8~M messages per second per core).
+It scales almost linearly to 128 hosts on our testbed and 1K hosts in simulation.
+Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
+In timestamp-based ordering, a receiver waits for timestamps from  other receivers before delivery, introducing delivery delay as well as network overhead.
+
+
+
+
+\subsubsection{Reordering Delay}
+\label{sec:eval-delay}
+
+Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
+Reordering delay is the time from receiving a message to delivering it.
+Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
+As the number of network layers increases, the reordering delay increases, due to beacon processing delay at each switch.
+\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
+For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
+
+Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays.
+We simulate two senders and two receivers connected via 4 links.
+When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
+When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.\RED{maximum delay in Figure~\ref{fig:reorder-simulation} is 20us, not 100us}
 When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
