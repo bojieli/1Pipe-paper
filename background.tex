@@ -60,9 +60,9 @@ This loop-free topology enables hierarchical aggregation of barrier timestamps, 
 The switch consists of a switching chip~\cite{broadcom,tofino} and a CPU (Figure~\ref{fig:switch}). The switch operating system~\cite{arista-eos} runs on the CPU to control the switching chip (\textit{e.g.} configure chip registers). The switching chip forwards selected traffic (typically control plane traffic, \textit{e.g.}, DHCP and BGP) to the CPU for processing via a virtual NIC. 
 
 The switching chip is composed of an ingress pipeline, multiple FIFO queues and an egress pipeline.
-%When a packet is received from an \textit{input link}, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
-%The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to \textit{output links}.
-Without going into details, we want to point out that one key property of the switch is that the queuing model ensures FIFO property for packets with the same ingress and egress port, 
+When a packet is received from an \textit{input link}, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
+The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to \textit{output links}.
+One key property of the switch is that the queuing model ensures FIFO property for packets with the same ingress and egress port, 
 if the packets have the same priority. In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
 The data center switch can provide good programmability. First, the CPU can be used to process (a small amount of) data plane packets~\cite{lu2011serverswitch}.
