@@ -75,14 +75,15 @@ To make simulations faster, each sender only sends one message to a randomly cho
 	\includegraphics[width=.24\textwidth]{gnuplot/total_order.eps}
 }
 \subfloat[Latency]{
-	\includegraphics[width=.24\textwidth]{gnuplot/total_order.eps}
+	\includegraphics[width=.24\textwidth]{gnuplot/total_order_lat.eps}
 }
 \caption{Scalability comparison of total order algorithms.}
 \label{fig:total-order}
 \end{figure}
 
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
-Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still not scalable.
+Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
+Timestamp-based ordering requires hosts to wait for timestamps from each other, which introduces 
 
 
 \subsection{Efficiency}
