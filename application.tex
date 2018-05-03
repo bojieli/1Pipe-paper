@@ -34,7 +34,7 @@
 
 		\centering
 		\includegraphics[width=\textwidth]{gnuplot/multishard.eps}
-		\caption{Throughput of multiple keys per transaction.}
+		\caption{Throughput of multiple keys per transaction. \RED{Y label, M  txn/s?}}
 		\label{fig:multishard}
     \end{minipage}
 \end{figure*}
@@ -61,7 +61,7 @@ The latency gap originates from the reordering delay.
 In comparison, the throughput of locks is limited by RTT.
 The throughput of centralized coordination is bottlenecked by the coordinator.
 
-Figure~\ref{fig:multishard} compares the throughput with an increasing number of keys per atomic scattering.
+Figure~\ref{fig:multishard} compares the throughput \RED{what throughput, single server? single core?} with an increasing number of keys per atomic scattering.
 Now we consider other timestamp-based methods.
 With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
 
@@ -75,7 +75,7 @@ Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under
 With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput.
 If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
 
-On the latency side, reliable \sys adds one RTT of latency to derive the commit barrier.
+On the latency side, reliable \sys adds one RTT of latency to derive the commit barrier \RED{delivery barrier?}.
 If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
 When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency.
 Under high packet loss probability, however, handling losses in \sys is better.
