@@ -1,10 +1,18 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
-\RED{Evaluation was written in a rush. Need rewrite.}
-
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
-In this section, we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions.
+Our evaluation centers around four aspects:
+
+\parab{Efficiency.} First, \sys achieves low reordering delay, which is the delay from receiving to delivering a packet. With beacon interval of 100$\mu$s, we achieve 
+
+\parab{Scalability.}
+
+\parab{Fault tolerance.}
+
+\parab{Real-world application.}
+
+we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions.
 Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
 
 \subsection{Methodology}
@@ -174,39 +182,36 @@ As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size 
 \begin{table}
 \centering
 \scalebox{0.9}{
-\begin{tabular}{l|l|l|l|l}
+\begin{tabular}{l|r|r|r|r}
 	\hline
 	 & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
     \hline
     \hline
-    $S_1$ fail & & & & \\
+    $S_1$ fail & N/A & N/A & $T_{timeout}$ & $T_{timeout}$ \\
     \hline
-    $S_1$ recover & & & & \\
+    $S_1$ recover & RTT & RTT & 0 & 0 \\
     \hline
-    $R_1$ fail & & & & \\
+    $R_1$ fail & N/A & $T_{timeout}$ & N/A & $T_{timeout}$ \\
     \hline
-    $R_1$ fail & & & & \\
+    $R_1$ recover & RTT & 0 & RTT & 0 \\
     \hline
-    $L$ fail & & & & \\
+    $SW_1$ fail & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ & $T_{timeout}$ \\
     \hline
-    $L$ recover & & & & \\
-    \hline
-    $SW_1$ fail & & & & \\
-    \hline
-    $SW_1$ recover & & & & \\
+    $SW_1$ recover & 0 & 0 & 0 & 0 \\
     \hline
 \end{tabular}
 }
 \caption{
-	Convergence time of failure and recovery of host, link and switch.
-	$L$ is the link from $S_1$ to $SW_1$.
+	Convergence time after failure and recovery of host and switch.
 	Convergence time is the time since the event occurs until end-to-end delay recovers to normal.
+    Convergence time 0 indicates not affected.
+    $T_{timeout}$ is the beacon timeout for failure detection.
 }
 \label{tab:failure}
 \end{table}
 
 We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ interconnected via two switches $SW_1, SW_2$.
-Each switch is connected to all four hosts for redundancy.
+Each switch is connected to all four hosts.
 Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
 \RED{Bojie will fill the table.}
 

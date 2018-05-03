@@ -281,7 +281,7 @@ Last assigned message timestamp: $T_{last}$ \;
 
 %\parab{Adjust logical time}
 Because message timestamps can not decrease, when the new offset $O_s^{new}$ is smaller than $O_s^{old}$, the system has to ``stall'' the logical clock rather than decrease it.
-During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. Algorithm~\ref{alg:clock} shows the procedure. This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$, \textcolor{red}{making all the senders be synchronized to the receiver's local clock time.}
+During stall, the offset $O_s$ is adjusted so that the logical clock increases by 1 per scattering until it reaches the target offset $O_s^{new}$. Algorithm~\ref{alg:clock} shows the procedure. This algorithm can be trivially extended to the case where there are multiple senders $S_i \in \mathcal{S}$, making all the senders be synchronized to the receiver's local clock time.
 
 Now we extend to multiple receivers $R_i \in \mathcal{R}$.
 %In a data center, each sender is also a receiver, but we denote the send and receive roles separately for clarity.
@@ -294,12 +294,13 @@ Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new
 \vspace{-1em}
 \begin{equation*}
 \begin{aligned}
-T'_k & = \texttt{BackFunc} \{ \texttt{FwdFunc} \{ T_i | i \in \mathcal{S} \} + RTT_{kj} | j \in \mathcal{R} \}
+T'_k & = \texttt{BackFunc}_k \{ \texttt{FwdFunc}_j \{ T_i | i \in \mathcal{S} \} + RTT_{kj} | j \in \mathcal{R} \}
 \end{aligned}
 \end{equation*}
 
+In this way, each sender aggregates information about all senders' clocks and the network delay between each pair of sender and receiver.
 Because a logical clock needs to be stalled if it is adjusted to be lower, thus causing increased reordering delay, we aim to minimize clock stalls.
-Consequently, all clocks should catch up with the clock with the highest offset, indicating that \texttt{FwdFunc} should be \texttt{max}.
+Consequently, all clocks should catch up with the sender's clock with the highest offset, indicating that \texttt{FwdFunc} should be \texttt{max}.
 %If we choose \texttt{BackFunc} to also be \texttt{max}, in some networks with delay imbalance, the clocks would not converge.
 %Convergence means that $\forall k \in \mathcal{S}, T'_k = T_k$.
 We choose \texttt{BackFunc} to be \texttt{min}, and prove in Appendix~\ref{appx:minimax} that with this choice, given any initial clock offsets, clocks converge in one RTT.
@@ -437,16 +438,15 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \section{\sys in Unreliable Networks}
 \label{sec:design-unreliable}
 
-Previous section achieves \sys in reliable networks.
-In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
+Previous section describes \sys in reliable networks. In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
 
-In data centers, network links experience one packet loss or corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}.
-In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
-\sys detects packet loss and corruption on last-hop links and queues using packet loss counter in commodity NICs and switches.
-Because switches do not have enough buffer~\cite{bai2017congestion}, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
+In data centers, network links experience a packet corruption every $10^5$ \texttildelow $10^7$ packets~\cite{zhuo2017understanding}. In addition, packets may get dropped due to congestion and device bugs~\cite{guo2015pingmesh}.
+%In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
+
+\sys detects packet loss and corruption on last-hop links and queues using packet loss counter in NICs and switches. Given the limited switch buffer resource, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
 Since retransmitted packets may violate the barrier property, we add a special mark to them.
 
 Due to packet loss, the barrier timestamp is no longer sufficient for message delivery because message might get dropped and retransmitted. If messages are immediately delivered when their timestamp is below the barrier, a retransmitted message with lower timestamp may get delivered out of order.
