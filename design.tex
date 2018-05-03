@@ -356,7 +356,7 @@ Each end-host will add RTT to received feedback timestamp, just as illustrated i
 When considering switches, one-hop RTT will be measured and compensated for feedback by each switch.
 
 The challenge is that there are multiple senders and receivers, so we must aggregate timestamps from different hosts.
-Let \texttt{FwdFunc} aggregate sender timestamps $T_i, i \in \mathcal{S}$ and \texttt{BackFunc} aggregate feedbacks from receivers $j \in \mathcal{R}$.
+Let \texttt{FwdFunc} aggregate sender timestamps $T_i, i \in \mathcal{S}$ and \texttt{BackFunc} aggregate feedback from receivers $j \in \mathcal{R}$.
 To simplify discussion, assume $d_{ij}$ is a fixed (but not measurable) one-way delay from sender $i$ to a receiver $j$, $r_{ji}$ is the fixed delay from receiver $j$ to sender $i$, and $RTT_{ij} = d_{ij} + r_{ji}$ is measurable.
 The new event timestamp $T'_k$ on a sender $k \in \mathcal{S}$ is:
 
@@ -444,7 +444,7 @@ In this section, we discuss how to maintain the ordering and atomicity of messag
 
 To address this problem, a traditional solution is two-phase commit (2PC). In 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message. This approach requires three one-way delays when no packet loss happens.
 
-\parab{Solution.}We aim to deliver messages with an one-way delay when no packet loss happpens, and fall back to the 2PC-like protocol when any packet loss happens. To achieve this, \sys leverages NICs and switches to detect packet losses. Hosts locate and retransmit lost packets via TCP-like loss recovery.
+\parab{Solution.}We aim to deliver messages with an one-way delay when no packet loss happens, and fall back to the 2PC-like protocol when any packet loss happens. To achieve this, \sys leverages NICs and switches to detect packet losses. Hosts locate and retransmit lost packets via TCP-like loss recovery.
 
 %\sys detects packet losses on last-hop links and queues using packet loss counter in NICs and switches. Given the limited switch buffer resource, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
 %Since retransmitted packets may violate the barrier property, we add a special mark to them.
