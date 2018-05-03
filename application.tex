@@ -49,9 +49,9 @@ With more keys per scattering, the chance of transaction abort increases, becaus
 
 Finally, we study the efficiency of our loss detection and recovery mechanism in Sec.~\ref{sec:lossy}.
 Assume 1/10 of the transactions have conflicts, \textit{i.e.}, if a transaction is rollbacked, 1/10 of uncommitted transactions also need rollback.
-Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under different loss ratios.
+Figure~\ref{fig:ycsb-loss} simulates the transaction throughput and latency under different loss ratios.
 With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput.
-If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
+If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions on packet loss.
 
 On the latency side, reliable \sys adds one RTT of latency to derive the delivery barrier.
 If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
@@ -77,7 +77,7 @@ Now we apply \sys to concurrent control in one-shot transactions.
 We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 To evaluate different concurrency control algorithms, we use 4 warehouses. 
 As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale, because each Payment transaction updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
-The throughput of \sys scales linearly with number of host
+The throughput of \sys scales linearly with number of concurrent hosts. With 128 hosts, \sys supports 18M Payment, 3.2M New-Order or 5.3M combined transactions, which is close to a non-transactional (NonTX) baseline system.
 
 
 
