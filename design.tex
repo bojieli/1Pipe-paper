@@ -459,7 +459,11 @@ In \sys, we rename the original barrier to \textit{loss-free barrier} and add a 
 Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages according to the loss-free barrier. Otherwise, it delivers based on delivery barrier.
 
 When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
-In \sys, the receiver ACK\RED{send ACKs?} to the sender when it receives a message. Such a message is buffered but not delivered. Unlike regular 2PC, because \sys can only deliver a message after delivering all messages with lower timestamps, instead of multicasts commit messages, the sender sends \textit{update delivery barrier} messages. \sys hierarchically aggregate the updated delivery barriers in network so that the receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.\RED{Rewrite}
+In \sys, the receiver replies ACKs to the sender when it receives a message.
+Then the message is buffered as a prepared message, not delivered.
+Unlike regular 2PC, \sys can only deliver a message after delivering all messages with lower timestamps.
+Instead of multicasting commit messages, the sender sends messages with updated delivery barrier.
+\sys hierarchically aggregates updated delivery barriers in network so that receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
 
 When delivery barrier catches up with loss-free barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
 
