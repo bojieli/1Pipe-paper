@@ -111,7 +111,9 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \subsubsection{Scalability of Total Ordering}\label{subsubsec:scalability}
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
-It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottneleck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. 
+It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottleneck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. 
+
+Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, we achieve scalable and efficient log replication.
 
 %Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
 
@@ -153,7 +155,7 @@ Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon proc
 
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
-Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP).
+Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization
 
 \subsection{Deep Dive}
 
@@ -193,8 +195,8 @@ Then we deep dive into the behavior of \sys under packet loss, failure and incre
 We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ interconnected via two switches $SW_1, SW_2$.
 Each switch is connected to all four hosts.
 Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
+When a node fails, non-failure nodes resume operation after $T_{timeout}$. When a node recovers, it rejoins the network in an RTT, and does not affect other parts of the system.
 
-Figure~\ref{fig:background-flow} shows the reordering delay when a background flow is inserted. \RED{Should be removed as well?}
 
 \iffalse
 \subsubsection{Incremental Deployment}

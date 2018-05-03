@@ -111,9 +111,8 @@ By FIFO order, $A \rightarrow O$ is ordered before $A \rightarrow B$. By causali
 Consequently, $A \rightarrow O$ is before $B \rightarrow O$.
 Therefore, the write operation is delivered before the read operation, thus avoiding WAW hazard.
 
-In IRIW and IMW hazards, messages $A \rightarrow O_1$ and $A \rightarrow O_2$ belong to a same scattering $S_1$, and $B \rightarrow O_1$ and $B \rightarrow O_2$ belong to another scattering $S_2$.
-By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarrow O_1$ if and only if $O_2$ delivers $A \rightarrow O_2$ before $B \rightarrow O_2$.
-Therefore, \sys ensures consistency between metadata and data (in IRIW hazard) and consistent history among replicas (in IMW hazard).
+In IRIW and IMW hazards, messages $A \rightarrow O_1$ and $A \rightarrow O_2$ belong to scattering $S_1$, and $B \rightarrow O_1$ and $B \rightarrow O_2$ belong to scattering $S_2$.
+By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarrow O_1$ if and only if $O_2$ delivers $A \rightarrow O_2$ before $B \rightarrow O_2$. Therefore, \sys ensures consistency between metadata and data (IRIW hazard) and consistent history among replicas (IMW hazard).
 
 %We implement the total order of message scatterings using explicit timestamps.
 %Each sender assigns a monotonically increasing timestamp to each message scattering.
@@ -285,7 +284,7 @@ For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers
 Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable}, use Lamport timestamps~\cite{lamport1978time} or run a consensus protocol among receivers~\cite{lamport1998part}.
 
 Critics and proponents of causal and totally ordered communication have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
-\sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the most serious criticism of this primitive.
+\sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
 
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
 Mostly-Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.

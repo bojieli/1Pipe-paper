@@ -61,7 +61,7 @@ The latency gap originates from the reordering delay.
 In comparison, the throughput of locks is limited by RTT.
 The throughput of centralized coordination is bottlenecked by the coordinator.
 
-Figure~\ref{fig:multishard} compares the throughput \RED{what throughput, single server? single core?} with an increasing number of keys per atomic scattering.
+Figure~\ref{fig:multishard} compares the single-core transaction throughput with an increasing number of keys per atomic scattering.
 Now we consider other timestamp-based methods.
 With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
 
@@ -119,14 +119,6 @@ For Payment transaction, throughput cannot scale with number of concurrent clien
 
 With 1024 districts.
 OCC peak at X due to timestamp assignment.~\cite{yu2014staring} Ours can still scale because no centralized timestamp assignment.
-
-\subsection{Serializable Log Replication}
-\label{subsec:eval-replication}
-
-Compare latency and throughput of \sys with network sequencer (control path) and centralized coordinator (data path).
-Just list some numbers in one paragraph.
-\RED{Bojie should fill in the numbers.}
-
 
 
 %\subsection{Multiple Round-Trip Transactions}
