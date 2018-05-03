@@ -71,16 +71,17 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \begin{figure}[t]
 \centering
-\begin{minipage}{0.4\textwidth}{
+\begin{minipage}{0.33\textwidth}
 \subfloat[Throughput]{
 	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
 }
+\hspace{0.01\textwidth}
 \subfloat[Latency]{
 	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
 }
 \caption{Scalability comparison of total order algorithms.}
 \label{fig:total-order}
-}
+\end{minipage}
 \end{figure}
 
 Figure~\label{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
