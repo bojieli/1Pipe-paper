@@ -290,13 +290,7 @@ If we want to follow the approach above for each receiver, we need to synchroniz
 In this regard, we add a \textit{forward pass} in which every sender $S_i$ sends clock sync messages to every receiver $R_j$ to synchronize the clock of $R_j$, then run the \textit{backward pass} like above from $R_j$ to $S_i$.
 In both passes, each node can calculate potentially different offset adjustments from multiple peers, so we need two aggregation functions to resolve conflicts, namely \texttt{FwdFunc} and \texttt{BackFunc}.
 Assume the sender logical clocks are $T_k, k \in \mathcal{S}$ initially, the new logical clocks $T'_k$ after two passes should be:
-
-\vspace{-1em}
-\begin{equation*}
-\begin{aligned}
-T'_k & = \texttt{BackFunc}_k \{ \texttt{FwdFunc}_j \{ T_i | i \in \mathcal{S} \} + RTT_{kj} | j \in \mathcal{R} \}
-\end{aligned}
-\end{equation*}
+$T'_k  = \texttt{BackFunc}_k \{ \texttt{FwdFunc}_j \{ T_i | i \in \mathcal{S} \} + RTT_{kj} | j \in \mathcal{R} \}$
 
 In this way, each sender aggregates information about all senders' clocks and the network delay between each pair of sender and receiver.
 Because a logical clock needs to be stalled if it is adjusted to be lower, thus causing increased reordering delay, we aim to minimize clock stalls.
@@ -549,7 +543,7 @@ Next, we deal with failure of network switches or links.
 If a failure does not block communication between any pair of hosts, it only causes a brief interval of packet losses.
 Otherwise, the sender would timeout in retransmission and \textit{recall} messages from other receivers.
 If a failure disconnects an end host from the network (\textit{e.g.} ToR switch failure), nearby switches would broadcast the host failure.
-\RED{Q1:should every switch records which host may pass through which input link? so that the switch is able to broadcast (potential) host failure. It seems really difficult. Q2:What if switches hold different opinions about whether a host fails. Is it possible?}
+%\RED{Q1:should every switch records which host may pass through which input link? so that the switch is able to broadcast (potential) host failure. It seems really difficult. Q2:What if switches hold different opinions about whether a host fails. Is it possible?}
 In the extreme case of network partition, all cross-partition scatterings will fail and scatterings within a partition still proceed with total order.
 
 %Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
