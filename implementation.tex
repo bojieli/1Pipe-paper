@@ -25,9 +25,9 @@ In the following, we present implementations of in-network processing at three t
 \subsection{Reconfigurable Switching Chips}
 \label{sec:p4}
 The reconfigurable switching chip can maintain 
-a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, for the switch with a reconfigurable chip, we can implement the in-network processing logics on the chip. 
+a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip. 
 
-We choose Barefoot Tofino~\cite{tofino} chip for the implementation. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, unreliable barrier and commit barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
+We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, unreliable barrier and commit barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
 A timestamp is a 6-byte integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 7.8 hours, 
 We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
 %to compare timestamps: If $s$ and $t$ are timestamps, $s < t$ if and only if $0 < t - s < 2^{47}$, computed in 48-bit unsigned arithmetic. 
