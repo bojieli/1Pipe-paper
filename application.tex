@@ -16,10 +16,20 @@ Clients scatter operations to sites and gather responses.
 
 
 \begin{figure}[t]
-\centering
-\includegraphics[width=.45\textwidth]{gnuplot/ycsb.eps}
-\caption{[Testbed] Throughput and latency of YCSB+T transactional key-value stores.\RED{Should update legend to `ROMS'}}
-\label{fig:ycsb}
+	\centering
+	\captionsetup{font=small,margin=0.5em}
+	\begin{minipage}[t]{.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/ycsb.eps}
+		\caption{[Testbed] Throughput and latency of YCSB+T transactional key-value stores.}
+		\label{fig:ycsb}
+	\end{minipage}
+	\begin{minipage}[t]{.23\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/multishard.eps}
+		\caption{[Testbed] Throughput of multiple keys per transaction.}
+		\label{fig:multishard}
+	\end{minipage}
 \end{figure}
 
 
@@ -33,15 +43,6 @@ In comparison, the throughput of locks is limited by RTT.
 The throughput of centralized coordination is bottlenecked by the coordinator.
 
 \RED{Remove TAPIR, Eris in the figures.}
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=.35\textwidth]{gnuplot/multishard.eps}
-\caption{[Testbed] Throughput of multiple keys per transaction.\RED{Should update legend to `ROMS'}}
-\label{fig:multishard}
-\vspace{-10pt}
-\end{figure}
 
 Figure~\ref{fig:multishard} compares the throughput with an increasing number of keys per atomic scattering.
 Now we consider other timestamp-based methods.

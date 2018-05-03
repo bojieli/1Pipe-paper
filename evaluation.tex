@@ -71,17 +71,14 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \begin{figure}[t]
 \centering
-\begin{minipage}{0.33\textwidth}
 \subfloat[Throughput]{
-	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+	\includegraphics[width=.24\textwidth]{gnuplot/total_order.eps}
 }
-\hspace{0.01\textwidth}
 \subfloat[Latency]{
-	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+	\includegraphics[width=.24\textwidth]{gnuplot/total_order.eps}
 }
 \caption{Scalability comparison of total order algorithms.}
 \label{fig:total-order}
-\end{minipage}
 \end{figure}
 
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
@@ -98,7 +95,6 @@ Although recent advances in RDMA~\cite{kaminsky2016design} and programmable swit
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization.
 \RED{Bojie will fill in the figure.}
-
 
 
 \begin{figure}[t]
@@ -176,10 +172,20 @@ If we are able to bypass the kernel network stack and process packets efficientl
 
 
 \begin{figure}[t]
-\centering
-\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.eps}
-\caption{[Testbed] Reordering overhead on receivers.}
-\label{fig:reorder-overhead}
+	\centering
+	\captionsetup{font=small,margin=0.5em}
+	\begin{minipage}[t]{.23\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
+		\caption{[Testbed] Reordering overhead on receivers.}
+		\label{fig:reorder-overhead}
+	\end{minipage}
+	\begin{minipage}[t]{.23\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{images/fixme.pdf}
+		\caption{Reordering delay with background flows.}
+		\label{fig:background-flow}
+	\end{minipage}
 \end{figure}
 
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
@@ -225,13 +231,6 @@ Each switch is connected to all four hosts.
 Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
 \RED{Bojie will fill the table.}
 
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
-\caption{Reordering delay with background flows.}
-\label{fig:background-flow}
-\end{figure}
 
 Figure~\ref{fig:background-flow} shows the reordering delay when a background flow is inserted.
 
