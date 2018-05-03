@@ -51,9 +51,9 @@ We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. We s
 
 \parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
 
-\parab{Low network and CPU overhead.}\sys's beacon traffic only consumes 0.1\% link capacity. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low network and CPU overhead.}\sys's beacons only consume 0.1\% link capacity. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
 
-\parab{Background traffic.}\sys is adaptive to delay variance in the network and the clocks are re-synchronized for every beacon interval. Hence, \sys can share the network fairly with background TCP traffic.
+\parab{Resilient to background traffic.}\sys is adaptive to delay variance in the network by re-synchronizing clocks for every beacon interval. Hence, \sys can share the network fairly with background TCP traffic.
 
 \subsection{Methodology}
 \label{sec:testbed}
@@ -69,7 +69,7 @@ Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~
 
 In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for sending and receiving, respectively.
 For experiments with 16$\sim$128 hosts, we use each physical server as 16 logical servers. Each logical server has a pair of dedicated cores, maintains timestamps independently and communicates via separate RDMA queue pairs.
-To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator.
+To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator with random link one-way delays from $U(0\mu s,10\mu s)$.
 We choose beacon interval to be 10~$\mu$s.
 
 
@@ -181,7 +181,7 @@ Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adap
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
 \parab{Background traffic.}
-Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. When \sys co-exists with background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
+Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
 
 
 \iffalse
