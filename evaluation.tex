@@ -3,11 +3,11 @@
 
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around five aspects:
 
-\parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit (8M messages per second), and scales linearly to 1K hosts.
+\parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit, and scales linearly to 1K hosts (Sec.\ref{subsubsec:scalability}).
 
-\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
+\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay (Sec.\ref{sec:eval-delay}).
 
-\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core (Sec. \ref{sec:eval-overhead} and \ref{sec:eval-cpu-overhead}).
 
 \parab{Fault tolerance.}When a host, switch or link fails, non-failure nodes resumes normal throughput and latency in a beacon timeout (1ms). When a node recovers from failure, it can join the system in one RTT (10$\mu$s).
 
@@ -83,7 +83,7 @@ To make simulations faster, each sender only sends one message to a randomly cho
         \hspace{0.01\textheight}
         \begin{minipage}[t]{.32\textwidth}
                 \centering
-                \subfloat[Reconfigurable switch (P4 switch), fixed-function switch (switch CPU) or end hosts.\label{fig:reorder-testbed}]
+                \subfloat[Reconfigurable chip, switch CPU and end hosts.\label{fig:reorder-testbed}]
                 {\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
                 \newline
                 \subfloat[Simulation with different end-host delays.
@@ -109,13 +109,13 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \vspace{-1.6em}
 \end{figure*}
 
-\subsubsection{Scalability of Total Ordering}
+\subsubsection{Scalability of Total Ordering}\label{subsubsec:scalability}
+Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
+It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottneleck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. 
 
-Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
-For \sys, the throughput is bottlenecked by CPU processing and RDMA messaging rate (8~M messages per second per core).
-It scales almost linearly to 128 hosts on our testbed and 1K hosts in simulation.
-Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
-In timestamp-based ordering, a receiver waits for timestamps from  other receivers before delivery, introducing delivery delay as well as network overhead.
+%Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
+
+
 
 
 
@@ -124,17 +124,11 @@ In timestamp-based ordering, a receiver waits for timestamps from  other receive
 \label{sec:eval-delay}
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
-Reordering delay is the time from receiving a message to delivering it.
-Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
-As the number of network layers increases, the reordering delay increases, due to beacon processing delay at each switch.
-\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
+Reordering delay is the interval from message arrival to delivery. As expected, reconfigurable chip delivers the smallest reordering delay. In contrast, end host representatives introduces extra forwarding delay from the switch to the end host. As the number of network layers increases, the reordering delay also increases, due to per-hop beacon processing delay.
+%\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
 For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
 
-Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays.
-We simulate two senders and two receivers connected via 4 links.
-When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
-When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.\RED{maximum delay in Figure~\ref{fig:reorder-simulation} is 20us, not 100us}
-When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
+Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays. We simulate two senders and two receivers connected via 4 links. When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays. When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multi-path, both synchronization mechanisms have more reordering delay. When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
 
@@ -149,26 +143,19 @@ When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu
 \subsubsection{Network Overhead}
 \label{sec:eval-overhead}
 
-Beacons are network packets that consume bandwidth.
-As shown in Figure~\ref{fig:network-overhead}, under high speed networks and a reasonable beacon interval, the beacon traffic is a tiny portion of available link bandwidth.
-Because beacons are hop-by-hop, the overhead is only related to beacon interval and does not change with system scale.
+Beacons add bandwidth overhead. As shown in Figure~\ref{fig:network-overhead}, with high link capacity and a reasonable beacon interval, the beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only related to beacon interval and does not change with the system scale.
 
 \subsubsection{CPU Overhead}
 \label{sec:eval-cpu-overhead}
 
-The CPU overhead of \sys has two parts: beacon processing on switches and reordering on receivers.
-Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch.
-The Arista switch has 4 CPU cores.
-The raw packet processing capacity of a switch CPU core is 1/3 of a Xeon E5 CPU core.
-If we are able to bypass the kernel network stack and process packets efficiently in Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
+The CPU overhead of \sys has two parts: beacon processing at switches and reordering at receivers.
+Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch. The Arista switch has 4 CPU cores. The raw packet processing capacity of a switch CPU core is 1/3 of a Xeon E5 CPU core. If we can bypass the kernel network stack and process packets efficiently at Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
 
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
-
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP).
 
 \subsection{Deep Dive}
-
 
 Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
 
