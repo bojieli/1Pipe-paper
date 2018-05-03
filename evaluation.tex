@@ -1,24 +1,17 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
-We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}.
-Our evaluation centers around five aspects:
+We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around five aspects:
 
-\parab{Scalable throughput.}
-\sys achieves throughput close to underlying hardware limit (8M messages per second), and scales linearly to 1K hosts.
+\parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit (8M messages per second), and scales linearly to 1K hosts.
 
-\parab{Low latency.}
-With reconfigurable switches, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With CPU on fixed-function switches, \sys adds less than 15$\mu$s delay.
+\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
 
-\parab{Low bandwidth and computation overhead.}
-In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. On switches, beacon packets can be processed by a CPU core in commodity switch. On hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
 
-\parab{Fault tolerance.}
-When a host, switch or link fails, non-failure nodes resumes normal throughput and latency in a beacon timeout (1ms).
-When a node recovers from failure, it can join the system in one RTT (10$\mu$s).
+\parab{Fault tolerance.}When a host, switch or link fails, non-failure nodes resumes normal throughput and latency in a beacon timeout (1ms). When a node recovers from failure, it can join the system in one RTT (10$\mu$s).
 
-\parab{Background traffic.}
-\sys is adaptive to delay variance in the network and the clocks are re-synchronized for every beacon interval. Consequently, \sys can share the network fairly with background TCP traffic.
+\parab{Background traffic.}\sys is adaptive to delay variance in the network and the clocks are re-synchronized for every beacon interval. Hence, \sys can share the network fairly with background TCP traffic.
 
 \subsection{Methodology}
 \label{sec:testbed}
