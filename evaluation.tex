@@ -7,7 +7,7 @@ We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our 
 
 \parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay (Sec.\ref{sec:eval-delay}).
 
-\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core (Sec. \ref{sec:eval-overhead} and \ref{sec:eval-cpu-overhead}).
 
 \parab{Fault tolerance.}When a host, switch or link fails, non-failure nodes resumes normal throughput and latency in a beacon timeout (1ms). When a node recovers from failure, it can join the system in one RTT (10$\mu$s).
 
@@ -124,18 +124,11 @@ It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation
 \label{sec:eval-delay}
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
-Reordering delay is the interval from message arrival to delivery. 
-
-Using end host representatives to process beacons introduces extra forwarding delay from the switch to the end host representative.
-As the number of network layers increases, the reordering delay also increases, due to per-hop beacon processing delay.
+Reordering delay is the interval from message arrival to delivery. As expected, reconfigurable chip delivers the smallest reordering delay. In contrast, end host representatives introduces extra forwarding delay from the switch to the end host. As the number of network layers increases, the reordering delay also increases, due to per-hop beacon processing delay.
 %\RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
 For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
 
-Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays.
-We simulate two senders and two receivers connected via 4 links.
-When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays.
-When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.\RED{maximum delay in Figure~\ref{fig:reorder-simulation} is 20us, not 100us}
-When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
+Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays. We simulate two senders and two receivers connected via 4 links. When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays. When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multi-path, both synchronization mechanisms have more reordering delay. When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
 
 
@@ -150,7 +143,7 @@ When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu
 \subsubsection{Network Overhead}
 \label{sec:eval-overhead}
 
-Beacons are network packets that consume bandwidth.
+Beacons add bandwidth overhead.
 As shown in Figure~\ref{fig:network-overhead}, under high speed networks and a reasonable beacon interval, the beacon traffic is a tiny portion of available link bandwidth.
 Because beacons are hop-by-hop, the overhead is only related to beacon interval and does not change with system scale.
 
