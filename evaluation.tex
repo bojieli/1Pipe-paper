@@ -115,29 +115,6 @@ Overall, the throughput is bottlenecked by CPU processing and RDMA messaging rat
 Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
 In timestamp-based ordering, a receiver waits for timestamps from  other receivers before delivery, introducing delivery delay as well as network overhead.
 
-\begin{figure*}[t]
-	\begin{minipage}[t]{.32\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{gnuplot/reordering_delay.eps}
-		\caption{Reordering delay with different clock synchronization methods.}
-		\label{fig:clock-sync}
-	\end{minipage}
-	\hspace{0.015\textwidth}
-	\begin{minipage}[t]{.32\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
-		\caption{[Testbed] Reordering overhead on receivers.}
-		\label{fig:reorder-overhead}
-	\end{minipage}
-	\hspace{0.015\textwidth}
-	\begin{minipage}[t]{.32\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{images/fixme.pdf}
-		\caption{Reordering delay with background flows.}
-		\label{fig:background-flow}
-	\end{minipage}
-\end{figure*}
-
 \subsection{Efficiency}
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP).
