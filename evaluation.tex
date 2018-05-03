@@ -43,14 +43,15 @@
 \vspace{-1.6em}
 \end{figure*}
 
+We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. We summarize the key findings as follows:
 
-We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around four aspects:
+%Our evaluation centers around four aspects:
 
 \parab{Scalable throughput.}\sys achieves throughput close to the underlying hardware limit, and scales linearly to 1K hosts.
 
 \parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
 
-\parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low network and CPU overhead.}\sys's beacon traffic only consumes 0.1\% link capacity. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
 
 \parab{Background traffic.}\sys is adaptive to delay variance in the network and the clocks are re-synchronized for every beacon interval. Hence, \sys can share the network fairly with background TCP traffic.
 
@@ -144,7 +145,7 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \end{figure*}
 
 \subsection{Results}
-\parab{.}\label{subsubsec:scalability}
+\parab{Scalability.}\label{subsubsec:scalability}
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
 It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottleneck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, \sys can achieve scalable and efficient log replication.
 
@@ -173,7 +174,7 @@ Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adap
 
 
 
-\parab{Network overhead.}As shown in Figure~\ref{fig:network-overhead}, with high link capacity and a reasonable beacon generation interval, the beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
+\parab{Network overhead.}As shown in Figure~\ref{fig:network-overhead}, with the high link capacity and a reasonable beacon generation interval, beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
 
 \parab{CPU overhead.}The CPU overhead of \sys has two parts: beacon processing at switches and reordering at receivers. Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch. The Arista switch has 4 CPU cores. The raw packet processing capacity of a switch CPU core is 1/3 of a Xeon E5 CPU core. If we can bypass the kernel network stack and process packets efficiently at Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
 
