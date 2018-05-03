@@ -37,7 +37,7 @@ As shown in Figure~\ref{fig:p4}, the beacon packets caryies not only the same se
 \subsection{Switch CPU}
 \label{sec:commodity}
 
-For the switch without a reconfigurable chip, \textit{e.g.,} Arista 7060CX, we can implement in-network processing logics on the switch CPU. 
+For the switch without a reconfigurable chip, \textit{e.g.,} Arista 7060CX, we implement in-network processing on the switch CPU. 
 %Data-plane programmable switches are currently not widely available in data centers.
 %Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
@@ -53,7 +53,7 @@ Second, compared to switching chip, switch CPU introduces the higher processing 
 \subsection{Delegate Switch Processing to a Host}
 \label{sec:end-host}
 
-In case that the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. The challenge is to maintain the FIFO property.
+In case that the switch vendor does not expose access interfaces to switch CPUs, we offload the beacon processing to end hosts. The challenge is to maintain the FIFO property.
 Beacons with barrier timestamps on a network link $L$ must pass through $L$.
 To this end, we designate an \textit{end-host representative} for each network switch.
 The location of the representative is arbitrary and does not need to be unique.

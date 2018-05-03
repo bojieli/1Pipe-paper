@@ -1,34 +1,37 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
-We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
-Our evaluation centers around four aspects:
+We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}.
+Our evaluation centers around five aspects:
 
-\parab{Efficiency.} First, \sys achieves low reordering delay, which is the delay from receiving to delivering a packet. With beacon interval of 100$\mu$s, we achieve 
+\parab{Scalable throughput.} 
 
-\parab{Scalability.}
+\parab{Low latency.} 
 
-\parab{Fault tolerance.}
+\parab{Low bandwidth and computation overhead.}
 
-\parab{Real-world application.}
+\parab{Fault tolerance.} We simulate the failure of a host or switch.
 
-we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions.
-Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
+\parab{Background traffic.} How background traffic affects reordering delay.
+
+
 
 \subsection{Methodology}
 \label{sec:testbed}
 
 We build two testbeds in two data centers.
 The first one has 3 servers connected to a Barefoot Tofino 100G switch~\cite{tofino}.
-The second one has 32 servers and 10 Arista 7060CX 100G switches~\cite{arista}, forming a fat-tree topology.
+The second one has 8 servers and 4 Arista 7060CX 100G switches~\cite{arista}, forming a fat-tree topology.
 Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~\cite{infinibandrocev2}.
 
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
-In throughput tests, each server uses 8 send cores and 8 receive cores in parallel.
-To minimize inter-core synchronization, each pair of send and receive cores is considered a unique host which maintains timestamps independently and processes unreliable datagrams via a separate RDMA queue pair.
+In small-scale experiments (1$\sim$8 hosts), each server uses a pair of dedicated cores for send and receive, respectively.
+For experiments with 16$\sim$128 hosts, we use each physical server as 16 logical servers. Each logical server has a pair of dedicated cores, maintains timestamps independently and communicates via separate RDMA queue pairs.
+To evaluate datacenter-scale scalability ($\ge$256 hosts), we build a simple simulator.
+
 
 \iffalse
 \begin{table}[t]
@@ -64,48 +67,80 @@ The link bandwidth, link delay and processing delay are extracted from three-lay
 To make simulations faster, each sender only sends one message to a randomly chosen receiver.
 \fi
 
+\subsection{Scalability}
 
+\begin{figure*}[t]
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Throughput]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+		}
+		\newline
+		\subfloat[Latency]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
+		}
+		\caption{Scalability comparison of total order algorithms.}
+		\label{fig:total-order}
+	\end{minipage}
+	\hspace{0.01\textheight}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Process beacon packets with switch CPU or end hosts in 5 system scales.\label{fig:reorder-testbed}]
+		{\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}}
+		\newline
+		\subfloat[Simulation with different end-host delays.
+		T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
+		{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
+		\caption{Average reordering delay. Beacon interval is 100~$\mu$s.}
+		\label{fig:reorder-delay}
+	\end{minipage}
+	\hspace{0.01\textwidth}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
+		{\includegraphics[width=\textwidth]{gnuplot/beacon_network_overhead.eps}}
+		\newline
+		\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
+		{\includegraphics[width=\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
+		\caption{
+			Beacon overhead under different beacon intervals and network throughput.
+			CPU processing overhead for Arista switch is extrapolated.
+		}
+		\label{fig:overhead}
+	\end{minipage}
+\end{figure*}
 
+Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
+Overall, the throughput is bottlenecked by CPU processing and RDMA messaging rate.
+Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
+In timestamp-based ordering, a receiver waits for timestamps from  other receivers before delivery, introducing delivery delay as well as network overhead.
+
+\begin{figure*}[t]
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/reordering_delay.eps}
+		\caption{Reordering delay with different clock synchronization methods.}
+		\label{fig:clock-sync}
+	\end{minipage}
+	\hspace{0.015\textwidth}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
+		\caption{[Testbed] Reordering overhead on receivers.}
+		\label{fig:reorder-overhead}
+	\end{minipage}
+	\hspace{0.015\textwidth}
+	\begin{minipage}[t]{.32\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{images/fixme.pdf}
+		\caption{Reordering delay with background flows.}
+		\label{fig:background-flow}
+	\end{minipage}
+\end{figure*}
 
 \subsection{Efficiency}
 
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
-\caption{[Testbed] Throughput comparison with hierarchical merge using end hosts only.}
-\label{fig:hierarchical-merge}
-\end{figure}
-
-Figure~\ref{fig:hierarchical-merge} compares the throughput and latency using P4 programmable switch, commodity switch, end host barrier and hierarchical merge.
-\RED{Bojie will fill in the figure.}
-
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
-\caption{[Testbed] Reordering delay with different clock synchronization methods.}
-\label{fig:clock-sync}
-\end{figure}
-
-Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization.
-\RED{Bojie will fill in the figure.}
-
-
-\begin{figure}[t]
-\centering
-	\subfloat[Process beacon packets with switch CPU or end hosts in 5 system scales.\label{fig:reorder-testbed}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_testbed.pdf}}
-	\hspace{0.01\textwidth}
-	\subfloat[Simulation with different end-host delays.
-	T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_simulation.pdf}}
-	\caption{Average reordering delay. Beacon interval is 100~$\mu$s.}
-    \vspace{-5pt}
-\label{fig:reorder-delay}
-\end{figure}
+Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP).
 
 \subsubsection{Reordering Delay}
 \label{sec:eval-delay}
@@ -123,21 +158,6 @@ When one sender $S_1$ has 100~$\mu$s more delay due to background traffic, minim
 When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multipath, both synchronization mechanisms have more reordering delay.
 When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
-
-
-\begin{figure}[t]
-\centering
-	\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_network_overhead.pdf}}
-	\hspace{0.01\textwidth}
-	\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_cpu_overhead.pdf}}
-	\caption{
-		Beacon overhead under different beacon intervals and network throughput.
-		CPU processing overhead for Arista switch is extrapolated.
-	}
-\label{fig:overhead}
-\end{figure}
 
 
 %\begin{figure}[t]
@@ -167,17 +187,12 @@ The Arista switch has 4 CPU cores.
 The raw packet processing capacity of a switch CPU core is 1/3 of a Xeon E5 CPU core.
 If we are able to bypass the kernel network stack and process packets efficiently in Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
 
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.pdf}
-\caption{[Testbed] Reordering overhead on receivers.}
-\label{fig:reorder-overhead}
-\end{figure}
-
 As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
 
 \subsection{Deep Dive}
+
+
+Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
 
 \begin{table}
 \centering
@@ -214,6 +229,10 @@ We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ inte
 Each switch is connected to all four hosts.
 Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
 \RED{Bojie will fill the table.}
+
+
+Figure~\ref{fig:background-flow} shows the reordering delay when a background flow is inserted.
+
 
 \iffalse
 \subsubsection{Incremental Deployment}
