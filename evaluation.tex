@@ -3,9 +3,9 @@
 
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}. Our evaluation centers around five aspects:
 
-\parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit (8M messages per second), and scales linearly to 1K hosts.
+\parab{Scalable throughput.}\sys achieves throughput close to underlying hardware limit, and scales linearly to 1K hosts (Sec.\ref{subsubsec:scalability}).
 
-\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
+\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay (Sec.\ref{sec:eval-delay}).
 
 \parab{Low bandwidth and computation overhead.}In our settings, \sys consumes 0.1\% bandwidth on idle network links, and adds an 8-byte tag to each network packet. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
 
@@ -109,12 +109,13 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \vspace{-1.6em}
 \end{figure*}
 
-\subsubsection{Scalability of Total Ordering}
-
+\subsubsection{Scalability of Total Ordering}\label{subsubsec:scalability}
 Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
-It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation.
-Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
-In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, introducing delivery delay as well as network overhead.
+It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation. In contrast, the sequencer is a central bottneleck and introduces extra network delays. In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, increasing delivery delay and network overhead. 
+
+%Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
+
+
 
 
 
@@ -123,8 +124,7 @@ In timestamp-based ordering, a receiver waits for timestamps from other receiver
 \label{sec:eval-delay}
 
 Figure~\ref{fig:reorder-testbed} shows the average reordering delay of \sys.
-Reordering delay is the time from receiving a message to delivering it.
-Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
+Reordering delay is the interval from message arrival to delivery. Using end host representatives to process beacons introduces additional delay due to forwarding delay from the switch to the end host representatives.
 As the number of network layers increases, the reordering delay increases, due to beacon processing delay at each switch.
 \RED{The beacon interval is not amplified by network layers, because the algorithm synchronizes beacon arrival times. doesn't make sense}
 For three-layer topology, the number of hosts adds slightly to reordering delay, because a switch with higher fan-out is likely to have more skew in beacon synchronization.
