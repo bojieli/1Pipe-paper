@@ -111,11 +111,10 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \subsubsection{Scalability of Total Ordering}
 
-Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
-For \sys, the throughput is bottlenecked by CPU processing and RDMA messaging rate (8~M messages per second per core).
-It scales almost linearly to 128 hosts on our testbed and 1K hosts in simulation.
+Figure~\ref{fig:total-order} compares the scalability of \sys with other total order multicast algorithms using centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}. The throughput of \sys is limited by CPU processing and RDMA messaging rate (8~M messages per second per core).
+It scales almost linearly to 128 hosts in the testbed and 1K hosts in simulation.
 Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
-In timestamp-based ordering, a receiver waits for timestamps from  other receivers before delivery, introducing delivery delay as well as network overhead.
+In timestamp-based ordering, a receiver waits for timestamps from other receivers before delivery, introducing delivery delay as well as network overhead.
 
 
 
