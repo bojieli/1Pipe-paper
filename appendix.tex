@@ -1,40 +1,40 @@
 \section{Appendix}
 \label{appx:proof}
-\newtheorem{theorem}{Theorem}[subsection]
+\newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[subsection]
-\newtheorem{property}{Property}[subsection]
+\newtheorem{definition}{Definition}
+\newtheorem{property}{Property}
 \newtheorem*{assump}{Assumption}
 \newtheorem*{notation}{Notation}
-\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{lemma}{Lemma}
 \theoremstyle{remark}
 \newtheorem*{rem}{Remark}
 \newtheorem*{conclusion}{Conclusion}
 \newtheorem*{note}{Note}
 \subsection{Proof of hierarchical merge}
 \label{appx:hierarchical_merge}
-In Sec.~\ref{sec:ideal}, we have pointed out the property of barrier timestamp and how we merge barriers hierarchically.
-Here we prove that the way we merge barriers does maintain its property.
-Let's rewrite the property and formula:
+In Sec.\ref{sec:ideal}, we have pointed out the property of \textit{barrier timestamp} and how we aggregate them hierarchically.
+Here we prove that the hierarchical aggregation does maintain the property.
 \begin{property}\label{prop:barrier}
 	Take any network link $L$, if a packet with barrier timestamp $B$ is on the $L$, then for any following packet carrying (barrier or data) timestamp $T$, there must be $B \le T$.
+	
+	When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.
 \end{property}
 \begin{theorem}
-	If we derive barriers following (\ref{equ:derive_barriers}), then the barrier timestamp $B$ determined for output link $E$ still has the above property as long as the barrier from every input link does.
+	If we derive barriers following (\ref{equ:derive_barriers}), then the barrier timestamp $B_{new}$ determined for output link $o$ still has the above property as long as the barrier from every input link has.
 \end{theorem}
 \begin{proof}
-	We reuse notation $\mathcal{I}_E$ and $R_i$ defined in (\ref{equ:derive_barriers}).
-	After barrier timestamp $B$ is sent through output link $E$, all following packets are either data packets from a certain input link or barrier packets determined in the future.
-
-	For a following data packet carrying timestamp $T$, let's assume it comes from input link $I \in \mathcal{I}$.
-	Because all received barrier timestamps from $I$ have the Property~\ref{prop:barrier}, we have $B \le R_I \le T$.
-
-	For a following barrier timestamp $T$, let's assume it is determined by newer register value $R'_I$.
-	$$T:=\min\{R'_I|I \in \mathcal{I}_E\}$$
+	We reuse notation $\mathcal{I}_o$ and $R_i$ defined in (\ref{equ:derive_barriers}).
+	After barrier timestamp $B_{new}$ is sent through output link $o$, let's take  any following packets through $o$ and assume it comes from input link $i \in \mathcal{I}$, with \textit{message timestamp} $T$ unmodified and \textit{barrier timestamp} updated to $B'_{new}$.
 	
-	Because of Property~\ref{prop:barrier}, $\forall I \in \mathcal{I}_E:R_I \le R'_I$, which implies $B \le T$.
+	Because all packets coming through $i$ also have the Property~\ref{prop:barrier}, we have $B_{new} \le R_i \le T$.
+	
+	As for the barrier timestamp $B'_{new}$, let's assume it is determined by newer register value $R'_i$.
+	$$B'_{new} := \min\{R'_i|i \in \mathcal{I}_o\} = R'_I$$
+	
+	Because of Property~\ref{prop:barrier}, we have $\forall i \in \mathcal{I}_o:R_i \le R'_i$, which implies $B_{new} \le R_I \le R'_I = B'_{new}$.
 
-	So, we can conclude that the newly determined barrier timestamp $B$ still has the Property~\ref{prop:barrier}.
+	From $B_{new} \le T$ and $B_{new} \le B'_{new}$, we can conclude that the $B_{new}$ on link $o$ still has Property~\ref{prop:barrier}.
 \end{proof}
 
 Besides, an endhost sender assigns barrier timestamps to be the same as data timestamps, which follows Property~\ref{prop:barrier} trivially, so hierarchical merge can maintain barrier's property properly.
