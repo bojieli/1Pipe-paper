@@ -97,11 +97,11 @@ Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchroni
 \begin{figure}[t]
 \centering
 	\subfloat[Process beacon packets with switch CPU or end hosts in 5 system scales.\label{fig:reorder-testbed}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_testbed.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_testbed.eps}}
 	\hspace{0.01\textwidth}
 	\subfloat[Simulation with different end-host delays.
 	T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_simulation.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/reorder_simulation.eps}}
 	\caption{Average reordering delay. Beacon interval is 100~$\mu$s.}
     \vspace{-5pt}
 \label{fig:reorder-delay}
@@ -128,10 +128,10 @@ When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 100~$\m
 \begin{figure}[t]
 \centering
 	\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_network_overhead.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_network_overhead.eps}}
 	\hspace{0.01\textwidth}
 	\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_cpu_overhead.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
 	\caption{
 		Beacon overhead under different beacon intervals and network throughput.
 		CPU processing overhead for Arista switch is extrapolated.
@@ -170,7 +170,7 @@ If we are able to bypass the kernel network stack and process packets efficientl
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.pdf}
+\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.eps}
 \caption{[Testbed] Reordering overhead on receivers.}
 \label{fig:reorder-overhead}
 \end{figure}

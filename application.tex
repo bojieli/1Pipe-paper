@@ -17,7 +17,7 @@ Clients scatter operations to sites and gather responses.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=.45\textwidth]{gnuplot/ycsb.pdf}
+\includegraphics[width=.45\textwidth]{gnuplot/ycsb.eps}
 \caption{[Testbed] Throughput and latency of YCSB+T transactional key-value stores.\RED{Should update legend to `ROMS'}}
 \label{fig:ycsb}
 \end{figure}
@@ -37,7 +37,7 @@ The throughput of centralized coordination is bottlenecked by the coordinator.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=.35\textwidth]{gnuplot/multishard.pdf}
+\includegraphics[width=.35\textwidth]{gnuplot/multishard.eps}
 \caption{[Testbed] Throughput of multiple keys per transaction.\RED{Should update legend to `ROMS'}}
 \label{fig:multishard}
 \vspace{-10pt}
@@ -56,10 +56,10 @@ With more keys per scattering, the chance of transaction abort increases, becaus
 \begin{figure}[t]
 \centering
 	\subfloat[Throughput.\label{fig:loss-throughput}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/loss_tput.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/loss_tput.eps}}
 	\hspace{0.01\textwidth}
 	\subfloat[Latency.\label{fig:loss-latency}]
-	{\includegraphics[width=.23\textwidth]{gnuplot/loss_latency.pdf}}
+	{\includegraphics[width=.23\textwidth]{gnuplot/loss_latency.eps}}
 \caption{[Simulation] Comparison of reliable \sys and application-layer transaction rollback.\RED{Should update legend to `ROMS'}}
 \label{fig:ycsb-loss}
 \end{figure}
