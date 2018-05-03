@@ -21,7 +21,7 @@ The first one has 3 servers connected to a Barefoot Tofino 100G switch~\cite{tof
 The second one has 8 servers and 4 Arista 7060CX 100G switches~\cite{arista}, forming a fat-tree topology.
 Each server has two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC running RoCEv2~\cite{infinibandrocev2}.
 
-%We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}. 
+%We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}.
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 
@@ -71,8 +71,8 @@ Then we deep dive into the behavior of \sys under packet loss, failure and incre
 \centering
 \scalebox{0.9}{
 \begin{tabular}{l|r|r|r|r}
-	\hline
-	 & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
+        \hline
+         & $S_1 \rightarrow R_1$ & $S_1 \rightarrow R_2$ & $S_2 \rightarrow R_1$ & $S_2 \rightarrow R_2$ \\
     \hline
     \hline
     $S_1$ fail & N/A & N/A & $T_{timeout}$ & $T_{timeout}$ \\
@@ -90,8 +90,8 @@ Then we deep dive into the behavior of \sys under packet loss, failure and incre
 \end{tabular}
 }
 \caption{
-	Convergence time after failure and recovery of host and switch.
-	Convergence time is the time since the event occurs until end-to-end delay recovers to normal.
+        Convergence time after failure and recovery of host and switch.
+        Convergence time is the time since the event occurs until end-to-end delay recovers to normal.
     Convergence time 0 indicates not affected.
     $T_{timeout}$ is the beacon timeout for failure detection.
 }
@@ -112,11 +112,11 @@ Figure~\ref{fig:background-flow} shows the reordering delay when a background fl
 
 \begin{figure}[t]
 \centering
-	\subfloat[Clock convergence.\label{fig:clock-convergence}]
-	{\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
-	\hspace{0.01\textwidth}
-	\subfloat[Reordering delay.\label{fig:incremental-delay}]
-	{\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
+        \subfloat[Clock convergence.\label{fig:clock-convergence}]
+        {\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
+        \hspace{0.01\textwidth}
+        \subfloat[Reordering delay.\label{fig:incremental-delay}]
+        {\includegraphics[width=.23\textwidth]{images/fixme.pdf}}
 \caption{[Simulation] Merging two running TOMS systems by adding a network link between them.}
 \label{fig:incremental}
 \end{figure}
@@ -126,6 +126,3 @@ Converge time graph, compare with physical time synchronization solution
 
 Figure~\ref{fig:incremental-delay} shows the reordering delay. (spike then fall back)
 \fi
-
-
-
