@@ -2,19 +2,19 @@
 \label{sec:evaluation}
 
 We prove the correctness and liveness of \sys in Appendix~\ref{appx:hierarchical_merge}.
-Our evaluation centers around four aspects:
+Our evaluation centers around five aspects:
 
-\parab{Low reordering delay.} Reordering delay is the delay from receiving to delivering a packet.
+\parab{Scalable throughput.} 
+
+\parab{Low latency.} 
 
 \parab{Low bandwidth and computation overhead.}
 
-\parab{Scalability.} 
-
 \parab{Fault tolerance.} We simulate the failure of a host or switch.
 
+\parab{Background traffic.} How background traffic affects reordering delay.
 
-we first evaluate the reordering delay, CPU overhead and network overhead of \sys under normal conditions.
-Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
+
 
 \subsection{Methodology}
 \label{sec:testbed}
@@ -67,25 +67,21 @@ The link bandwidth, link delay and processing delay are extracted from three-lay
 To make simulations faster, each sender only sends one message to a randomly chosen receiver.
 \fi
 
-
-
-
-\subsection{Efficiency}
-
-
+\subsection{Scalability}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.3\textwidth]{images/fixme.pdf}
 \caption{[Testbed] Throughput comparison with hierarchical merge using end hosts only.}
-\label{fig:hierarchical-merge}
+\label{fig:total-order}
 \end{figure}
 
-Figure~\ref{fig:hierarchical-merge} compares the throughput and latency using P4 programmable switch, commodity switch, end host barrier and hierarchical merge.
-\RED{Bojie will fill in the figure.}
+Figure~\label{fig:total-order} compares the scalability of \sys total order multicast algorithms based on centralized sequencer, token, ISIS, logical timestamp and hierarchical merge.
+
+Figure~\ref{fig:hierarchical-merge} compares the throughput of total ordering algorithms.
 
 
-
+\subsection{Efficiency}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.3\textwidth]{images/fixme.pdf}
@@ -95,6 +91,7 @@ Figure~\ref{fig:hierarchical-merge} compares the throughput and latency using P4
 
 Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization.
 \RED{Bojie will fill in the figure.}
+
 
 
 \begin{figure}[t]
@@ -182,6 +179,9 @@ As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size 
 
 \subsection{Deep Dive}
 
+
+Then we deep dive into the behavior of \sys under packet loss, failure and incremental deployment.
+
 \begin{table}
 \centering
 \scalebox{0.9}{
@@ -217,6 +217,17 @@ We consider a network with two senders $S_1, S_2$, two receivers $R_1, R_2$ inte
 Each switch is connected to all four hosts.
 Table~\ref{tab:failure} shows how long a failure or recovery would impact the system.
 \RED{Bojie will fill the table.}
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
+\caption{Reordering delay with background flows.}
+\label{fig:background-flow}
+\end{figure}
+
+Figure~\ref{fig:background-flow} shows the reordering delay when a background flow is inserted.
+
 
 \iffalse
 \subsubsection{Incremental Deployment}
