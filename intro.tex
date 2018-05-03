@@ -49,7 +49,7 @@ Since the dawn of distributed system research~\cite{lamport1978time}, many effor
 However, existing solutions suffer from scalability or efficiency limitations.
 One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 As a result, it is challenging to scale the system.
-Another line of work uses fully distributed coordination, \textit{e.g.}, add a consensus round among receivers before they start to process messages~\cite{lamport1978time,chandra1996unreliable}.
+Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}.
 This causes extra network communication overhead and delay, thus degrading system efficiency.
 %An additional limitation comes from the semantics of multicast, where each receiver must get a same sequence of messages. 
 Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.

@@ -71,13 +71,20 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.3\textwidth]{images/fixme.pdf}
-\caption{[Testbed] Throughput comparison with hierarchical merge using end hosts only.}
+\begin{minipage}{0.4\textwidth}{
+\subfloat[Throughput]{
+	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+}
+\subfloat[Latency]{
+	\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+}
+\caption{Scalability comparison of total order algorithms.}
 \label{fig:total-order}
+}
 \end{figure}
 
-Figure~\label{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer, token, ISIS, logical timestamp and hierarchical merge.
-
+Figure~\label{fig:total-order} compares the scalability of \sys with other total order multicast algorithms based on centralized sequencer~\cite{eris,kaminsky2016design}, token~\cite{rajagopalan1989token}, ISIS~\cite{birman1985replication} and Lamport timestamp~\cite{lamport1978time}.
+Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still not scalable.
 
 
 \subsection{Efficiency}
