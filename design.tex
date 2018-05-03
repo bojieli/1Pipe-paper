@@ -42,7 +42,7 @@ In this section, we assume that the network is reliable. There is no host, link 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
-\caption{Hierarchical aggregation of barrier timestamp.} %\RED{Change logos smaller. Use computer logo instead of this logo. Make the network links vertical (orthogonal to horizontal). MODIFIED, NEED REVIEW}
+\caption{Hierarchical barrier timestamp aggregation.} %\RED{Change logos smaller. Use computer logo instead of this logo. Make the network links vertical (orthogonal to horizontal). MODIFIED, NEED REVIEW}
 \label{fig:hierarchical_merge}
 \vspace{-0.9em}
 \end{figure}
@@ -432,13 +432,14 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \section{\sys in Unreliable Networks}
 \label{sec:design-unreliable}
 
-Previous section describes \sys in reliable networks. In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
+%Previous section describes \sys in reliable networks. 
+In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
 %In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
 
-\parab{Problem.}In data centers, the packet corruption rate is around $10^{-5}$ \texttildelow $10^{-7}$~\cite{zhuo2017understanding}. In addition, packets get dropped due to congestion and device bugs~\cite{guo2015pingmesh}. Due to packet losses, the barrier timestamp is inefficient for message delivery because messages might get dropped and retransmitted. If messages are immediately delivered when their timestamps are below the barrier, a retransmitted message with lower timestamp may get delivered out of order. 
+\parab{Problem.}Packet losses happen due to congestion, device bugs~\cite{guo2015pingmesh} and corruption~\cite{zhuo2017understanding}. Due to packet losses, the barrier timestamp is inefficient for message delivery because messages might get dropped and retransmitted. If messages are immediately delivered when their timestamps are below the barrier, a retransmitted message with lower timestamp may get delivered out of order. 
 
 To address this problem, a traditional solution is two-phase commit (2PC). In 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message. This approach requires three one-way delays when no packet loss happens.
 
@@ -449,8 +450,7 @@ To address this problem, a traditional solution is two-phase commit (2PC). In 2P
 
 %Due to packet loss, the barrier timestamp is no longer sufficient for message delivery because message might get dropped and retransmitted. If messages are immediately delivered when their timestamp is below the barrier, a retransmitted message with lower timestamp may get delivered out of order. Our aim is to deliver messages in one-way network delay when no packet loss is encountered, and fall back to a protocol similar to two-phase commit (2PC) with three one-way delays when loss occurs.
 
-In \sys, we rename the original barrier to \textit{loss-free barrier} and add a \textit{delivery barrier} field and a \textit{loss encountered} flag to each packet.
-Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages according to the loss-free barrier. Otherwise, it delivers based on delivery barrier.
+In \sys, we rename the original barrier to \textit{loss-free barrier} and add a \textit{delivery barrier} field and a \textit{loss encountered} flag to each packet. Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages based on loss-free barrier. Otherwise, it delivers based on delivery barrier.
 
 When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
 In \sys, the receiver replies ACKs to the sender when it receives a message.
