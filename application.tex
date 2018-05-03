@@ -75,7 +75,7 @@ Figure~\ref{fig:ycsb-loss} simulate the transaction throughput and latency under
 With reliable \sys, packet loss is transparent to applications, and the transaction throughput is approximately the network goodput.
 If \sys does not handle packet loss, the transaction processing application needs to rollback all uncommitted transactions in conflict with the lost transaction, so a significant portion of CPU power and network bandwidth is wasted.
 
-On the latency side, reliable \sys adds one RTT of latency to derive the commit barrier \RED{delivery barrier?}.
+On the latency side, reliable \sys adds one RTT of latency to derive the delivery barrier.
 If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
 When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency.
 Under high packet loss probability, however, handling losses in \sys is better.
