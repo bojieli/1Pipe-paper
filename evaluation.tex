@@ -119,17 +119,6 @@ To make simulations faster, each sender only sends one message to a randomly cho
 		\caption{Reordering delay with clock synchronization methods and background traffic (BG).}
 		\label{fig:clock-sync}
 	\end{minipage}
-	\hspace{0.01\textwidth}
-    \begin{minipage}{.31\textwidth}
-      \centering
-      \subfloat[Throughput.\label{fig:loss-throughput}]
-      {\includegraphics[width=\textwidth]{gnuplot/loss_tput.eps}}
-      \vspace{0.01\textwidth}
-      \subfloat[Latency.\label{fig:loss-latency}]
-      {\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}}
-      \caption{Comparison of reliable \sys and application-layer transaction rollback.}
-      \label{fig:ycsb-loss}
-    \end{minipage}
     \hspace{0.01\textwidth}
     \begin{minipage}{.31\textwidth}
     	\centering
@@ -142,6 +131,17 @@ To make simulations faster, each sender only sends one message to a randomly cho
 		\caption{Throughput of multiple keys per transaction.}
 		\label{fig:multishard}
     \end{minipage}
+	\hspace{0.01\textwidth}
+	\begin{minipage}{.31\textwidth}
+		\centering
+		\subfloat[Throughput.\label{fig:loss-throughput}]
+		{\includegraphics[width=\textwidth]{gnuplot/loss_tput.eps}}
+		\vspace{0.01\textwidth}
+		\subfloat[Latency.\label{fig:loss-latency}]
+		{\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}}
+		\caption{Comparison of reliable \sys and application-layer transaction rollback.}
+		\label{fig:ycsb-loss}
+	\end{minipage}
 \end{figure*}
 
 \subsection{Results}
