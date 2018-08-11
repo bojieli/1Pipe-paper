@@ -1,27 +1,4 @@
-% TEMPLATE for Usenix papers, specifically to meet requirements of
-%  USENIX '05
-% originally a template for producing IEEE-format articles using LaTeX.
-%   written by Matthew Ward, CS Department, Worcester Polytechnic Institute.
-% adapted by David Beazley for his excellent SWIG paper in Proceedings,
-%   Tcl 96
-% turned into a smartass generic template by De Clarke, with thanks to
-%   both the above pioneers
-% use at your own risk.  Complaints to /dev/null.
-% make it two column with no page numbering, default is 10 point
-
-% Munged by Fred Douglis <douglis@research.att.com> 10/97 to separate
-% the .sty file from the LaTeX source template, so that people can
-% more easily include the .sty file into an existing document.  Also
-% changed to more closely follow the style guidelines as represented
-% by the Word sample file. 
-
-% Note that since 2010, USENIX does not require endnotes. If you want
-% foot of page notes, don't include the endnotes package in the 
-% usepackage command, below.
-
-% This version uses the latex2e styles, not the very ancient 2.09 stuff.
-\documentclass[letterpaper,twocolumn,10pt]{article}
-\usepackage{usenix}
+\documentclass[sigconf,preprint,10pt]{acmart}
 \usepackage{epsfig}
 \usepackage{endnotes}
 \usepackage{amsfonts}
@@ -60,10 +37,15 @@
 \usepackage{eucal}
 \begin{document}
 
+\settopmatter{printfolios=true} % Add page numbers
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\pagestyle{plain} % removes running headers
+
 %don't want date printed
 \date{}
 
-\title{ Scalable and Efficient Reliable Ordered Message Scattering\\ in Data Center Networks\vspace{-0.2in}}
+\title{Scalable and Efficient Reliable Ordered Message Scattering in Data Center Networks}
 
 %for single author (just remove % characters)
 %\author{
@@ -77,7 +59,7 @@
 % {\rm Name}\\
 %Name Institution
 %} % end author
-\author{{\rm OSDI'18 submission \#277}\vspace{-0.1in}}
+\author{{\rm Eurosys'19 submission \#277}}
 
 \maketitle
 
@@ -101,7 +83,7 @@
 \bibliography{bibliography}
 }
 
-\input{appendix}
+%\input{appendix}
 
 
 \end{document}
