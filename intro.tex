@@ -35,9 +35,9 @@ Transactional systems that mitigate this problem often introduce synchronization
 We propose Reliable Ordered Message Scattering (\sys), a group communication abstraction that provides both linearizable ordering and reliability.
 \emph{Message scattering}~\cite{kshemkalyani2011distributed} is a communication pattern where a host sends a group of (potentially different) messages simultaneously to multiple hosts.
 \emph{Linearizable ordering} means that each receiver delivers messages from different senders in the wall clock order of message sent time.
-It provides the guarantee that messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}.
+It provides \emph{total order}, ensuring that messages are delivered in the same order to all receivers.
 This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered after the other.
-Moreover, messages are \emph{total order}, ensuring that they are delivered in the same order to all receivers.
+Moreover, messages obey the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}.
 \emph{Reliability} means that (1) \emph{atomicity} or \emph{serializability}, i.e., either all or none receivers deliver messages in a scattering, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if its sender and all receivers are correct, and the network is not partitioned.
 The \sys primitive can support externally consistent distributed transactions~\cite{ports2015designing, eris}, replication in eventually consistent systems, state machine replication~\cite{state-machine-replication} as well as improve consistency in distributed shared memory.
 
