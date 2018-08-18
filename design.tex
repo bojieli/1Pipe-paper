@@ -1,4 +1,4 @@
-\section{ROMS in Reliable Networks}
+\section{ROMS in a Reliable Network}
 \label{sec:design-reliable}
 
 %\begin{figure}[t]
@@ -37,7 +37,7 @@ In this section, we assume that the network is reliable. There is no host, link 
 
 %\subsection{Hierarchical Merge of Barriers}
 \subsection{Message and Barrier Timestamp}
-\label{sec:ideal}
+\label{sec:loss-free}
 
 \begin{figure}[t]
 \centering
@@ -192,6 +192,7 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
 
 %In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for three max beacon intervals, the input link is considered to be dead and removed from the input link list. When the failed link, host or switch recovers, it needs to rejoin (Sec.\ref{sec:incremental}).
 
+\iffalse{
 \subsection{Minimax Clock Synchronization}
 \label{sec:sync}
 
@@ -428,9 +429,10 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 %One may ask why we use physical clock instead of Lamport clock (cite) or vector clock (cite) to measure intervals. A clock measures an interval by counting repetitive events. A good clock source should generate a roughly same number of repetitive events when our measurement object is stable, as well have a granularity finer than the intervals to measure.
 %If we use packet counter as clock source, the RTT measurement will vary with network throughput. If we use received timestamps as clock source, it is unable to measure a tiny interval if no packet is received during the interval. Physical clocks driven by crystal oscillators and CPU instruction counters are accurate enough to measure short intervals, because their relative error is less than $10^{-5}$ (cite) and the granularity is as fine as a nanosecond.
 
+\fi
 
 
-\section{ROMS in Unreliable Networks}
+\section{Fault Tolerance}
 \label{sec:design-unreliable}
 
 %Previous section describes \sys in reliable networks. 
@@ -520,6 +522,17 @@ At this time, messages below delivery barrier are received and messages above th
 %For each connection, the sender maintains a \textit{minimum unacknowledged timestamp}, detect packet loss via duplicate ACKs or timeout, then retransmit the lost packets with the same timestamp (Figure~\ref{fig:ack-barrier}).
 %Each sender maintains an unacknowledged timestamp barrier (\textit{ACK barrier}), which is the minimum of minimum unacknowledged timestamps among all connections. Messages with timestamps below the ACK barrier are guaranteed to be received by all recipients.
 
+\subsection{Crash Failures of Hosts}
+\label{sec:host-failure}
+
+\subsection{Byzantine Failures of Hosts}
+\label{sec:byzantine}
+
+\subsection{Crash Failure of Network}
+\label{sec:network-failure}
+
+
+\iffalse
 \subsection{Fault Tolerance and Incremental Deployment}
 \label{sec:failure}
 
@@ -601,6 +614,7 @@ As a case study, we consider a network with two senders $S_1, S_2$, two receiver
 Each switch is connected to all four hosts.
 As shown in Table~\ref{tab:failure}, when a node fails, non-failure nodes resume operation after $T_{timeout}$. When a node recovers, it rejoins the network in an RTT, and does not affect other parts of the system.
 
+\fi
 
 
 
