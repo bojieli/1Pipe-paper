@@ -56,10 +56,6 @@ Given recent efforts on accurate clock synchronization in data centers~\cite{cor
 Message timestamp determines the delivery order at receiver.
 To achieve ordered message scattering, the receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through host ID).  
 
-To preserve causal order in the Lamport logical clock sense~\cite{lamport1978time}, the local clock time should be strictly higher than delivered timestamps.
-This would be the normal case, because the offset among clocks is typically lower than the network diameter.
-If this causality condition does not hold, message delivery should be delayed until the local clock catches up.
-
 \parab{Barrier timestamp.}
 When a receiver wants to deliver a message with timestamp $t$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $t$.
 Since different network paths have different propagation and queuing delays, this is nontrivial.
@@ -122,6 +118,14 @@ When the receiver receives a packet with barrier timestamp $B$, it first buffers
 %Although the design above works on a reconfigurable switch, many fixed function switching chips are not capable of storing states $R_i$ and calculating the minimum among $R_i$.
 %We offload the control plane to the CPU on switches, by using beacon packets as \textit{slacked barriers} of data packets.
 %This will be discussed in Sec.\ref{sec:commodity}.
+
+
+\parab{Causality.}
+To preserve causal order in the Lamport logical clock sense~\cite{lamport1978time}, the local clock time should be strictly higher than delivered timestamps.
+This would be the normal case, because the offset among clocks is typically lower than the network diameter.
+If this causality condition does not hold, message delivery should be delayed until the local clock catches up.
+
+
 
 \subsection{Beacons on Idle Links}
 \label{sec:beacon}
