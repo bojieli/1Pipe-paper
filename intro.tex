@@ -144,7 +144,7 @@ To achieve consensus under crash failures of hosts, rather than voting, we use t
 Host failure information is reliably propagated through the network along with delivery barriers (Sec.\ref{sec:crash-failure}).
 To ensure security, the top-of-rack switches monitor and enforce the hosts to comply with \sys protocol, so Byzantine failures of hosts can also be detected (Sec.\ref{sec:byzantine}).
 Crash failures of network switches and links would stall the system but not violate correctness.
-To ensure liveness, we rely on the centralized SDN controller to resume operation of a largest strongly connected network partition (Sec.\ref{network-failure}).
+To ensure liveness, we rely on the centralized SDN controller to resume operation of a largest strongly connected network partition (Sec.\ref{sec:network-failure}).
 
 
 
