@@ -22,6 +22,8 @@
 
 Table of ROMS API.
 
+Discuss initialization and incremental deployment.
+
 We implement a reliable transport at the end host to deliver messages. Our implementation is built on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update delivery barrier when a TCP ACK is received.
 
 In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities. 

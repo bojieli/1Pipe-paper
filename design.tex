@@ -1,5 +1,5 @@
-\section{ROMS in a Reliable Network}
-\label{sec:design-reliable}
+\section{Unreliable Ordered Message Scattering}
+\label{sec:unreliable}
 
 %\begin{figure}[t]
 %\centering
@@ -9,7 +9,9 @@
 %\vspace{-1em}
 %\end{figure}
 
-In this section, we assume that the network is reliable. There is no host, link or switch failure. No packet is lost due to congestion or corruption. We make such strong assumptions to help reader understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.\ref{sec:design-unreliable}.
+In this section, we achieve linearizable order of message scattering. We will add reliablity in Sec.\ref{sec:packet-loss} and Sec.\ref{sec:failure}.
+
+%In this section, we assume that the network is reliable. There is no host, link or switch failure. No packet is lost due to congestion or corruption. We make such strong assumptions to help reader understand the key ideas of \sys. We will present the design in lossy and failure-prone networks in Sec.\ref{sec:design-unreliable}.
 
 
 %\textbf{Scalability}.
@@ -432,11 +434,15 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \fi
 
 
-\section{Fault Tolerance}
-\label{sec:design-unreliable}
+\section{Handling Packet Losses}
+\label{sec:packet-loss}
 
 %Previous section describes \sys in reliable networks. 
 In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
+
+\subsection{Reliable Delivery Without Packet Loss}
+\label{sec:ack-barrier}
+
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
@@ -521,6 +527,9 @@ At this time, messages below delivery barrier are received and messages above th
 %The receiver responds ACK to the sender via non-timestamped packets.
 %For each connection, the sender maintains a \textit{minimum unacknowledged timestamp}, detect packet loss via duplicate ACKs or timeout, then retransmit the lost packets with the same timestamp (Figure~\ref{fig:ack-barrier}).
 %Each sender maintains an unacknowledged timestamp barrier (\textit{ACK barrier}), which is the minimum of minimum unacknowledged timestamps among all connections. Messages with timestamps below the ACK barrier are guaranteed to be received by all recipients.
+
+\section{Handling Failures}
+\label{sec:failure}
 
 \subsection{Crash Failures of Hosts}
 \label{sec:host-failure}
