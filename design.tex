@@ -511,7 +511,7 @@ At this time, messages below delivery barrier are received and messages above th
 This is shown in Algorithm~\ref{alg:loss-detection}.
 
 It is worth noting that even if switches are not capable of detecting packet loss, we can remove loss-free and ACK barriers, and \sys still works by delivering messages according to delivery barriers.
-Loss-free and ACK barriers is an optimization to reduce message delivery latency in the absence of packet loss.
+Loss-free and ACK barriers is an optimization to reduce message delivery latency in the absence of packet loss, because packet loss is rare in carefully engineered data center networks~\cite{ports2015designing}.
 
 %We aim to deliver messages with an one-way delay when no packet loss happens, and fall back to the 2PC-like protocol when any packet loss happens. To achieve this, \sys leverages NICs and switches to detect packet losses. Hosts locate and retransmit lost packets via TCP-like loss recovery.
 
