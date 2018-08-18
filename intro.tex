@@ -58,23 +58,10 @@ The \sys primitive can support externally consistent distributed transactions~\c
 %In a networked system, effects of an event propagate via network messages. This means to \textit{scatter} messages from the origin node to a set of receiver nodes. For communication efficiency, an event may not need to be observed by all nodes, and different nodes may receive different messages originated from a same event, so generally it is a \textit{scattering} instead of a \textit{broadcast} or \textit{multicast}. Messages are tagged with the timestamp of the origin event. A node observes an event by receiving the corresponding message. Consequently, from a receiver's perspective, \textit{total ordering of input message timestamps implies total ordering of its observed events}.
 
 Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
-Most existing works achieve atomic broadcast for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
-However, distributed systems in data centers may scale to thousands of shards~\cite{nishtala2013scaling}, where each client communicate with a small and non-predetermined subset of hosts for each scattering.
+Most existing works achieve atomic multicast for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
+However, distributed systems in data centers may scale to thousands of shards~\cite{nishtala2013scaling}, while each client communicate with a small and non-predetermined subset of hosts for each scattering.
 To this end, we design \sys for a very large group of unknown and untrusted hosts in data centers.
-In this scenario, existing solutions suffer from scalability or efficiency limitations.
-
-To achieve real-time ordering in \sys, one line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
-As a result, it is challenging to scale the system.
-Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}.
-This causes extra network communication overhead and delay, thus degrading system efficiency.
-A third line of work assumes a synchronous network, \textit{e.g.} the block generation interval in Bitcoin blockchain~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
-However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
-
-To achieve reliability in \sys, we need to achieve consensus among receivers in the presence of failures.
-Most existing works, e.g. Paxos~\cite{lamport1998part} and ZAB~\cite{hunt2010zookeeper}, use voting to guarantee that a quorum of receivers agree on the sequence of messages to be delivered.
-Each vote needs to be broadcast to and collected from all hosts, incurring significant communication overhead for hundreds of thousands of hosts in a data center.
-In addition, Paxos does not allow Byzantine failure of hosts, which is insecure for a data center service with potentially malicious hosts.
-Achieving Byzantine fault tolerance~\cite{castro1999practical} in an asynchronous network is notably complicated and inefficient~\cite{mickens2014saddest}.
+In this scenario, existing solutions suffer from scalability or efficiency limitations~\cite{defago2004total}.
 
 
 %Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}.
@@ -109,15 +96,15 @@ Achieving Byzantine fault tolerance~\cite{castro1999practical} in an asynchronou
 %In \sys, hosts send messages to other hosts. A timestamp is attached to every message by the sender. The timestamps satisfy two requirements. First, for a given host the timestamps are non-decreasing, meaning that when a host sends out two messages, the latter one will have a timestamp equal or larger than that of the first one. Messages sent by a host with the same timestamp are considered to form a scattering group. Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message. \sys achieves reliable ordered message delivery. Unless the host is faulty or unreachable, all messages sent to a particular host will be delivered exactly once according to the timestamp order.  
 
 In this work, we propose an efficient and scalable solution to \sys in a data center network, where the network topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, switches have generally good programmability, and switches are managed by a logically centralized SDN controller.
-Our principle is to co-design end hosts with underlying data center networks to achieve synchrony and detect failures.
-We synchronize the clocks on hosts and a timestamp is attached to each message by the sender.
-The timestamps satisfy two reqirements.
-First, for a given host the timestamps are non-decreasing.
+Our principle is to co-design end hosts with underlying data center networks.
+We synchronize the clocks on hosts.
+The sender attaches a non-decreasing timestamp to each message.
+%The timestamps satisfy two reqirements.
+%First, for a given host the timestamps are non-decreasing.
 Messages sent by a host with the same timestamp are considered to form a scattering.
-Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message.
+%Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message.
+Each receiver delivers messages in non-decreasing timestamp order.
 
-We first consider the common case without packet loss and failures.
-Each receiver needs to deliver messages in non-decreasing timestamp order.
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys forwards timestamped messages as usual in the network, and buffers them at the receiver side.
 The switch aggregates timestamp information of all messages to derive the \emph{loss-free barrier} for each receiver.
@@ -129,15 +116,13 @@ Each switch keeps per-link barrier information and updates it for each packet.
 We merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:loss-free}).
 If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
 
-Now we consider failure cases.
+Now we consider packet loss and failures.
 \sys guarantees that all messages of a scattering is delivered to their corresponding recipients if and only if none of its sender and recipients fail.
-When a host receives a loss-free barrier, the messages can be only \emph{tentatively delivered}, which means that the message is delivered in order, but may be recalled if another host in the same scattering group fails.
-A host can \emph{reliably deliver} a message when it is sure that all hosts have received messages with lower timestamps.
-To achieve reliable delivery, a receiver responds an ACK to each tentatively delivered message, and the switch aggregate \emph{ACK barriers} hierarchically from receivers to senders (Sec.\ref{sec:ack-barrier}).
-
-To recover from occasional packet loss or corruption, we take advantage of the fact that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}.
 We detect packet loss via counters in network switches, and rely on end hosts to retransmit lost packets.
-Hosts stop delivering messages according to loss-free and ACK barriers when loss is detected.
+%When a host receives a loss-free barrier, the messages can be only \emph{tentatively delivered}, which means that the message is delivered in order, but may be recalled if another host in the same scattering group fails.
+To take advantage of the fact that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}, when packet loss does not occur, a host can \emph{reliably deliver} a message when it is sure that all hosts have received messages with lower timestamps.
+To this end, a receiver responds an ACK for each message, and the switch aggregate \emph{ACK barriers} from receivers to senders (Sec.\ref{sec:ack-barrier}).
+When packet loss is detected, hosts stop delivering messages according to loss-free and ACK barriers.
 After retransmission, we aggregate \emph{delivery barriers} from senders to receivers to resume reliable delivery and reset loss detectors (Sec.\ref{sec:lossy}).
 
 To achieve consensus under crash failures of hosts, rather than voting, we use the top-of-rack switch of each host to reliably detect host failures via beacon timeout.
@@ -203,13 +188,13 @@ In case that switch vendors do not expose accesses to switch CPUs, Sec.\ref{sec:
 %We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
 We evaluate the performance of \sys using both small-scale testbed experiments and large-scale simulation.
-In normal cases, \sys can deliver messages reliably in two \emph{network diameters}, i.e. the maximum one-way delay between two hosts, which is theoretically optimal.
+In normal cases, \sys can deliver messages reliably in two \emph{network diameters}, i.e. the maximum one-way delay between two hosts.
 \sys can recover from packet loss with only two additional network diameters, identical to the latency of two-phase commit.
 \sys also achieves low network bandwidth and CPU processing overhead in both small and large system scales.
 \sys also supports incremental deployment, as new hosts, switches and links can join the system within only one round-trip time.
 
-Making use of tentative delivery, \sys can execute externally consistent independent transactions in a round-trip time, the same as a non-transactional and non-replicated system.
-As a case study, \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for independent transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than other systems and the performance scales linearly with number of servers.
+As a case study, \sys can execute externally consistent independent transactions in a round-trip time, the same as a non-transactional and non-replicated system.
+\sys achieves 6.4 million transactions per server and 40~$\mu$s latency for independent transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than other systems and the performance scales linearly with number of servers.
 For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 districts, \sys scales to thousands of concurrent clients, while other concurrency control mechanisms only scale to tens of clients.
 
 %\textcolor{red}{Do we need to add: the rest of the paper is organized as follows. .....}

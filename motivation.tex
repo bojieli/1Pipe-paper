@@ -279,19 +279,31 @@ In Sec.\ref{subsec:transactional-kvs}, we introduce a novel message scattering p
 \label{subsec:existing-approaches}
 
 There has been extensive research in ordered communication, mostly providing a multicast or broadcast primitive.
-Efficiency and scalability is considered a fundamental trade-off for total order multicast~\cite{defago2004total}.
-For efficiency, a centralized algorithm is often used, \textit{e.g.}, sequencers~\cite{eris} or token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
-Scalability often leads to a distributed algorithm, \textit{e.g.}, aggregate history during message delivery~\cite{chandra1996unreliable}, use Lamport timestamps~\cite{lamport1978time} or run a consensus protocol among receivers~\cite{lamport1998part}.
+To achieve linearizable ordering, one line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
+As a result, it is challenging to scale the system.
+Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
+This causes extra network communication overhead and delay, thus degrading system efficiency.
+A third line of work assumes a synchronous network, \textit{e.g.} the block generation interval in Bitcoin blockchain~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
+However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
-Critics and proponents of causal and totally ordered communication have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
+To achieve reliability in the presence of failures, we need to achieve consensus among receivers.
+Most existing works, e.g. Paxos~\cite{lamport1998part} and Zab~\cite{junqueira2011zab}, use voting to guarantee that a quorum of receivers agree on the sequence of messages to be delivered.
+Each vote needs to be broadcast to and collected from all hosts, incurring significant communication overhead for hundreds of thousands of hosts in a data center.
+In addition, Paxos does not allow Byzantine failure of hosts, which is insecure for a data center service with potentially malicious hosts.
+Achieving Byzantine fault tolerance~\cite{castro1999practical} in an asynchronous network is notably complicated and inefficient~\cite{mickens2014saddest}.
+
+Critics and proponents of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
 \sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
 
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
 Mostly-Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
-Eris~\cite{eris} proposes in-network concurrency control using switch as a serialization point.
-To mitigate the single point of failure, NetChain~\cite{jin2018netchain} uses a chain of switches for fault tolerance.
-However, in these designs, the switch is a scalability bottleneck.
-\sys follows this trend while achieving scalability.
+However, consensus does not imply FIFO ordering~\cite{junqueira2011zab}.
+Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
+%To mitigate the single point of failure, NetChain~\cite{jin2018netchain} uses a chain of switches for fault tolerance.
+Each transaction in Eris must go through the centralized sequencer and involve all shards and replicas.
+However, in large distributed services, most transactions only involve a small portion of shards, so sending null messages incurs high overhead.
+In addition, when all hosts are correct, an Eris transaction may fail due to packet loss, while subsequent transactions from the same sender may succeed, violating validity of \sys.
+\sys follows the trend of systems and network co-design and achieves scalability.
 
 
 %It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
@@ -301,6 +313,8 @@ However, in these designs, the switch is a scalability bottleneck.
 %The predominant approach to total order communication is consensus protocols~\cite{lamport1998part,raft}, which introduces a centralized serialization point (not necessarily on the data path, but at least requires a centralized sequencer~\cite{kaminsky2016design}).
 
 %they cannot say ``for sure'' in the presence of out-of-band communication~\cite{cheriton1994understanding}
+
+\iffalse
 \subsection{Design Goals}
 \label{sec:goals}
 
@@ -339,3 +353,4 @@ The system ensures liveness unless network partition occurs.
 %Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may grow to milliseconds under heavy load.
 %Links with different speeds or congestions also lead to delay variations.
 %The system should dynamically adapt to the variance of network delays to minimize reordering delay.
+\fi

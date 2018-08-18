@@ -97,7 +97,8 @@ B_{new}:=\min\{R_i| i\in \mathcal{I}\}
 %Here $\rightarrow$ means \textit{can be forwarded to}. 
 %In the regular topologies of data centers, the set of all possible input links $\mathcal{I}_o$ is predetermined at route configuration time.
 %Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
-Using (\ref{equ:derive_barriers}), each switch independently derives the barrier timestamp based on all input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network.
+Using (\ref{equ:derive_barriers}), each switch independently derives the barrier timestamp based on all input links.
+As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network.
 %In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
 This algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
 
@@ -453,39 +454,84 @@ Finally, to reduce the message complexity of clock synchronization, we use netwo
 \label{sec:packet-loss}
 
 %Previous section describes \sys in reliable networks. 
-In this section, we discuss how to maintain the ordering and atomicity of message delivery in the presence of packet losses and node failures.
+In this section, we assume there are no host and network failures. We first detect packet loss and achieve reliable delivery in the absence of packet loss, then discuss how to recover from packet loss.
 
 \subsection{Reliable Delivery Without Packet Loss}
 \label{sec:ack-barrier}
 
+\parab{Problem.}
+Packet losses happen due to congestion, device bugs~\cite{guo2015pingmesh} and corruption~\cite{zhuo2017understanding}.
+If a packet is lost, none of the subsequent messages should be delivered.
+Otherwise, when the lost message is retransmitted, it will be delivered out of order.
+More importantly, if a scattering sends to both $A$ and $B$, and the message to $B$ is lost, then the message to $A$ should not be delivered immediately, because the sender or $B$ may fail during retransmission.
+To this end, a host can only deliver a message if no packet loss occurred for all receipients in the scattering.
+
+\parab{Solution.}
+We refer to the barrier timestamp in Sec.\ref{sec:unreliable} as \emph{loss-free barrier}.
+We maintain a \emph{loss encountered} flag in each switch, according to the packet drop counters in each ingress port.
+When a packet loss on any ingress network link or inside the switch occurs, the loss encountered flag is set.
+The loss encountered flag is piggybacked with every loss-free barrier, and the receipient switch sets its own flag when it receives the flag.
+If a host receives a loss-free barrier without loss encountered flag, then no packet loss occurred before the barrier on all possible routes to the host.
+Then the messages below the loss-free barrier can be \emph{tentatively delivered}, which means that the message is delivered in order, but may be recalled if another host in the same scattering group fails.
+To reduce latency, a host can tentatively process the message and respond to the sender if the processing does not have irreversible side effects.
+
+To \emph{reliably deliver} a message, all receipients in the same scattering group should have tentatively delivered the message.
+To aggregate this information efficiently, we add an \emph{ACK barrier} field to each message and set it to be the timestamp of the last tentatively delivered message.
+The switch aggregates ACK barriers similar to loss-free barriers, but in the opposite direction of the routing graph.
+When a host receives an ACK barrier, it knows that all messages below the timestamp has been tentatively delivered.
+So, a receiver can reliably deliver messages below the ACK barrier, and a sender can deduce that the messages below the ACK barrier will be delivered.
+
+%As an example, assume client $S$ scatters two operations $O_1, O_2$ to shards $R_1, R_2$ with timestamp $T$.
+%When $R_i$ receives loss-free barrier $T$, it logs $O_i$, responds an ACK to $S$, tentatively processes $O_i$, and return the processing result to $S$.
+%When $S$ receives ACK barrier $T$, it waits for both processing results.
+%When $R_i$ receives ACK barrier $T$, it can remove $O_i$ from the log because it will never be recalled.
+%In this way, the scattered operation completes in one round-trip time.
+
+%To address this problem, a traditional solution is two-phase commit (2PC). In 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message. This approach requires three one-way delays when no packet loss happens.
 
 \subsection{Packet Loss Detection and Recovery}
 \label{sec:lossy}
-%In addition, some devices or network links may have congestion or bugs that lead to higher packet loss possibility~\cite{guo2015pingmesh}.
 
-\parab{Problem.}Packet losses happen due to congestion, device bugs~\cite{guo2015pingmesh} and corruption~\cite{zhuo2017understanding}. Due to packet losses, the barrier timestamp is inefficient for message delivery because messages might get dropped and retransmitted. If messages are immediately delivered when their timestamps are below the barrier, a retransmitted message with lower timestamp may get delivered out of order. 
+\parab{Problem.}
+Although the switch can detect packet loss, it cannot tell which packet(s) are lost.
+So end-to-end loss recovery is needed.
+After all lost packets are retransmitted and received, we need to clear the loss encountered flag in switches and resume message delivery.
 
-To address this problem, a traditional solution is two-phase commit (2PC). In 2PC, each receiver responds an ACK to a data message, then the sender multicasts a commit message after receiving all ACKs, receivers then deliver the data when receiving the commit message. This approach requires three one-way delays when no packet loss happens.
+\parab{Solution.}
+We simply use TCP to detect and retransmit lost packets between a pair of sender and receiver.
+The TCP loss recovery mechanism enables non-tail loss to be detected in one round-trip, rather than waiting for timeout.
+When a sender receives all ACKs of sent messages below a timestamp, it knows that all messages sent by the sender and below the timestamp have been received, so they can be delivered.
+To this end, we add a \emph{delivery barrier} field to each message, which carries accumulative delivery timestamp from the sender, i.e., the minimum ACK timestamp of all recipients.
+Again, delivery barriers are aggregated by network switches hop by hop.
+When a host receives a delivery barrier, it can reliably deliver all buffered messages below the timestamp, regardless of whether they have been tentatively delivered.
+Figure~\ref{fig:ack-barrier} shows an example of loss recovery.
 
-\parab{Solution.}We aim to deliver messages with an one-way delay when no packet loss happens, and fall back to the 2PC-like protocol when any packet loss happens. To achieve this, \sys leverages NICs and switches to detect packet losses. Hosts locate and retransmit lost packets via TCP-like loss recovery.
+When delivery barrier catches up with loss-free barrier recorded at last packet loss, a switch clears the loss encountered flag.
+At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch.
+This is shown in Algorithm~\ref{alg:loss-detection}.
+
+It is worth noting that even if switches are not capable of detecting packet loss, we can remove loss-free and ACK barriers, and \sys still works by delivering messages according to delivery barriers.
+Loss-free and ACK barriers is an optimization to reduce message delivery latency in the absence of packet loss.
+
+%We aim to deliver messages with an one-way delay when no packet loss happens, and fall back to the 2PC-like protocol when any packet loss happens. To achieve this, \sys leverages NICs and switches to detect packet losses. Hosts locate and retransmit lost packets via TCP-like loss recovery.
 
 %\sys detects packet losses on last-hop links and queues using packet loss counter in NICs and switches. Given the limited switch buffer resource, we rely on end hosts to locate and retransmit lost packets via TCP-like loss recovery.
 %Since retransmitted packets may violate the barrier property, we add a special mark to them.
 
 %Due to packet loss, the barrier timestamp is no longer sufficient for message delivery because message might get dropped and retransmitted. If messages are immediately delivered when their timestamp is below the barrier, a retransmitted message with lower timestamp may get delivered out of order. Our aim is to deliver messages in one-way network delay when no packet loss is encountered, and fall back to a protocol similar to two-phase commit (2PC) with three one-way delays when loss occurs.
 
-In \sys, we rename the original barrier to \textit{loss-free barrier} and add a \textit{delivery barrier} field and a \textit{loss encountered} flag to each packet. Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages based on loss-free barrier. Otherwise, it delivers based on delivery barrier.
+%In \sys, we rename the original barrier to \textit{loss-free barrier} and add a \textit{delivery barrier} field and a \textit{loss encountered} flag to each packet. Delivery barrier carries accumulative delivery timestamp from the sender, which means that all messages sent by the sender and below delivery barrier have been delivered. Figure~\ref{fig:ack-barrier} shows an example of delivery barrier. When loss encountered flag is off, a receiver can deliver messages based on loss-free barrier. Otherwise, it delivers based on delivery barrier.
 
-When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
-In \sys, the receiver replies ACKs to the sender when it receives a message.
-Then the message is buffered as a prepared message, not delivered.
-Unlike regular 2PC, \sys can only deliver a message after delivering all messages with lower timestamps.
-Instead of multicasting commit messages, the sender sends messages with updated delivery barrier.
-\sys hierarchically aggregates updated delivery barriers in network so that receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
+%When packet loss is encountered, we use a protocol similar to 2PC to update the delivery barrier. 
+%In \sys, the receiver replies ACKs to the sender when it receives a message.
+%Then the message is buffered as a prepared message, not delivered.
+%Unlike regular 2PC, \sys can only deliver a message after delivering all messages with lower timestamps.
+%Instead of multicasting commit messages, the sender sends messages with updated delivery barrier.
+%\sys hierarchically aggregates updated delivery barriers in network so that receivers know the timestamp lower bound of all delivered (and prepared) messages and can deliver the prepared messages accordingly.
 
-When delivery barrier catches up with loss-free barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
+%When delivery barrier catches up with loss-free barrier recorded at last packet loss, the switch clears loss encountered flag, thus enables receivers to deliver messages without waiting for an additional RTT.
 
-At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
+%At this time, messages below delivery barrier are received and messages above that are not lost before passing through this switch. This is shown in Algorithm~\ref{alg:loss-detection}, 
 
 
 
@@ -546,14 +592,31 @@ At this time, messages below delivery barrier are received and messages above th
 \section{Handling Failures}
 \label{sec:failure}
 
+In this section, we first handle crash failure of hosts, then extend it to handle Byzantine hosts, finally handle crash failure of network switches and links.
+
+
 \subsection{Crash Failures of Hosts}
 \label{sec:host-failure}
+
+\parab{Problem.}
+When a host, switch or network link fails, barrier timestamps and message delivery stall.
+Our goal is to remove the failed components and resume message delivery, while preserving the atomicity and validity of scatterings.
+
+\parab{Solution.}
 
 \subsection{Byzantine Failures of Hosts}
 \label{sec:byzantine}
 
+\parab{Problem.}
+
+\parab{Solution.}
+
 \subsection{Crash Failure of Network}
 \label{sec:network-failure}
+
+\parab{Problem.}
+
+\parab{Solution.}
 
 
 \iffalse
