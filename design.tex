@@ -56,6 +56,10 @@ Given recent efforts on accurate clock synchronization in data centers~\cite{cor
 Message timestamp determines the delivery order at receiver.
 To achieve ordered message scattering, the receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through host ID).  
 
+To preserve causal order in the Lamport logical clock sense~\cite{lamport1978time}, the local clock time should be strictly higher than delivered timestamps.
+This would be the normal case, because the offset among clocks is typically lower than the network diameter.
+If this causality condition does not hold, message delivery should be delayed until the local clock catches up.
+
 \parab{Barrier timestamp.}
 When a receiver wants to deliver a message with timestamp $t$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $t$.
 Since different network paths have different propagation and queuing delays, this is nontrivial.
