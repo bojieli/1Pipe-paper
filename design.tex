@@ -49,10 +49,20 @@ In this section, we achieve linearizable order of message scattering. We will ad
 \vspace{-0.9em}
 \end{figure}
 
-\parab{Message timestamp.}\sys assigns a non-decreasing timestamp for each message. A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps. %Each sender assigns monotonically increasing message timestamps, \textit{e.g.}, synchronized physical time, to different scatterings. 
-Message timestamp determines the delivery order at receiver. To achieve ordered message scattering, the receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through host ID).  
+\parab{Message timestamp.}
+\sys assigns a non-decreasing timestamp for each message.
+A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps.
+Given recent efforts on accurate clock synchronization in data centers~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, we synchronize monotonic time on hosts similar to Spanner~\cite{corbett2013spanner}, and use the local clock time as message timestamps.
+Message timestamp determines the delivery order at receiver.
+To achieve ordered message scattering, the receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through host ID).  
 
-\parab{Barrier timestamp.} When a receiver wants to deliver a message with timestamp $t$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $t$. Since messages can be received out of order, this is nontrivial. To this end, we introduce the concept of \emph{barrier timestamp}. A barrier timestamp is associated with either a link or a node (i.e. a switch or an end host) in the routing graph. The barrier timestamp is the lower bound of message timestamps of all \emph{future arrival messages} from the link, or at the node. Each receiver can maintain its own barrier timestamp and deliver the messages whose timestamps are smaller than the barrier timestamp.
+\parab{Barrier timestamp.}
+When a receiver wants to deliver a message with timestamp $t$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $t$.
+Since different network paths have different propagation and queuing delays, this is nontrivial.
+To this end, we introduce the concept of \emph{barrier timestamp}.
+A barrier timestamp is associated with either a link or a node (i.e. a switch or an end host) in the routing graph.
+The barrier timestamp is the lower bound of message timestamps of all \emph{future arrival messages} from the link, or at the node.
+Each receiver can maintain its own barrier timestamp and deliver the messages whose timestamps are smaller than the barrier timestamp.
 
 Due to non-decreasing timestamp assignment, in a FIFO network (such as by using TCP transport), a receiver can easily figure out the barrier if it has received messages from all senders: the barrier is the minimum timestamp of latest messages from each sender. Therefore, a naive solution would be for every sender to send periodic beacons to every receiver so that the receivers can figure out the barrier and deliver messages. Unfortunately, such a solution requires quadratic beacons.
 
@@ -75,16 +85,21 @@ To derive barriers, the sender initializes both fields of all packets in a messa
 %\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
 \begin{equation}\label{equ:derive_barriers}
 %\RED{
-B_{new}:=\min\{R_i| i\in \mathcal{I}_o\}
+B_{new}:=\min\{R_i| i\in \mathcal{I}\}
 %}
 \end{equation}
 %B := \min \{ R_i | \exists i \rightarrow E, i \in \mathcal{I} \}
-Where 
-\begin{equation}\label{equ:derive_barriers1}
-\mathcal{I}_o =\{i| i\rightarrow o, i \in \mathcal{I} \}
-\end{equation}
+%Where 
+%\begin{equation}\label{equ:derive_barriers1}
+%\mathcal{I}_o =\{i| i\rightarrow o, i \in \mathcal{I} \}
+%\end{equation}
 
-Here $\rightarrow$ means \textit{can be forwarded to}. In the regular topologies of data centers, the set of all possible input links $\mathcal{I}_o$ is predetermined at route configuration time. Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
+%Here $\rightarrow$ means \textit{can be forwarded to}. 
+%In the regular topologies of data centers, the set of all possible input links $\mathcal{I}_o$ is predetermined at route configuration time.
+%Using (\ref{equ:derive_barriers}) and (\ref{equ:derive_barriers1}), each switch independently derives the barrier timestamp based on all possible input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network. In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
+Using (\ref{equ:derive_barriers}), each switch independently derives the barrier timestamp based on all input links. As shown in Figure~\ref{fig:hierarchical_merge}, barrier timestamps are aggregated hierarchically through layers of switches, and finally the receiver gets the barrier of all reachable hosts and links in the network.
+%In Appendix~\ref{appx:hierarchical_merge}, we prove that this algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
+This algorithm maintains the property of barrier timestamps, given the FIFO property of each network link and switch.
 
 When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue that sorts packets based on the message timestamp. The receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
 
@@ -162,7 +177,7 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
  }
  \SetKwFunction{UpdateEgressPortTS}{UpdateEgressPortTS}
  \Fn{\UpdateEgressPortTS{\textnormal{output link} $E$}}{
-    $B_E \leftarrow \min \{ R_i | i \rightarrow E, i \in \mathcal{I} \}$\;
+    $B_E \leftarrow \min \{ R_i | i \in \mathcal{I} \}$\;
     \eIf{last$_E + min \leq$ time()}{
       SendBeacon ($B_E$, $E$)\;
     }{
@@ -179,7 +194,7 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
     modify barrier timestamp in $P$ to $B_E$\;
   }
   \ElseIf{$P$ is a beacon packet}{
-  	\ForEach{$e \in \{ e \in \mathcal{E} | I \rightarrow e \}$}{
+  	\ForEach{$e \in \mathcal{E} $}{
     	UpdateEgressPortTS ($e$)\;
     }
   }

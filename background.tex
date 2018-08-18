@@ -48,7 +48,10 @@
 Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. In a multi-rooted tree topology, the shortest path between two hosts first goes up to one of the lowest common ancestor switches, then goes down to the destination.
 %Shortest-path between two hosts in a multi-rooted tree first goes up layers of switches to one of their lowest common ancestors, then goes down layers of switches.
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
-This loop-free topology enables hierarchical aggregation of barrier timestamps, as discussed in \ref{sec:ideal}.
+This loop-free topology enables hierarchical aggregation of barrier timestamps.
+
+In addition to the production network, data centers have an isolated management network that interconnects network switches.
+A logically centralized SDN service runs on the management network to detect failures of switches and links, then reconfigure routing tables on failure.
 
 %\RED{Discuss loop-free routing.}
 %Formally, for $n$ distinct switches $S_1, \ldots, S_n$, if there are $n$ links $L_1, \ldots, L_n$ directly connecting $S_1 \rightarrow S_2, \ldots, S_{n-1} \rightarrow S_n, S_n \rightarrow S_1$, and $n$ possible routes (need not be distinct) passing through $L_1 \rightarrow L_2, \ldots, L_{n-1} \rightarrow L_n, L_n \rightarrow L_1$ respectively, then we call it a \textit{routing loop}.
