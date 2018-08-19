@@ -2447,11 +2447,11 @@ Computing Machinery]
 }
 \def\ACM@adddotafter#1{\ifx\relax#1\relax\else\LTX@adddotafter{#1}\fi}
 \renewcommand\section{\@startsection{section}{1}{\z@}%
-  {-.75\baselineskip \@plus -2\p@ \@minus -.2\p@}%
+  {.5\baselineskip}%{-.75\baselineskip \@plus -2\p@ \@minus -.2\p@}%
   {.25\baselineskip}%
   {\ACM@NRadjust\@secfont}}
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-  {-.75\baselineskip \@plus -2\p@ \@minus -.2\p@}%
+  {.25\baselineskip}%{-.75\baselineskip \@plus -2\p@ \@minus -.2\p@}%
   {.25\baselineskip}%
   {\ACM@NRadjust\@subsecfont}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%

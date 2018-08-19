@@ -301,9 +301,9 @@ However, consensus does not imply FIFO ordering~\cite{junqueira2011zab}.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
 %To mitigate the single point of failure, NetChain~\cite{jin2018netchain} uses a chain of switches for fault tolerance.
 Each transaction in Eris must go through the centralized sequencer and involve all shards and replicas.
-However, in large distributed services, most transactions only involve a small portion of shards, so sending null messages incurs high overhead.
+However, in large distributed services, most transactions only involve a small portion of shards~\cite{nishtala2013scaling}, so sending null messages incurs high overhead.
 In addition, when all hosts are correct, an Eris transaction may fail due to packet loss, while subsequent transactions from the same sender may succeed, violating validity of \sys.
-\sys follows the trend of systems and network co-design and achieves scalability.
+\sys follows the trend of systems and network co-design.%and achieves scalability.
 
 
 %It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.

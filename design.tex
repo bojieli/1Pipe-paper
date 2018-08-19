@@ -81,12 +81,8 @@ In \sys, we attach two timestamp fields to each message packet. The first is \te
 \emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.}
 
 To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} with the non-decreasing message timestamp. The switch maintains a register $R_i$ for each input link $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all input links. After forwarding a packet with barrier timestamp $B$ from input link $i$ to output link $o$, the switch performs two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
-
-%\RED{$i$ never appeared before, while $I$ did. $\exists$ is redundant}
 \begin{equation}\label{equ:derive_barriers}
-%\RED{
 B_{new}:=\min\{R_i| i\in \mathcal{I}\}
-%}
 \end{equation}
 %B := \min \{ R_i | \exists i \rightarrow E, i \in \mathcal{I} \}
 %Where 
@@ -657,50 +653,51 @@ This failure recovery mechanism also enables incremental deployment of new hosts
 
 \parab{Problem.}
 Different from atomic multicast services used by a single application, \sys is a data center infrastructure used by multiple tenants and applications.
-To this end, we need to ensure correctness and liveness even when the hosts are Byzantine~\cite{lamport1982byzantine}.
+For security purpose, we ensure correctness and liveness even when some hosts are malicious.
 
 \parab{Solution.}
-We use the ToR switch to monitor and enforce that hosts comply with the \sys protocol.
+We use the ToR switch to enforce that hosts comply with the \sys protocol.
 We trust network switches because they are centrally managed by data center operators via an isolated network.
-For correctness, the ToR switch should detect the following cases: (a) incorrect source host ID, (b) timestamps and barriers that violate ordering properties, (c) inconsistent receiver list in a scattering, (d) retransmitted message is different from the initially sent one, and (e) send delivery barrier before receiving all ACKs.
-Cases (a) and (b) can be detected by simple checks on the ToR.
-To detect case (c), the ToR stores the sequence number, timestamp, message receiver and scattering receiver list in last message, and checks such fields in a new message if the timestamp is the same.
-When the ToR detects a missing sequence number, forwarding is stalled and the sender is notified to retransmit the lost message.
+
+For correctness, the ToR switch should detect the following cases: (a) incorrect source host ID, (b) timestamps and barriers that violate ordering, (c) inconsistent receiver list in a scattering, (d) retransmitted message is different from the initially sent one, and (e) send delivery barrier before receiving all ACKs.
+Cases (a) and (b) can be detected trivially on ToR.
+To detect (c), ToR stores the sequence number, timestamp, message receiver and scattering group of the last message, and checks such fields in a new message if it belongs to a same scattering.
+When ToR detects a missing sequence number, forwarding is paused and the sender is notified to retransmit the lost message.
 
 Cases (d) and (e) are much harder to detect.
-A naive approach requires the ToR switch to store the set of unique unacknowledged messages, which is impractical because the switch has limited storage capacity. % and per-packet computation needs to be O(1).
-Now we propose a practical solution using constant storage on ToR.
+A naive approach is storing the set of unique unacknowledged messages on ToR, which is impractical due to limited storage capacity of switches. % and per-packet computation needs to be O(1).
+We propose a practical solution using constant storage on ToR.
 %At its core, the ToR tracks the accumulative XOR sum of unique unacknowledged messages and uses signatures to ensure that all unique messages are tracked.
-The ToR signs each initially sent message and sets a \emph{signature} field in the message.%: msg.signature = signature(msg.timestamp, msg.sender, msg.receiver, msg.payload).
-The ToR maintains a \emph{per-sender XOR sum} of signatures of \emph{initially sent messages}.
+ToR signs each initially sent message and sets a \emph{signature} field in the message. %: msg.signature = signature(msg.timestamp, msg.sender, msg.receiver, msg.payload).
+ToR maintains a \emph{per-sender XOR sum} $S_1$ of signatures of \emph{initially sent messages}.
 In addition to forwarding the signed message to the receiver, ToR also sends the signature and the XOR sum back to sender in a signed \emph{sigreturn} message.
-When the sender needs to retransmit the message, it attaches the signature, so the ToR can verify that the retransmitted message is identical to the initially sent one.
-If one sigreturn message is lost, the sender can compute the lost signature according to the XOR sum.
-If more consecutive sigreturn messages are lost, the sender retransmits such initially sent messages along with the previous and next sigreturn messages, so that the ToR can verify that the signatures agree with the XOR sums, then return the lost signatures.
+When the sender needs to retransmit the message, it attaches the signature, so ToR can verify that the retransmitted message is identical to the initially sent one.
+If one sigreturn message is lost, the sender can compute the lost signature according to  XOR sums.
+If more consecutive sigreturn messages are lost, the sender retransmits corresponding initially sent messages along with the previous and next sigreturn messages, so that ToR can verify that the signatures agree with XOR sums, then return the lost signatures.
 
-The receiver responds ACK with the message signature.
-When the ToR receives an ACK, it adds another signature to the ACK to verify its authenticity.
-When the sender updates the delivery barrier to the ToR, it piggybacks signed ACKs of the messages to deliver.
-If a receiver fails, the sender sends discarded messages and their signatures to the ToR.
-The ToR maintains a per-sender XOR sum of signatures of \emph{messages to deliver}.
-If all sent messages are either acknowledged or discarded, the XOR sum of signatures of initially sent messages would equal to that of messages to deliver.
-However, with in-flight messages, the XOR sums will never equal.
-To this end, the ToR maintains an array of XOR sums and tracks the two XOR sums for messages in each timestamp interval.
-When the XOR sums of a timestamp interval equal, all messages in this interval are acknowledged or discarded, so the ToR sends the delivery barrier of the interval.
-We choose the timestamp interval to be an RTT, so the array size needs to be (retransmission time / RTT + 2).
+A receiver responds ACK with the message signature.
+When ToR receives an ACK, it adds another signature to the ACK to verify its authenticity.
+When the sender updates the delivery barrier to ToR, it piggybacks signed ACKs of the delivered messages.
+If a receiver fails, the sender sends discarded messages and their signatures to ToR.
+ToR maintains another per-sender XOR sum $S_2$ of signatures of delivered messages.
+If all sent messages are either acknowledged or discarded, $S_1$ and $S_2$ are equal.
+However, with in-flight messages, $S_1$ and $S_2$ will never equal.
+To this end, the ToR maintains an array of XOR sums and tracks $S_1$ and $S_2$ for messages in each timestamp interval.
+When $S_1$ and $S_2$ of a timestamp interval equal, all messages in this interval are acknowledged or discarded, so ToR sends the delivery barrier of the interval.
+%We choose the timestamp interval to be an RTT, so the array size needs to be (retransmission time / RTT + 2).
 
 For liveness, the following cases should be detected: (1) do not update barriers for a long time, (2) the clock has too much offset, and (3) do not reply ACK after receiving a message.
-For (1), we introduce a \emph{barrier update timeout} to announce failure of a host when the barrier is kept the same during the timeout.%, which is set to three host failure timeouts.
-For (2), we block a message if its timestamp is too far away from the ToR clock.
-For (3), we enable a sender to trigger death notice of a receiver if it does not reply ACKs after a certain number of retransmissions.
+For (1), we introduce a \emph{barrier update timeout} to announce failure of a host when it sends the same barrier during the timeout. %, which is set to three host failure timeouts.
+For (2), we block message timestamps too far away from the ToR clock.
+For (3), we enable a sender to trigger death notice of a receiver if it does not reply ACKs after several retransmissions.
 First, the sender retransmits the message to the ToR switch of receiver.
 Second, the receiver ToR forwards the message to the host and wait for its reply.
-Third, if the receiver does not reply after a certain number of retransmissions, the ToR announces death of the receiver.
-Finally, the sender continues incrementing barriers after receiving the death notice.
+Third, if the receiver does not reply after several retransmissions, the ToR announces death of the receiver.
+Finally, the sender resumes updating barriers after receiving the death notice.
 
 
 
-\subsection{Fault Tolerance of Network}
+\subsection{Network Failure}
 \label{sec:network-failure}
 
 \parab{Problem.}
@@ -726,7 +723,7 @@ To see why this condition is needed, we show a counter-example.
 Receiver $R$ in the failed partition is not reachable from a border switch $T$, and sender $S$ is reachable to both $T$ and $R$.
 $R$ receives delivery barrier 20 from $S$, but $T$ only receives 10.
 Now a neighbor of $T$ fails, and hosts in the resumed network partition would receive death notice of $S$ with timestamp 10 from $T$, inconsistent with that $R$ has delivered 20.
-This condition is sufficient.
+This condition is also sufficient.
 For any receiver $R$ in failed partition $P'$ and a border switch $T$ in resumed network partition $P$, because $R$ is reachable from $T$, the delivery barrier $B$ of $R$ must be less or equal than the delivery barrier $B'$ at $T$.
 When $T$ broadcasts death notice of any host $S$ in $P'$ with timestamp $B'$, messages delivered in $P'$ has timestamp $\le B$.
 So, no host in $P'$ can deliver messages higher than $B'$, and hosts in $P$ will receive death notices at $B'$.
