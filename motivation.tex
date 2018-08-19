@@ -278,7 +278,7 @@ In Sec.\ref{subsec:transactional-kvs}, we introduce a novel message scattering p
 \subsection{Existing Approaches}
 \label{subsec:existing-approaches}
 
-There has been extensive research in ordered communication, mostly providing a multicast or broadcast primitive.
+Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in ordered communication, mostly providing a multicast or broadcast primitive.
 To achieve linearizable ordering, one line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.

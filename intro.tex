@@ -15,7 +15,7 @@
 \fi
 
 In a data center with arbitrary network delay, packet loss and failure, messages are not guaranteed to be delivered reliably and in a consistent order.
-For example, a client updates metadata and data simultaneously in a distributed database.
+For example, a client updates metadata and data simultaneously in a distributed storage.
 The shards storing metadata and data may receive the updates in different orders, and some shard may fail to receive the update, thus violating data consistency.
 Transactional systems that mitigate this problem often introduce synchronization overhead and complicate distributed system design.
 
@@ -38,7 +38,7 @@ We propose Reliable Ordered Message Scattering (\sys), a group communication abs
 It provides \emph{total order}, ensuring that messages are delivered in the same order to all receivers.
 This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered after the other.
 Moreover, messages obey the \emph{causal order} in the Lamport logical clock sense~\cite{lamport1978time}.
-\emph{Reliability} means that (1) \emph{atomicity} or \emph{serializability}, i.e., either all or none receivers deliver messages in a scattering, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if its sender and all receivers are correct, and the network is not partitioned.
+\emph{Reliability} means both (1) \emph{atomicity} or \emph{serializability}, i.e., either all or none receivers deliver messages in a scattering, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if its sender and all receivers are correct, and the network is not partitioned.
 The \sys primitive can support externally consistent distributed transactions~\cite{ports2015designing, eris}, replication in eventually consistent systems, state machine replication~\cite{state-machine-replication} as well as improve consistency in distributed shared memory.
 
 %Total order communication provides an abstraction where different receivers process messages from senders in a consistent order~\cite{kshemkalyani2011distributed}.
@@ -57,11 +57,11 @@ The \sys primitive can support externally consistent distributed transactions~\c
 
 %In a networked system, effects of an event propagate via network messages. This means to \textit{scatter} messages from the origin node to a set of receiver nodes. For communication efficiency, an event may not need to be observed by all nodes, and different nodes may receive different messages originated from a same event, so generally it is a \textit{scattering} instead of a \textit{broadcast} or \textit{multicast}. Messages are tagged with the timestamp of the origin event. A node observes an event by receiving the corresponding message. Consequently, from a receiver's perspective, \textit{total ordering of input message timestamps implies total ordering of its observed events}.
 
-Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
-Most existing works achieve atomic multicast for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
-However, distributed systems in data centers may scale to thousands of shards~\cite{nishtala2013scaling}, while each client communicate with a small and non-predetermined subset of hosts for each scattering.
+Many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
+Most existing works are designed for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
+However, distributed systems in data centers scale to thousands of hosts~\cite{nishtala2013scaling}, while each client communicate with a small and non-predetermined subset of hosts for each scattering.
 To this end, we design \sys for a very large group of unknown and untrusted hosts in data centers.
-In this scenario, existing solutions suffer from scalability or efficiency limitations~\cite{defago2004total}.
+In this scenario, existing solutions suffer from scalability, efficiency or security limitations.
 
 
 %Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}.
@@ -95,7 +95,7 @@ In this scenario, existing solutions suffer from scalability or efficiency limit
 
 %In \sys, hosts send messages to other hosts. A timestamp is attached to every message by the sender. The timestamps satisfy two requirements. First, for a given host the timestamps are non-decreasing, meaning that when a host sends out two messages, the latter one will have a timestamp equal or larger than that of the first one. Messages sent by a host with the same timestamp are considered to form a scattering group. Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message. \sys achieves reliable ordered message delivery. Unless the host is faulty or unreachable, all messages sent to a particular host will be delivered exactly once according to the timestamp order.  
 
-In this work, we propose an efficient and scalable solution to \sys in a data center network, where the network topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, switches have generally good programmability, and switches are managed by a logically centralized SDN controller.
+In this work, we propose an efficient and scalable solution to \sys in a data center network, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, switches have generally good programmability, and switches are managed by a logically centralized SDN controller.
 Our principle is to co-design end hosts with underlying data center networks.
 We synchronize the clocks on hosts.
 The sender attaches a non-decreasing timestamp to each message.
