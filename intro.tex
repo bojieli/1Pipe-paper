@@ -125,8 +125,9 @@ To this end, a receiver responds an ACK for each message, and the switch aggrega
 When packet loss is detected, hosts stop delivering messages according to loss-free and ACK barriers.
 After retransmission, we aggregate \emph{delivery barriers} from senders to receivers to resume reliable delivery and reset loss detectors (Sec.\ref{sec:lossy}).
 
-To achieve consensus under crash failures of hosts, rather than voting, we use the top-of-rack switch of each host to reliably detect host failures via beacon timeout.
+To achieve consensus under failures of hosts, rather than voting, we use the top-of-rack switch of each host to reliably detect host failures via beacon timeout.
 Host failure information is reliably propagated through the network along with delivery barriers (Sec.\ref{sec:crash-failure}).
+After failure recovery, a host can rejoin the system as a new host (Sec.\ref{sec:failure-recovery}).
 To ensure security, the top-of-rack switches monitor and enforce the hosts to comply with \sys protocol, so Byzantine failures of hosts can also be detected (Sec.\ref{sec:byzantine}).
 Crash failures of network switches and links would stall the system but not violate correctness.
 To ensure liveness, we rely on the centralized SDN controller to resume operation of a largest strongly connected network partition (Sec.\ref{sec:network-failure}).
