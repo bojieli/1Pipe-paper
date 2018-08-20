@@ -2455,7 +2455,7 @@ Computing Machinery]
   {.25\baselineskip}%
   {\ACM@NRadjust\@subsecfont}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
-  {-.5\baselineskip \@plus -2\p@ \@minus -.2\p@}%
+  {.25\baselineskip}%{-.5\baselineskip \@plus -2\p@ \@minus -.2\p@}%
   {-3.5\p@}%
   {\ACM@NRadjust{\@subsubsecfont\@adddotafter}}}
 \renewcommand\paragraph{\@startsection{paragraph}{4}{\parindent}%

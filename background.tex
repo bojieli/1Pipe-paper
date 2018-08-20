@@ -34,7 +34,7 @@
     The dashed virtual link between corresponding uplink and downlink switch indicates ``hairpin'' traffic from a lower-layer switch or host to another one.
 }
 \label{fig:dcn}
-\vspace{-1.5em}
+\vspace{-1em}
 \end{figure}
 
 \begin{figure}[t]
@@ -42,7 +42,7 @@
 \includegraphics[width=0.3\textwidth]{images/cropped_switch_architecture.pdf}
 \caption{Architecture of a typical network switch.}
 \label{fig:switch}
-\vspace{-1.5em}
+\vspace{-1em}
 \end{figure}
 
 Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. In a multi-rooted tree topology, the shortest path between two hosts first goes up to one of the lowest common ancestor switches, then goes down to the destination.
@@ -50,7 +50,7 @@ Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson
 Therefore, the routing topology form a directed acyclic graph (DAG), as shown in Figure~\ref{fig:dcn}.
 This loop-free topology enables hierarchical aggregation of barrier timestamps.
 
-In addition to the production network, data centers have an isolated management network that interconnects network switches.
+Apart from the production network, data centers have an isolated management network that interconnects network switches.
 A logically centralized SDN service runs on the management network to detect failures of switches and links, then reconfigure routing tables on failure.
 
 %\RED{Discuss loop-free routing.}

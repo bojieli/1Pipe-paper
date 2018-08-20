@@ -122,20 +122,20 @@ By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarro
 \label{subsec:application-scenarios}
 
 In this section, we discuss three use cases of \sys.
-By avoiding IRIW hazard, one-shot distributed transactions can complete in one round-trip with high throughput under contention.
+By avoiding IRIW hazard, independent distributed transactions can complete in one round-trip with high throughput under contention.
 By avoiding IMW hazard, log replication can be both scalable and serializable, which is a building block for both strongly and eventually consistent replicated systems.
 By avoiding WAW hazard, \sys improves consistency in distributed shared memory.
 
-\subsubsection{Distributed One Shot Transactions}
+\subsubsection{Distributed Independent Transactions}
 \label{subsec:transactional-kvs}
-We consider \emph{one-shot transactions}~\cite{kallman2008h} or \emph{single round-trip transactions}, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
-For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are one-shot transactions.
+We consider \emph{independent transactions} or \emph{one-shot transactions}~\cite{kallman2008h}, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
+For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
 In \sys, we implement each transaction as a message scattering to multiple sites.
 Transaction initiator uses the scattering timestamp as the transaction timestamp.
 \sys guarantees atomicity and isolation, thus solving the concurrency control problem.
 Transactions would not abort due to out-of-order operations.
 Because \sys assigns timestamps on senders, there is also no sequencer bottleneck.
-In this way, one-shot transactions can complete in a single network RTT.% (if not counting replication and logging).
+In this way, independent transactions can complete in a single round-trip, close to a non-transactional system.% (if not counting replication and logging).
 
 %Concurrency control mechanisms of distributed transactions typically fall in two categories~\cite{bernstein1981concurrency}.
 %One category uses \textit{locks} to protect accesses to shared resources.
@@ -296,14 +296,14 @@ Critics and proponents of causal and totally ordered communication (CATOCS) have
 \sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
 
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
-Mostly-Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
+Mostly Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
 However, consensus does not imply FIFO ordering~\cite{junqueira2011zab}.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
 %To mitigate the single point of failure, NetChain~\cite{jin2018netchain} uses a chain of switches for fault tolerance.
 Each transaction in Eris must go through the centralized sequencer and involve all shards and replicas.
-However, in large distributed services, most transactions only involve a small portion of shards~\cite{nishtala2013scaling}, so sending null messages incurs high overhead.
+However, in large distributed services, most transactions only involve a small portion of shards~\cite{nishtala2013scaling}, so sending null messages to other shards incurs high overhead.
 In addition, when all hosts are correct, an Eris transaction may fail due to packet loss, while subsequent transactions from the same sender may succeed, violating validity of \sys.
-\sys follows the trend of systems and network co-design.%and achieves scalability.
+\sys follows the trend of systems and network co-design, achieving scalability, efficiency and security.
 
 
 %It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
