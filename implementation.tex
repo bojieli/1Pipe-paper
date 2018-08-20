@@ -1,7 +1,57 @@
 \section{Implementation}
 \label{sec:impl}
 
-\begin{figure*}[t]
+
+
+%At the end host, \sys requires a reliable transport. The transport can be built over any at-most-once packet transmission interfaces, \textit{e.g.}, UDP, UNIX raw socket, RDMA unreliable datagram~\cite{infinibandrocev2} or netmap~\cite{rizzo2012netmap}. We implement the message transport on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
+
+\subsection{ROMS API}
+\label{sec:api}
+
+\begin{table*}[thbp]
+	\centering
+	\scalebox{0.9}{
+	\begin{tabular}{l|l}
+		\hline
+		$T$ = Scatter([($M_i$, $R_i$)]) & Scatter a group of messages $M_i$ to receivers $R_i$ respectively, return timestamp $T$. \\
+		\hline
+		CompletionCallback($f$($T$, IsDelivered)) & Register callback $f$ to notify whether a sent scattering $T$ is delivered or discarded. \\
+		\hline
+		$T, M$ = TentativeRecv() & Receive a message $M$ and its timestamp $T$ in order, but may be recalled. \\
+		\hline
+		RecallCallback($f$($T, M$)) & Register callback $f$ to recall a tentatively received message $M$ at timestamp $T$. \\
+		\hline
+		$T, M$ = ReliableRecv() & Receive a message $M$ and its timestamp $T$ reliably in order. \\
+		\hline
+		\hline
+		ID = Init(IsHostOrSwitch) & Initialize \sys and get a node ID. \\
+		\hline
+		Connect(NeighborID) & Connect to a neighbor node (switch or host). \\
+		\hline
+		Disconnect(NeighborID) & Disconnect from a neighbor node (switch or host). \\
+		\hline
+		FailureCallback($f$(ID, $T$)) & Register callback $f$ for failure notification of node ID at timestamp $T$. \\
+		\hline
+		NewID = Recover(OldID) & Get a new ID after failure recovery. \\
+		\hline
+		[$T_i, M_i$] = RedoRecv($T$) & Redo reliable receive since timestamp $T$. \\
+		\hline
+		DiscardLog($T$) & Discard redo log until timestamp $T$. \\
+		\hline
+	\end{tabular}
+	}
+	\caption{\sys API.}
+	\vspace{-25pt}
+	\label{tab:api}
+\end{table*}
+
+The ROMS API is shown in Table~\ref{tab:api}.
+
+We implement a reliable transport at the end host to deliver messages. Our implementation is built on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update delivery barrier when a TCP ACK is received.
+
+In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities. 
+
+\begin{figure*}[thbp]
 	\centering
 	\subfloat[Reconfigurable swithing chips.\label{fig:p4}]
 	{\includegraphics[width=.25\textwidth]{images/p4_implementation.pdf}}
@@ -16,54 +66,6 @@
 	\label{fig:impl}
 	\vspace{-10pt}
 \end{figure*}
-
-%At the end host, \sys requires a reliable transport. The transport can be built over any at-most-once packet transmission interfaces, \textit{e.g.}, UDP, UNIX raw socket, RDMA unreliable datagram~\cite{infinibandrocev2} or netmap~\cite{rizzo2012netmap}. We implement the message transport on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update commit barrier when a TCP ACK is received.
-
-\subsection{ROMS API}
-\label{sec:api}
-
-\begin{table}[t]
-	\centering
-	\scalebox{0.9}{
-	\begin{tabular}{l|l}
-		\hline
-		$T$ = Scatter(\[($M_i$, $R_i$)\]) & Scatter a group of messages $M_i$ to receivers $R_i$ respectively, return timestamp $T$. \\
-		\hline
-		CompletionCallback($f$($T$, IsDelivered)) & Register callback $f$ to notify whether a sent scattering $T$ is delivered or discarded. \\
-		\hline
-		$T, M$ = TentativeRecv() & Receive a message $M$ at timestamp $T$ in order but may be recalled. \\
-		\hline
-		RecallCallback($f$($T, M$)) & Register callback $f$ to recall a tentatively received message $M$ at $T$. \\
-		\hline
-		$T, M$ = ReliableRecv() & Receive a message $M$ reliably in order at timestamp $T$. \\
-		\hline
-		\hline
-		ID = Init(IsHostOrSwitch) & Initialize \sys and get a node ID. \\
-		\hline
-		Connect(NeighborID) & Connect to a neighbor switch or host. \\
-		\hline
-		Disconnect(NeighborID) & Disconnect from a neighbor switch or host. \\
-		\hline
-		FailureCallback($f$(ID, $T$)) & Register callback $f$ for failure notification of ID at timestamp $T$. \\
-		\hline
-		NewID = Recover(OldID) & Get a new ID after failure recovery. \\
-		\hline
-		\[$T_i, M_i$\] = RedoRecv($T$) & Redo reliable receive since timestamp $T$. \\
-		\hline
-		DiscardLog($T$) & Discard redo log until timestamp $T$. \\
-		\hline
-	\end{tabular}
-	}
-	\caption{ROMS API.}
-	\vspace{-15pt}
-	\label{tab:api}
-\end{table}
-
-The ROMS API is shown in Table~\ref{tab:api}.
-
-We implement a reliable transport at the end host to deliver messages. Our implementation is built on the top of a user-mode TCP stack~\cite{dunkels2001design} for loss recovery and congestion control. Beacon packets are sent directly, bypassing the TCP stack. To ensure that retransmitted packets do not violate timestamp monotonicity, we add a TCP option to mark them. In addition, we maintain a mapping from TCP sequence numbers to timestamps, and update delivery barrier when a TCP ACK is received.
-
-In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities. 
 
 \subsection{Reconfigurable Switching Chips}
 \label{sec:p4}
