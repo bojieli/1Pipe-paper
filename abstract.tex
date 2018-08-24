@@ -1,9 +1,9 @@
 \subsection*{Abstract}
 
 The ability to have reliable and ordered delivery of a group of messages can facilitate and simplify many distributed applications.
-Existing approaches either employ centralized sequencers or tokens, thus suffer from limited scalability, or use distributed consensus protocols, which incurs high overhead in bandwidth and delay.
+Existing approaches either employ centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which incurs high overhead in bandwidth and delay.
 
-This paper proposes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in linearizable and serializable order via data center network.
+This paper proposes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in linearizable and serializable order via data center networks.
 \sys is linearizable as the message delivery order of each host is identical to the wall clock order when the messages are sent.
 \sys is seralizable as messages in a scattering group are delivered if and only if none of its participants fail.
 \sys guarantees correctness and liveness under packet loss, Byzantine failure of hosts and crash failure of network switches.

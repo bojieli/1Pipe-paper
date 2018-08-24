@@ -283,14 +283,14 @@ To achieve linearizable ordering, one line of work leverages logically centraliz
 As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
 This causes extra network communication overhead and delay, thus degrading system efficiency.
-A third line of work assumes a synchronous network, \textit{e.g.} the block generation interval in Bitcoin blockchain~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
+A third line of work assumes a synchronous network, \textit{e.g.}, the block generation interval in Bitcoin blockchain~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
 However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
 To achieve reliability in the presence of failures, we need to achieve consensus among receivers.
 Most existing works, e.g. Paxos~\cite{lamport1998part} and Zab~\cite{junqueira2011zab}, use voting to guarantee that a quorum of receivers agree on the sequence of messages to be delivered.
-Each vote needs to be broadcast to and collected from all hosts, incurring significant communication overhead for hundreds of thousands of hosts in a data center.
-In addition, Paxos does not allow Byzantine failure of hosts, which is insecure for a data center service with potentially malicious hosts.
-Achieving Byzantine fault tolerance~\cite{castro1999practical} in an asynchronous network is notably complicated and inefficient~\cite{mickens2014saddest}.
+The votes need to be broadcast to and collected from all hosts, incurring significant communication overhead for hundreds of thousands of hosts in a data center.
+In addition, Paxos does not allow Byzantine failure of hosts, which is insecure for a multi-tenant data center service with potentially malicious hosts.
+Achieving Byzantine fault tolerance~\cite{lamport1982byzantine,castro1999practical,kotla2007zyzzyva} in an asynchronous network is notably complicated and inefficient~\cite{mickens2014saddest}.
 
 Critics and proponents of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
 \sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
@@ -303,7 +303,7 @@ Eris~\cite{eris} proposes in-network concurrency control using switch as a centr
 Each transaction in Eris must go through the centralized sequencer and involve all shards and replicas.
 However, in large distributed services, most transactions only involve a small portion of shards~\cite{nishtala2013scaling}, so sending null messages to other shards incurs high overhead.
 In addition, when all hosts are correct, an Eris transaction may fail due to packet loss, while subsequent transactions from the same sender may succeed, violating validity of \sys.
-\sys follows the trend of systems and network co-design, achieving scalability, efficiency and security.
+\sys follows the trend of systems and network co-design to achieve scalability, efficiency and security.
 
 
 %It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
