@@ -5,6 +5,8 @@
 
 Several mostly related works are discussed in Sec.\ref{subsec:existing-approaches}.
 
+\parab{Transaction commitment protocols.} 2PC, 3PC, Paxos.
+
 \parab{Tree-based total order.}Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}, which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
 At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
 However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
