@@ -14,9 +14,9 @@
 \end{figure}
 \fi
 
-Today's data centers host a variety of distributed systems\RED{add some references}. With arbitrary network delays, packet losses and failures, it is challenging to guarantee the reliability and ordering of message delivery. For example, multiple clients updates an object simultaneously in a distributed storage, where each client needs to update both metadata and data on different shards.
-The shards storing metadata and data may receive the updates in different orders, and some shards may fail to receive the updates, thus violating data consistency
-To address this problem, transactional systems often introduce synchronization overhead \RED{introduce complex mechanisms for synchronization?}and complicate distributed system design.
+In a network With arbitrary network delays, packet losses and failures, it is challenging to guarantee the reliability and ordering of message delivery. For example, multiple clients updates an object simultaneously in a distributed storage, where each client needs to update both metadata and data on different shards.
+The shards storing metadata and data may receive the updates in different orders, and some shards may fail to receive the updates, thus violating data consistency. Solutions that mitigate this problem often introduce synchronization overhead, and often complicate distributed
+system design.
 
 %Today's data centers host a variety of distributed systems~\textcolor{red}{cite some papers here} to provide service for global users. 
 %In a network with arbitrary delays, messages are not guaranteed to be delivered in a consistent order.
@@ -31,18 +31,17 @@ To address this problem, transactional systems often introduce synchronization o
 
 %Total order communication provides an abstraction where different receivers process messages from senders in a consistent order. In a total order communication system, messages are tagged with monotonic \textit{event timestamps} by sender, and each receiver processes all messages sent to it based on timestamp order. In log replication, each replica will receive logs in a consistent ordering, which can be an important building block for both strongly consistent and eventually consistent systems. In addition, total order communication can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}.
 
-To address this, we propose Reliable Ordered Message Scattering (\sys), a group communication abstraction that provides both linearizable ordering and reliability.
+Ordered communication provides an abstraction where different receivers process messages from senders in a consistent order. This abstraction, sometimes called Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}, is an important building block for both strongly consistent and eventually consistent systems. Ordered communication provides the guarantee that messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered before the other. Moreover, messages are \emph{total order}, ensuing that they are delivered in the same order to all participants. The primitive can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}. 
+
+Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}. However, existing solutions suffer from scalability or efficiency limitations. One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}. As a result, it is challenging to scale the system. Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}. This causes extra network communication overhead and delay, thus degrading system efficiency. Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
+
+In this work, we propose Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages. We generalize multicast to \emph{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages to multiple hosts simultaneously. \sys strictly preserves the following two priorities in a efficient and scalable manner:
 \begin{ecompact}
-\item \textbf{Message scattering}~\cite{kshemkalyani2011distributed} is a communication pattern where a host sends a group of (potentially different) messages to multiple hosts simultaneously .
-
-\item \textbf{Linearizable ordering} means that each receiver delivers messages from different senders in the wall clock order of message sent time.
-It provides \emph{total order}, ensuring that messages are delivered in the same order to all receivers.
-This also implies \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered after the other.
-Moreover, messages obey the \emph{causal order} in the Lamport logical clock sense~\cite{lamport1978time}.
-
-\item \textbf{Reliability} means both (1) \emph{atomicity} or \emph{serializability}, i.e., either all or none receivers deliver messages in a scattering group, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if all the senders and receivers are correct, and the network is not partitioned.
+\item \textbf{Linearizable ordering}: Each receiver delivers messages from different senders in the wall clock order of message sent time. It provides \emph{total order}, ensuring that messages are delivered in the same order to all receivers. This also implies \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered after the other.
+\item \textbf{Reliability}: It means both (1) \emph{atomicity}, i.e., either all or none receivers deliver messages in a scattering group, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if all the senders and receivers are correct, and the network is not partitioned.
 \end{ecompact}
-The \sys primitive can support externally consistent distributed transactions~\cite{ports2015designing, eris}, replication in eventually consistent systems, state machine replication~\cite{state-machine-replication} as well as improve consistency in distributed shared memory. 
+
+%The \sys primitive can support externally consistent distributed transactions~\cite{ports2015designing, eris}, replication in eventually consistent systems, state machine replication~\cite{state-machine-replication} as well as improve consistency in distributed shared memory. 
 
 %Total order communication provides an abstraction where different receivers process messages from senders in a consistent order~\cite{kshemkalyani2011distributed}.
 %More formally, in total order communication, for each pair of hosts $R_i$ and $R_j$ and for each pair of messages $M_x$ and $M_y$ that are delivered to both hosts, $R_i$ is delivered $M_x$ before $M_y$ if and only if $R_j$ is delivered $M_x$ before $M_y$.
@@ -60,11 +59,11 @@ The \sys primitive can support externally consistent distributed transactions~\c
 
 %In a networked system, effects of an event propagate via network messages. This means to \textit{scatter} messages from the origin node to a set of receiver nodes. For communication efficiency, an event may not need to be observed by all nodes, and different nodes may receive different messages originated from a same event, so generally it is a \textit{scattering} instead of a \textit{broadcast} or \textit{multicast}. Messages are tagged with the timestamp of the origin event. A node observes an event by receiving the corresponding message. Consequently, from a receiver's perspective, \textit{total ordering of input message timestamps implies total ordering of its observed events}.
 
-Many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
-Most existing works are designed for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
-However, distributed systems in data centers scale to thousands of hosts~\cite{nishtala2013scaling}, while each client communicate with a small and non-predetermined subset of hosts for each scattering.
-To this end, we design \sys for a very large group of unknown and untrusted hosts in data centers.
-In this scenario, existing solutions suffer from scalability, efficiency or security limitations.
+%Many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
+%Most existing works are designed for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
+%However, distributed systems in data centers scale to thousands of hosts~\cite{nishtala2013scaling}, while each client communicate with a small and non-predetermined subset of hosts for each scattering.
+%To this end, we design \sys for a very large group of unknown and untrusted hosts in data centers.
+%In this scenario, existing solutions suffer from scalability, efficiency or security limitations.
 
 
 %Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}.
