@@ -1,6 +1,7 @@
 \section{Introduction}
 \label{sec:intro}
 
+
 \iffalse
 \begin{figure}[t]
 \centering
@@ -14,9 +15,10 @@
 \end{figure}
 \fi
 
-In a network With arbitrary network delays, packet losses and failures, it is challenging to guarantee the reliability and ordering of message delivery. For example, multiple clients updates an object simultaneously in a distributed storage, where each client needs to update both metadata and data on different shards.
-The shards storing metadata and data may receive the updates in different orders, and some shards may fail to receive the updates, thus violating data consistency. Solutions that mitigate this problem often introduce synchronization overhead, and often complicate distributed
-system design.
+The lack of order in communication often complicates distributed system design.
+For example, when a host atomically reads or writes multiple objects on different remote hosts, there is no guarantee that the messages arrive at different remote hosts at the same time, so, locks are often required to achieve consistency.
+As another example, multiple shards of a distributed database generate logs to multiple replicas, and each replica may receive logs from the shards in a different interleaving ordering, thus violating data consistency.
+%A centralized sequencer can solve this problem, but it introduces a central bottleneck.
 
 %Today's data centers host a variety of distributed systems~\textcolor{red}{cite some papers here} to provide service for global users. 
 %In a network with arbitrary delays, messages are not guaranteed to be delivered in a consistent order.
@@ -31,15 +33,34 @@ system design.
 
 %Total order communication provides an abstraction where different receivers process messages from senders in a consistent order. In a total order communication system, messages are tagged with monotonic \textit{event timestamps} by sender, and each receiver processes all messages sent to it based on timestamp order. In log replication, each replica will receive logs in a consistent ordering, which can be an important building block for both strongly consistent and eventually consistent systems. In addition, total order communication can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}.
 
-Ordered communication provides an abstraction where different receivers process messages from senders in a consistent order. This abstraction, sometimes called Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}, is an important building block for both strongly consistent and eventually consistent systems. Ordered communication provides the guarantee that messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered before the other. Moreover, messages are \emph{total order}, ensuing that they are delivered in the same order to all participants. The primitive can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}. 
 
-Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}. However, existing solutions suffer from scalability or efficiency limitations. One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}. As a result, it is challenging to scale the system. Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}. This causes extra network communication overhead and delay, thus degrading system efficiency. Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
 
-In this work, we propose Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages. We generalize multicast to \emph{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages to multiple hosts simultaneously. \sys strictly preserves the following two priorities in a efficient and scalable manner:
-\begin{ecompact}
-\item \textbf{Linearizable ordering}: Each receiver delivers messages from different senders in the wall clock order of message sent time. It provides \emph{total order}, ensuring that messages are delivered in the same order to all receivers. This also implies \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered after the other.
-\item \textbf{Reliability}: It means both (1) \emph{atomicity}, i.e., either all or none receivers deliver messages in a scattering group, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if all the senders and receivers are correct, and the network is not partitioned.
-\end{ecompact}
+In this work, we propose \sys{}, a communication primitive that provides a single FIFO pipe abstraction in a distributed system. As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receivers to process messages from senders in a consistent order.
+More precisely, \sys{} provides Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers. In addition, \emph{batching} in \sys{} enables grouping multiple messages at the same position of the total order. (2) Messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. (3) Messages between a pair of sender and receiver are in \emph{FIFO} order.
+
+\sys{} can achieve distributed atomic multi-object read and write with a single batch of messages. Replication in \sys{} is simply a batch of messages. \sys{} also provides a total ordering of communication events, thus improving concurrency of distributed systems.
+
+
+\begin{figure}[t]
+\centering
+	\includegraphics[width=.45\textwidth]{images/1pipe.pdf}
+	\vspace{-0.5em}
+	\caption{\sys{} abstraction.}
+	\label{fig:1pipe}
+	\vspace{-1.5em}
+\end{figure}
+
+%Besides ordering, another desirable abstraction is a reliable communication system that is able to deliver a group of messages atomically: either all the messages in a group are delivered to the desired targets, or non is delivered. 
+%Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve atomic broadcast and multicast~\cite{defago2004total}. However, existing solutions suffer from scalability or efficiency limitations~\cite{eris,rajagopalan1989token,kim1997total,ekwall2004token,lamport1978time,birman1985replication,chandra1996unreliable}. 
+%One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}. As a result, it is challenging to scale the system. Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}. This causes extra network communication overhead and delay, thus degrading system efficiency. Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
+
+%In this work, we propose Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages reliably. We generalize multicast to \emph{message scattering}~\cite{kshemkalyani2011distributed}, a communication pattern where a host sends a group of (potentially different) messages to multiple hosts simultaneously. \sys strictly preserves the following two properties in an efficient and scalable manner:
+%\begin{ecompact}
+%\item \textbf{Ordering}: Each receiver delivers messages from different senders in the ascending wall clock order of message sent time.
+%Wall clock is a clock on each host that obeys monotonicity and causality, that is (not strictly) synchronized.
+%This implies CATOCS.
+%\item \textbf{Reliability}: It means both (1) \emph{atomicity}, i.e., either all or none receivers deliver messages in a scattering group, and (2) \emph{validity}, i.e., a scattering is guaranteed to be delivered if all the senders and receivers are not faulty, and the network is not partitioned.
+%\end{ecompact}
 
 %The \sys primitive can support externally consistent distributed transactions~\cite{ports2015designing, eris}, replication in eventually consistent systems, state machine replication~\cite{state-machine-replication} as well as improve consistency in distributed shared memory. 
 
@@ -97,31 +118,31 @@ In this work, we propose Reliable Ordered Message Scattering (\sys), an efficien
 
 %In \sys, hosts send messages to other hosts. A timestamp is attached to every message by the sender. The timestamps satisfy two requirements. First, for a given host the timestamps are non-decreasing, meaning that when a host sends out two messages, the latter one will have a timestamp equal or larger than that of the first one. Messages sent by a host with the same timestamp are considered to form a scattering group. Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message. \sys achieves reliable ordered message delivery. Unless the host is faulty or unreachable, all messages sent to a particular host will be delivered exactly once according to the timestamp order.  
 
-In this work, we propose an efficient and scalable solution to \sys in a data center network, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, switches have generally good programmability, and switches are managed by a logically centralized SDN controller.
+\sys{} seems to require a central serialization point, which is not scalable.
+In this work, we propose a scalable and efficient implementation of \sys{} in a data center network, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, and switches have generally good programmability.
 Our principle is to co-design end hosts with underlying data center networks.
 We synchronize the clocks on hosts.
 The sender attaches a non-decreasing timestamp to each message.
 %The timestamps satisfy two reqirements.
 %First, for a given host the timestamps are non-decreasing.
-Messages sent by a host with the same timestamp are considered to form a scattering.
+%Messages sent by a host with the same timestamp are considered to form a scattering.
 %Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message.
 Each receiver delivers messages in non-decreasing timestamp order.
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys forwards timestamped messages as usual in the network, and buffers them at the receiver side.
-The switch aggregates timestamp information of all messages to derive the \emph{loss-free barrier} for each receiver.
-The barrier is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
-With this information, the receiver can deliver the messages with timestamps below the loss-free barrier in order.
+The key challenge is to let a receiver know that all packets below a certain timestamp has arrived.
+To this end, we introduce a \emph{barrier} timestamp on each link and switch, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
+Each switch aggregates barrier information of all ingress links to derive the barrier for all egress links.
+In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
+If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
 
-In order to derive the loss-free barrier, we generalize timestamp barriers from end hosts to every link in the network.
-Each switch keeps per-link barrier information and updates it for each packet.
-We merge barriers hierarchically at switches to reduce communication overhead (Sec.\ref{sec:loss-free}).
-If some hosts or links are temporarily idle, we periodically generate beacons carrying barrier information (Sec.\ref{sec:beacon}).
+Considering packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and receiver are correct.
+In addition, the reliable service ensures \emph{restricted failure atomicity}: either all or none messages in a batch are delivered unless a receiver fails or network partitions permanently after the messages are sent.
+The reliable service uses a two-phase commit (2PC) approach, where the first phase is end-to-end, and the second phase aggregates \emph{commit barriers} through the network.
+It adds one network round-trip time (RTT) compared to the best effort service.
 
-Now we consider packet loss and failures.
-\sys guarantees that all messages of a scattering is delivered to their corresponding recipients if and only if none of its sender and recipients fail.
-We detect packet loss via counters in network switches, and rely on end hosts to retransmit lost packets.
-%When a host receives a loss-free barrier, the messages can be only \emph{tentatively delivered}, which means that the message is delivered in order, but may be recalled if another host in the same scattering group fails.
+\iffalse
 To take advantage of the fact that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}, when packet loss does not occur, a host can \emph{reliably deliver} a message when it is sure that all hosts have received messages with lower timestamps.
 To this end, a receiver responds an ACK for each message, and the switch aggregate \emph{ACK barriers} from receivers to senders (Sec.\ref{sec:ack-barrier}).
 When packet loss is detected, hosts stop delivering messages according to loss-free and ACK barriers.
@@ -133,7 +154,7 @@ After failure recovery, a host can rejoin the system (Sec.\ref{sec:failure-recov
 To ensure security, the top-of-rack switches enforce the hosts comply with \sys protocol, so Byzantine failures of hosts can also be detected (Sec.\ref{sec:byzantine}).
 Crash failures of network switches and links would stall the system but not violate correctness.
 To ensure liveness, we rely on the centralized SDN controller to resume operation of a largest strongly connected network partition (Sec.\ref{sec:network-failure}).
-
+\fi
 
 
 %At its core, \sys separates the bookkeeping of order information from message forwarding.
@@ -181,24 +202,22 @@ To ensure liveness, we rely on the centralized SDN controller to resume operatio
 %Physical clock synchronization does not account for the difference in delays incured by OS network stacks and network links.
 %In Sec.\ref{sec:sync}, we propose \textit{minimax clock synchronization} to synchronize logical clocks on each node and assign timestamps to events according to the logical clocks, so that messages originated from distant nodes with adjacent timestamps arrive at receivers as simultaneously as possible.
 
-We implement three incarnations of \sys on network devices with different programming capabilities.
-Sec.\ref{sec:p4} presents the implementation on reconfigurable switching chips~\cite{tofino,cavium} that can support flexible stateful per-packet processing.
-Sec.\ref{sec:commodity} presents the implementation on switch CPUs.
-In case that switch vendors do not expose accesses to switch CPUs, Sec.\ref{sec:end-host} presents the implementation on host CPUs. 
+We implement three incarnations of \sys on network devices with different programming capabilities: reconfigurable switching chips~\cite{tofino,cavium} that can support flexible stateful per-packet processing, switch CPUs, and host CPUs in case that switch vendors do not expose accesses to switch CPUs.
 
 %Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
 %We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
 We evaluate the performance of \sys using both small-scale testbed experiments and large-scale simulation.
-In normal cases, \sys can deliver messages reliably in two \emph{network diameters}, i.e. the maximum one-way delay between two hosts.
-\sys can recover from packet loss with only two additional network diameters, identical to the latency of two-phase commit.
+In normal cases, best effort \sys{} adds low delay to message delivery. Reliable \sys{} can deliver messages within \textbf{10 $\mu$s}.
+%In normal cases, \sys can deliver messages reliably in two \emph{network diameters}, i.e., the maximum one-way delay between two hosts.
+%\sys can recover from packet loss with only two additional network diameters, identical to the latency of two-phase commit.
 \sys also achieves low network bandwidth and CPU processing overhead in both small and large system scales.
-\sys also supports incremental deployment, as new hosts, switches and links can join the system within only one round-trip time.
+%\sys also supports incremental deployment, as new hosts, switches and links can join the system within only one round-trip time.
 
-As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
-\sys achieves 6.4 million transactions per server and 40~$\mu$s latency for independent transactions in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, which is 10x efficient than MVCC concurrency control and Paxos-based replication.
+%As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
+As a case study, in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for independent transactions, which is 10x more efficient than MVCC concurrency control and Paxos-based replication. The performance is almost the same as a non-transactional system.
 Moreover, the performance scales linearly with number of servers.
-For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
+%For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
 
 %\textcolor{red}{Do we need to add: the rest of the paper is organized as follows. .....}

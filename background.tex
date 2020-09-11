@@ -31,7 +31,7 @@
 \caption{
 	Routing topology of a typical data center network.
 	Each physical switch is split into two logical switches, one for \textit{uplink} and one for \textit{downlink}.
-    The dashed virtual link between corresponding uplink and downlink switch indicates ``hairpin'' traffic from a lower-layer switch or host to another one.
+    The dashed virtual link between corresponding uplink and downlink switch indicates ``loopback'' traffic from a lower-layer switch or host to another one.
 }
 \label{fig:dcn}
 \vspace{-1em}
@@ -51,7 +51,7 @@ Therefore, the routing topology form a directed acyclic graph (DAG), as shown in
 This loop-free topology enables hierarchical aggregation of barrier timestamps.
 
 Apart from the production network, data centers have an isolated management network that interconnects network switches.
-A logically centralized SDN service runs on the management network to detect failures of switches and links, then reconfigure routing tables on failure.
+A highly available SDN \emph{controller} runs on the management network to detect failures of switches and links, then reconfigure routing tables on failure.
 
 %\RED{Discuss loop-free routing.}
 %Formally, for $n$ distinct switches $S_1, \ldots, S_n$, if there are $n$ links $L_1, \ldots, L_n$ directly connecting $S_1 \rightarrow S_2, \ldots, S_{n-1} \rightarrow S_n, S_n \rightarrow S_1$, and $n$ possible routes (need not be distinct) passing through $L_1 \rightarrow L_2, \ldots, L_{n-1} \rightarrow L_n, L_n \rightarrow L_1$ respectively, then we call it a \textit{routing loop}.
@@ -65,7 +65,7 @@ The switch consists of a switching chip~\cite{broadcom,tofino} and a CPU (Figure
 The switching chip is composed of an ingress pipeline, multiple FIFO queues and an egress pipeline.
 When a packet is received from an \textit{input link}, it first goes through the ingress pipeline to determine the output link and queueing priority, then get buffered into the corresponding FIFO queue.
 The egress pipeline pulls packets from queues according to priority, applies header modifications and sends them to \textit{output links}.
-One key property of the switch is that the queuing model ensures FIFO property for packets with the same ingress and egress port, 
+One key property of the switch is that the queuing model ensures \emph{FIFO} property for packets with the same ingress and egress port, 
 if the packets have the same priority. In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
 The data center switch can provide good programmability. First, the CPU can be used to process (a small amount of) data plane packets~\cite{lu2011serverswitch}.
@@ -108,7 +108,7 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 %A single network switch is a serialization point where \textit{coordination} of directly-connected hosts can take place (cite hardware coordination, Eris).
 %\sys leverages the broadcast, cache and coordination functionalities of network switches to scale total ordering hierarchically.\RED{(leverage broadcast and cache?)}
 
-
+%\textbf{Consider NIC as a switch, processes connect to data center network via NIC.}
 
 \iffalse
 \subsection{Network Requirements}
@@ -116,10 +116,10 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 
 \sys assumes that the underlying network satisfies three properties, two for correctness and one for liveness.
 
-\textbf{At-most-once transport.}
+\textbf{At-most-once Transport.}
 The underlying transport of \sys should provide at-most-once semantics, \textit{i.e.}, each packet is transmitted at most once.
 Otherwise, the retransmitted packet may violate timestamp ordering on the network link.
-UDP/IP or unreliable datagram in RDMA satisfies this requirement.
+UDP or unreliable datagram in RDMA satisfies this requirement.
 
 \textbf{FIFO on a Network Switch.}
 If packets $P_1, P_2$ arrive in order to an input link of switch $S$, and they are routed to the same output link, then their output ordering should also be $P_1, P_2$.

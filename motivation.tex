@@ -1,6 +1,60 @@
 \section{Motivation}
 \label{sec:motivation}
 
+\subsection{Abstractions of 1Pipe}
+\label{subsec:abstration}
+
+\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host in the distributed system maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. When a process sends a batch of messages, they are labeled with timestamp of the host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l}
+	\hline
+	\texttt{TS = GTO\_send(vec[<dst, msg>])} \\
+	\hline
+	\hline
+	\texttt{TS, vec[<src, msg>] = GTO\_unreliable\_recv()} \\
+	\hline
+	\texttt{set\_send\_failure\_callback(func(TS,dst,msg))} \\
+	\hline
+	\hline
+	\texttt{TS, vec[<src, msg>] = GTO\_reliable\_recv()} \\
+	\hline
+	\texttt{set\_proc\_failure\_callback(func(host, TS))} \\
+	\hline
+	\hline
+	\texttt{TS = get\_timestamp()} \\
+	\hline
+	\texttt{GTO\_init(src, dst)} \\
+	\hline
+	\texttt{GTO\_exit()} \\
+	\hline
+\end{tabular}
+\caption{Programming API of \sys{}. \texttt{vec[<dst, msg>]} indicates a batch of messages that have a same timestamp.}
+\label{tab:abstraction}
+\end{table}
+
+As Figure~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{GTO\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{GTO\_unreliable\_recv} returns all messages with a same timestamp as a batch.
+It is worth mentioning that modern data centers with PFC flow control~\cite{pfc} or advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
+%There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
+So, the application can assume that best effort \sys{} is almost reliable, but should guard against the failure cases.
+Best effort \sys{} does not retransmit packets.
+The application should use \texttt{set\_send\_failure\_callback} to detect lost packets and possible remote host failure.
+
+Second, \texttt{GTO\_reliable\_recv} is a \emph{reliable} service which in addition to causality and total ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
+The reliable service retransmits packets in the case of packet loss.
+In this paper, we only consider crash failures.
+When a process or network fails, message delivery stalls.
+\sys{} removes in-flight messages from or to the failed process.
+If a message cannot be delivered, the send failure callback is invoked.
+In addition, each process may register a callback function via \texttt{set\_proc\_failure\_callback} to get notified of failed processes.
+Message delivery is resumed after all correct processes finish their callback functions.
+In addition to ordering, reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of a batch of messages with the exception that if a receiver fails or network partitions \emph{permanently} after the decision to deliver is made, the receiver can never deliver it.
+If failures eventually recover, the receiver can deliver messages consistently.
+In fact, failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
+Applications may solve permanent failures by replication.
+%As we will show in Sec.~\ref{sec:reliable}, compared to best effort \sys{}, reliable \sys{} adds one RTT to message delivery.
+
 \iffalse
 \textcolor{red}{Outline:\\
 1. What is message scattering?\\
@@ -10,52 +64,148 @@
 }
 \fi
 
-\subsection{Ordering Hazards}
-\label{subsec:tso}
+\subsection{Use Cases of 1Pipe}
+\label{subsec:application}
 
+\subsubsection{Total Ordering of Communication Events}
+\label{subsec:order-hazards}
 
 \begin{figure}[t]
 \centering
 	\subfloat[Write after write.\label{fig:ordering-waw}]
-	{\includegraphics[width=.14\textwidth,page=1]{images/ordering-cropped.pdf}}
-    \hspace{0.01\textwidth}
+	{\includegraphics[width=.17\textwidth,page=1]{images/ordering-cropped.pdf}}
+    \hspace{0.02\textwidth}
     \subfloat[Independent read, independent write.\label{fig:ordering-iriw}]
-	{\includegraphics[width=.16\textwidth,page=2]{images/ordering-cropped.pdf}}
-    \hspace{0.01\textwidth}
-	\subfloat[Independent multi-write.\label{fig:ordering-imw}]
-	{\includegraphics[width=.11\textwidth,page=3]{images/ordering-cropped.pdf}}
+	{\includegraphics[width=.18\textwidth,page=2]{images/ordering-cropped.pdf}}
+    %\hspace{0.01\textwidth}
+	%\subfloat[Independent multi-write.\label{fig:ordering-imw}]
+	%{\includegraphics[width=.11\textwidth,page=3]{images/ordering-cropped.pdf}}
 	\caption{Ordering hazards in a distributed system.}
 	\label{fig:ordering}
 	\vspace{-1.5em}
 \end{figure}
 
 
-Message scattering is a common communication pattern in distributed systems, where one end-host sender scatters a group of messages to one or more end-host receivers.
+%Message scattering is a common communication pattern in distributed systems, where one end-host sender sends a group of messages to one or more end-host receivers.
 %First, packet losses can occur due to congestion, packet corruption and network switch or link failure.
 %Packet losses and host failures may violate atomicity of message scattering.
-With different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place, as shown in Figure~\ref{fig:ordering}.
+With different delays of network paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place (Figure~\ref{fig:ordering}).
 
 \parab{Write after write (WAW)}.
-Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered a write operation.
-When $B$ receives the notification, it issues read command to $O$, but may not get the data due to message delays.
-
-%\textbf{Write after write (WAW)}.
-%$A$ writes data to shared storage $O$, then writes metadata to shared storage $X$.
-%Asynchronously\textcolor{red}{In the meanwhile?}, $B$ reads $X$ and gets the metadata, then attempts to fetch data from $O$, but may get nothing.
+Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered as a write operation.
+When $B$ receives the notification, it issues a read command to $O$, but may not get the data due to message delays.
 
 \parab{Independent read, independent write (IRIW)}.
-Host $A$ writes $O_1$ and $O_2$ at the same time, while $B$ reads $O_1$ and $O_2$ simultaneously. $B$ may get an inconsistent state where only one of $O_1$ and $O_2$ is written.
+Host $A$ first writes to data $O_1$ and then writes to metadata $O_2$. Concurrently, host $B$ reads metadata $O_2$ and then reads data $O_2$.
+It is possible that $B$ reads the metadata from $A$ but the data is not updated yet.
+
 %IRIW hazard is common in shared data structures, where metadata and data needs to be accessed together atomically. %Note that messages to $O_1$ and $O_2$ may be different, so it is a \textit{scattering} instead of multicast.
 
-\parab{Independent multi-write (IMW)}.
-Host $A$ scatters writes to both $O_1$ and $O_2$. Concurrently, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different, causing inconsistency. % For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
+%\parab{Independent multi-write (IMW)}.
+%Host $A$ scatters writes to both $O_1$ and $O_2$. Concurrently, $B$ also scatters writes. The ordering of $A$'s and $B$'s writes at $O_1$ and $O_2$ may be different, causing inconsistency. % For example, if $O_1$ and $O_2$ are two replicas, IMW hazard would lead to inconsistent histories between replicas. %In replication, a log is sent to replicas as multicast. However, other scenarios still need the scattering semantics. For instance, if $A$ and $B$ are web servers, $O_1$ collects access log and $O_2$ collects error log, then logs for each HTTP request are scattered to different hosts.
 %$S_1$ and $S_2$ are two web servers, generating an access log to $A$ and an error log to $E$ for each HTTP request.
 %The interleaving order of requests from $S_1$ and $S_2$ may be different \REDBLU{between}{at} $A$ and $E$.
 
-Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs to wait for the first write operation to complete (an RTT to $O$) before sending to $B$, thus increasing latency and degrading throughput. To avoid IRIW and IMW hazards, application needs locks, centralized sequencers~\cite{kaminsky2016design} or explicit coordination via logical timestamps~\cite{lamport1978time}.
+Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs to wait for the first write operation to complete (an RTT to $O$, called a \emph{fence}) before sending to $B$, thus increasing latency. To avoid the IRIW hazard, $A$ needs to wait for write $O_1$ to complete before initiating write $O_2$, and $B$ needs to wait for read $O_2$ to complete before initiating read $O_1$. The fence latency will be exaggerated when multiple remote objects need to be accessed in order.
 
 %In today's distributed systems, to avoid WAW hazards, $A$~\textcolor{red}{$A$ is not defined here. gefei:'A is defined in Figure~\ref{fig:causality_traditional}'} needs to wait for the first write operation to complete (an RTT to the shared storage) until issuing the next operation, therefore increases latency and limits concurrency.~\textcolor{red}{thus increasing latency and degrading the throughput?}
 %To avoid IMW and IRIW hazards, application needs locks or explicit coordination via logical timestamps~\cite{lamport1978time}.
+
+\sys{} can remove both WAW and IRIW hazards due to causality and total ordering.
+In WAW hazard, by monotonicity of host timestamp, $A \rightarrow O$ is ordered before $A \rightarrow B$. By causality, $A \rightarrow B$ is ordered before $B \rightarrow O$.
+Consequently, $A \rightarrow O$ is before $B \rightarrow O$.
+Therefore, the write operation is delivered before the read operation, thus avoiding WAW hazard.
+Because the fence between $A \rightarrow O$ and $A \rightarrow B$ is removed, the end-to-end latency is reduced from 2.5 RTTs to 1.5 RTTs.
+
+If an application needs to process a lot of WAW communication tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. Using \sys{}, the application can send messages in pipeline, so, the throughput is only limited by computation speed and network bandwidth.
+
+The argument above neglects possible packet loss.
+In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so $B$ still needs to check the version of $O$ after reading. If it does not match $A$, $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
+$A$ needs to register send failure callback, and perform rollback recovery when $A$ is notified of a send failure.
+If we use reliable \sys{}, $O$ does not need to maintain a version, but it adds an RTT to each message delivery, so, the end-to-end latency is increased from 2.5 RTTs to 3.5 RTTs. However, $A$ can still send messages in pipeline, and have much higher throughput than the traditional way.
+
+A similar argument shows that \sys{} removes IRIW hazard, and improves minimum end-to-end latency from 3 RTTs to 1 RTT because two fences are removed. The minimum latency is achieved when $A$ and $B$ initiate read and write simultaneously.
+
+The ability to totally order communication events is the root power of removing ordering hazards.
+This power is also a perfect match with \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} in a distributed shared memory (DSM) system. In TSO, each processor observes a consistent ordering of writes from all other cores. In other words, processors must not observe WAW and IRIW hazards.
+Compared to weaker memory models, TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}, thereby simplifying programming and reducing fence overheads.
+
+
+\subsubsection{Distributed Atomic Operation (DAO)}
+\label{subsec:dao}
+
+The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
+
+A \emph{distributed atomic operation} (DAO) is a transaction that atomically reads or updates objects in multiple hosts.
+DAO is widely used in transactional key-value store~\cite{dey2014ycsbt}, caches in web services, distributed in-memory computing, and index cache of distributed storage.
+Traditionally, a DAO is implemented as (1) locking the objects, (2) if all locks succeed, send operations to the participants, and (3) unlock the objects.
+Using \sys{}, a DAO can be implemented as a batch of messages with a same timestamp from the initiator.
+Each recipient processes messages from all DAOs in timestamp order\footnote{When multiple DAOs have a same timestamp, a recipient can break the tie by the ID of initiator.}, so, the DAOs are sequentially consistent.
+If a recipient or the network permanently fails, atomicity violation does not matter because it cannot be accessed by any subsequent operations.
+%Using \sys{}, a DAO can be completed in 1 RTT, and there is no locking or waiting.
+
+%Reliable \sys{} can handle packet loss and failures.
+%If the sender or a receiver fails, none of the messages in a batch are delivered. If both sender and all receivers are correct, all messages are delivered in total order.
+
+If we do not need strict ordering among DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried.
+
+Now, we consider an alternative approach that uses best effort \sys{}. Due to its unreliability, it provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff. Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition, because read-only DAOs do not need to lock the objects, the concurrency can be significantly improved. Compared to FaRM~\cite{dragojevic2014farm}, \sys{} read-only DAOs never return inconsistent versions, thus reducing retries.
+
+%Problem arises when some of the receivers fail, because \sys{} does not provide atomic delivery of a batch of messages. However, we can achieve atomic delivery by leveraging that \sys{} broadcasts process failure notification to all processes. The initiator of DAO sends the recipient list of DAO to all recipients. Each process records process failure notifications from \sys{}. When a process receives a DAO with timestamp $T$ that involves a recipient that fails before $T$, it drops the DAO. So, the DAO is committed if and only if all recipients are correct at $T$. If a recipient fails after $T$ but have not received the DAO, 
+
+
+
+DAO can be extended to two important classes of distributed transactions: snapshot transactions~\cite{corbett2013spanner} that are read-only, and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on output of other hosts.
+The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
+Similar to DAO, snapshot reads and independent transactions can be implemented as a batch of messages to multiple hosts in \sys{}.
+The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
+The next subsection will show that \sys{} can achieve replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
+
+%optimistic concurrency control (OCC). If OCC is used, \sys{} timestamps can be used as versions. 
+
+%Next, we extend DAO to distributed transactions.
+%\sys{} simplifies 
+
+\subsubsection{Replication}
+
+Replication is central to achieve fault tolerance and to scale performance.
+There are two traditional replication methods: (1) leader-follower, where a initiator sends to the leader, and leader replicates to followers. The leader is the performance bottleneck.
+(2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
+
+Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery.
+In addition, process failure notification in \sys{} enables fast detection of replica failures, which is typically faster than application heartbeat timeout.
+
+Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
+SMR can solve arbitrary synchronization problems~\cite{lamport1978time}. An example problem is mutual exclusion that requires the resource to be granted in the order that the request is made~\cite{lamport1978time}.
+%If a lock manager grants resource in FIFO order, due to variable network delay, it is possible that $A$ requests the resource and sends a message to $B$, then $B$ requests the resource, but $B$ gets the resource.
+With reliable \sys{}, either implementing SMR on all hosts or using Sec.\ref{subsec:order-hazards} to implement the lock manager can solve the mutual exclusion problem.
+
+\subsubsection{Reduce Timeout}
+
+By simply sending a message to itself via best effort \sys{}, a process can measure \emph{real-time} sum of maximum clock skew and maximum network delay.
+This is because any straggler clock will require messages from other hosts to wait for it.
+Similarly, any slow network link causes messages from other links to wait.
+%This will become more clear when the timestamp aggregation mechanism of \sys{} is explained in Sec.~\ref{sec:unreliable}.
+
+Leases~\cite{gray1989leases} is a use case of this real-time measurement.
+A lease grants exclusive access to a process within a time interval. Between two leases, there is a quiet period that must be higher than the maximum clock skew. Otherwise, two hosts with different clocks may be actually accessing the same leased object at the same time, leading to inconsistency.
+Traditionally, the quiet period is set to the maximum possible clock skew.
+With \sys{}, the quiet period can be set to the real-time clock skew plus network delay, which is much shorter and thus improves concurrency.
+
+\iffalse
+Another use case is reducing RPC timeouts.
+To avoid false positives, timeouts are typically on the order of milliseconds, while the typical RPC response time in a fast data center network is on the order of microseconds.
+Using \sys{}, RPC timeout can be set to waiting for two loop-back messages (maximum network delay) plus the estimated processing time.
+\fi
+
+\subsubsection{Global Synchronization Point}
+
+Finally, we show that \sys{} timestamp provides a global synchronization point.
+For example, to take a distributed snapshot~\cite{chandy1985distributed} in a \sys{} system, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state when the message is received. Each process also records in-flight sent messages with a higher timestamp than $T$.
+This is a consistent snapshot algorithm, because no message with timestamp higher than $T$ has been received by any process in the snapshot.
+%Compared with a stop-the-world snapshot algorithm, processes keep running during taking the snapshot.
+%Compared with the classical algorithm~\cite{chandy1985distributed} with all-to-all communication channels, processes do not need to broadcast marks after receiving a mark, thus reducing message complexity from $O(n^2)$ to $O(n)$, where $n$ is the number of processes.
+
 
 
 \iffalse
@@ -105,32 +255,27 @@ Ordering hazards affect system performance. To avoid the WAW hazard, $A$ needs t
 %\parab{Causality.}The total order of message scatterings preserves causality. For a pair of scatterings $S_1$ and $S_2$, if the sender of $S_1$ is a receiver of $S_2$, and $S_2$ is sent after receiving $M \in S_1$, then $S_1$ is ordered before $S_2$.
 
 %\sys can remove all three hazards in Sec.\ref{subsec:tso}.
-\sys can remove all three hazards discussed above.  \sys ensures a group of messages to be scattered atomically and obeys causality and total order.
-In WAW hazard, the three messages $A \rightarrow O$, $A \rightarrow B$ and $B \rightarrow O$ are three message scatterings.
-By FIFO order, $A \rightarrow O$ is ordered before $A \rightarrow B$. By causality, $A \rightarrow B$ is ordered before $B \rightarrow O$.
-Consequently, $A \rightarrow O$ is before $B \rightarrow O$.
-Therefore, the write operation is delivered before the read operation, thus avoiding WAW hazard.
-
-In IRIW and IMW hazards, messages $A \rightarrow O_1$ and $A \rightarrow O_2$ belong to scattering $S_1$, and $B \rightarrow O_1$ and $B \rightarrow O_2$ belong to scattering $S_2$.
-By total order property, $O_1$ delivers $A \rightarrow O_1$ before $B \rightarrow O_1$ if and only if $O_2$ delivers $A \rightarrow O_2$ before $B \rightarrow O_2$. Therefore, \sys ensures consistency between metadata and data (IRIW hazard) and consistent history among replicas (IMW hazard).
 
 %We implement the total order of message scatterings using explicit timestamps.
 %Each sender assigns a monotonically increasing timestamp to each message scattering.
 %Each receiver delivers messages according to timestamp order (break ties by sender ID).
 
+\iffalse
 \subsection{Use Cases}
 \label{subsec:application-scenarios}
 
 In this section, we discuss three use cases of \sys.
-By avoiding IRIW hazard, independent distributed transactions can complete in one round-trip with high throughput under contention.
-By avoiding IMW hazard, log replication can be both scalable and serializable, which is a building block for both strongly and eventually consistent replicated systems.
-By avoiding WAW hazard, \sys improves consistency in distributed shared memory.
+These cases are used to illustrate how \sys can help simplify distributed systems construction, and they are by no means the only usage scenarios where \sys can be useful.
+%By avoiding IRIW hazard, independent distributed transactions can complete in one round-trip with high throughput under contention.
+%By avoiding IMW hazard, log replication can be both scalable and serializable, which is a building block for both strongly and eventually consistent replicated systems.
+%By avoiding WAW hazard, \sys improves consistency in distributed shared memory.
 
 \subsubsection{Distributed Independent Transactions}
 \label{subsec:transactional-kvs}
-We consider \emph{independent transactions} or \emph{one-shot transactions}~\cite{kallman2008h}, in which the transaction involves multiple sites but the input of each site does not depend on output of other sites.
+We consider \emph{independent transactions} or \emph{one-shot transactions}~\cite{kallman2008h}, in which the transaction involves multiple shards but the input of each shard does not depend on output of other shards.
 For example, YCSB+T workload for transactional key-value store~\cite{dey2014ycsbt} and the two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
-In \sys, we implement each transaction as a message scattering to multiple sites.
+General transactions can be divided into independent transactions exactly as in Eris~\cite{eris}.
+In \sys, we implement each independent transaction as a message scattering to multiple sites.
 Transaction initiator uses the scattering timestamp as the transaction timestamp.
 \sys guarantees atomicity and isolation, thus solving the concurrency control problem.
 Transactions would not abort due to out-of-order operations.
@@ -303,8 +448,10 @@ Eris~\cite{eris} proposes in-network concurrency control using switch as a centr
 Each transaction in Eris must go through the centralized sequencer and involve all shards and replicas.
 However, in large distributed services, most transactions only involve a small portion of shards~\cite{nishtala2013scaling}, so sending null messages to other shards incurs high overhead.
 In addition, when all hosts are correct, an Eris transaction may fail due to packet loss, while subsequent transactions from the same sender may succeed, violating validity of \sys.
+Further, none of these works tolerate Byzantine host failure.
 \sys follows the trend of systems and network co-design to achieve scalability, efficiency and security.
 
+\fi
 
 %It works like a merge sort: Each step the network switch compares the heads of input streams and output the head packet with minimum timestamp. %Reordering packets on the switch introduces less reordering delay compared to reordering on the receivers (as shown in Figure~\ref{fig:barrier}), because the switch sees messages more frequently~\cite{aguilera2000efficient}.
 %However, when the timestamps are not perfectly synchronized, the switch needs to wait and buffer other streams.

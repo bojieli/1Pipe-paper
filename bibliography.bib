@@ -37,6 +37,39 @@ publisher = {{USENIX} Association},
   publisher={ACM}
 }
 
+@article{fischer1985impossibility,
+  title={Impossibility of distributed consensus with one faulty process},
+  author={Fischer, Michael J and Lynch, Nancy A and Paterson, Michael S},
+  journal={Journal of the ACM (JACM)},
+  volume={32},
+  number={2},
+  pages={374--382},
+  year={1985},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{pfc,
+  title={Priority based flow control},
+  author={IEEE. 802.11Qbb},
+  year={2011}
+}
+
+@inproceedings{kumar2020swift,
+  title={Swift: Delay is Simple and Effective for Congestion Control in the Datacenter},
+  author={Kumar, Gautam and Dukkipati, Nandita and Jang, Keon and Wassel, Hassan MG and Wu, Xian and Montazeri, Behnam and Wang, Yaogong and Springborn, Kevin and Alfeld, Christopher and Ryan, Michael and others},
+  booktitle={Proceedings of the Annual conference of the ACM Special Interest Group on Data Communication on the applications, technologies, architectures, and protocols for computer communication},
+  pages={514--528},
+  year={2020}
+}
+
+@inproceedings{hu2020aeolus,
+  title={Aeolus: A Building Block for Proactive Transport in Datacenters},
+  author={Hu, Shuihai and Bai, Wei and Zeng, Gaoxiong and Wang, Zilong and Qiao, Baochen and Chen, Kai and Tan, Kun and Wang, Yi},
+  booktitle={Proceedings of the Annual conference of the ACM Special Interest Group on Data Communication on the applications, technologies, architectures, and protocols for computer communication},
+  pages={422--434},
+  year={2020}
+}
+
 @article{bernstein1981concurrency,
   title={Concurrency control in distributed database systems},
   author={Bernstein, Philip A and Goodman, Nathan},
@@ -78,11 +111,49 @@ publisher = {{USENIX} Association},
   publisher={ACM}
 }
 
+@inproceedings{weil2006ceph,
+  title={Ceph: A scalable, high-performance distributed file system},
+  author={Weil, Sage A and Brandt, Scott A and Miller, Ethan L and Long, Darrell DE and Maltzahn, Carlos},
+  booktitle={Proceedings of the 7th symposium on Operating systems design and implementation},
+  pages={307--320},
+  year={2006}
+}
+
+@article{lamport1984using,
+  title={Using time instead of timeout for fault-tolerant distributed systems.},
+  author={Lamport, Leslie},
+  journal={ACM Transactions on Programming Languages and Systems (TOPLAS)},
+  volume={6},
+  number={2},
+  pages={254--280},
+  year={1984},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{zhu2015congestion,
+  title={Congestion control for large-scale RDMA deployments},
+  author={Zhu, Yibo and Eran, Haggai and Firestone, Daniel and Guo, Chuanxiong and Lipshteyn, Marina and Liron, Yehonatan and Padhye, Jitendra and Raindel, Shachar and Yahia, Mohamad Haj and Zhang, Ming},
+  journal={ACM SIGCOMM Computer Communication Review},
+  volume={45},
+  number={4},
+  pages={523--536},
+  year={2015},
+  publisher={ACM New York, NY, USA}
+}
+
 @inproceedings{ports2015designing,
   title={Designing Distributed Systems Using Approximate Synchrony in Data Center Networks.},
   author={Ports, Dan RK and Li, Jialin and Liu, Vincent and Sharma, Naveen Kr and Krishnamurthy, Arvind},
   booktitle={NSDI},
   pages={43--57},
+  year={2015}
+}
+
+@inproceedings{gao2015phost,
+  title={phost: Distributed near-optimal datacenter transport over commodity network fabric},
+  author={Gao, Peter X and Narayan, Akshay and Kumar, Gautam and Agarwal, Rachit and Ratnasamy, Sylvia and Shenker, Scott},
+  booktitle={Proceedings of the 11th ACM Conference on Emerging Networking Experiments and Technologies},
+  pages={1--12},
   year={2015}
 }
 
@@ -95,6 +166,14 @@ publisher = {{USENIX} Association},
   pages={307--318},
   year={2015},
   publisher={ACM}
+}
+
+@inproceedings{zhuo2017understanding,
+  title={Understanding and mitigating packet corruption in data center networks},
+  author={Zhuo, Danyang and Ghobadi, Monia and Mahajan, Ratul and F{\"o}rster, Klaus-Tycho and Krishnamurthy, Arvind and Anderson, Thomas},
+  booktitle={Proceedings of the Conference of the ACM Special Interest Group on Data Communication},
+  pages={362--375},
+  year={2017}
 }
 
 @inproceedings{li2016just,
@@ -167,6 +246,11 @@ deployment/benchmarks/smallbank/}
   title={TPC-C Benchmark V5},
   author={THE TRANSACTION PROCESSING COUNCIL},
   url={http://www.tpc.org/tpcc/}
+}
+
+@misc{etcd,
+  title={etcd: A distributed, reliable key-value store for the most critical data of a distributed system.},
+  url={https://etcd.io}
 }
 
 @inproceedings{lim2014mica,
@@ -424,14 +508,6 @@ deployment/benchmarks/smallbank/}
   year={2016}
 }
 
-@inproceedings{kaminsky2016design,
-  title={Design guidelines for high performance RDMA systems},
-  author={Kaminsky, Anuj Kalia Michael and Andersen, David G},
-  booktitle={2016 USENIX Annual Technical Conference},
-  pages={437},
-  year={2016}
-}
-
 @article{li2016achieving,
   title={Achieving One Billion Key-Value Requests per Second on a Single Server},
   author={Li, Sheng and Lim, Hyeontaek and Lee, Victor W and Ahn, Jung Ho and Kalia, Anuj and Kaminsky, Michael and Andersen, David G and Seongil, O and Lee, Sukhan and Dubey, Pradeep},
@@ -479,14 +555,6 @@ deployment/benchmarks/smallbank/}
   organization={ACM}
 }
 
-@inproceedings{ports2015designing,
-  title={Designing Distributed Systems Using Approximate Synchrony in Data Center Networks.},
-  author={Ports, Dan RK and Li, Jialin and Liu, Vincent and Sharma, Naveen Kr and Krishnamurthy, Arvind},
-  booktitle={NSDI},
-  pages={43--57},
-  year={2015}
-}
-
 @inproceedings{zhuo2017understanding,
   title={Understanding and Mitigating Packet Corruption in Data Center Networks},
   author={Zhuo, Danyang and Ghobadi, Monia and Mahajan, Ratul and F{\"o}rster, Klaus-Tycho and Krishnamurthy, Arvind and Anderson, Thomas},
@@ -503,18 +571,6 @@ deployment/benchmarks/smallbank/}
   pages={795--809},
   year={2017},
   organization={ACM}
-}
-
-@inproceedings {geng2018exploiting,
-author = {Yilong Geng and Shiyu Liu and Zi Yin and Ashish Naik and Balaji Prabhakar and Mendel Rosenblum and Amin Vahdat},
-title = {Exploiting a Natural Network Effect for Scalable, Fine-grained Clock Synchronization},
-booktitle = {15th {USENIX} Symposium on Networked Systems Design and Implementation ({NSDI} 18)},
-year = {2018},
-isbn = {978-1-931971-43-0},
-address = {Renton, WA},
-pages = {81--94},
-url = {https://www.usenix.org/conference/nsdi18/presentation/geng},
-publisher = {{USENIX} Association},
 }
 
 @inproceedings{zhuo2017rail,
@@ -936,6 +992,37 @@ publisher = {{USENIX} Association},
   year={2014}
 }
 
+@article{gray1989leases,
+  title={Leases: An efficient fault-tolerant mechanism for distributed file cache consistency},
+  author={Gray, Cary and Cheriton, David},
+  journal={ACM SIGOPS Operating Systems Review},
+  volume={23},
+  number={5},
+  pages={202--210},
+  year={1989},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{chandra1996unreliable,
+  title={Unreliable failure detectors for reliable distributed systems},
+  author={Chandra, Tushar Deepak and Toueg, Sam},
+  journal={Journal of the ACM (JACM)},
+  volume={43},
+  number={2},
+  pages={225--267},
+  year={1996},
+  publisher={ACM New York, NY, USA}
+}
+
+@inproceedings{yang2012poll,
+  title={When poll is better than interrupt.},
+  author={Yang, Jisoo and Minturn, Dave B and Hady, Frank},
+  booktitle={FAST},
+  volume={12},
+  pages={3--3},
+  year={2012}
+}
+
 @inproceedings{dragojevic2015no,
   title={No compromises: distributed transactions with consistency, availability, and performance},
   author={Dragojevi{\'c}, Aleksandar and Narayanan, Dushyanth and Nightingale, Edmund B and Renzelmann, Matthew and Shamis, Alex and Badam, Anirudh and Castro, Miguel},
@@ -992,14 +1079,6 @@ publisher = {{USENIX} Association},
   number={2SI},
   year={1990},
   publisher={ACM}
-}
-
-@inproceedings{lu2016snow,
-  title={The SNOW Theorem and Latency-Optimal Read-Only Transactions.},
-  author={Lu, Haonan and Hodsdon, Christopher and Ngo, Khiem and Mu, Shuai and Lloyd, Wyatt},
-  booktitle={OSDI},
-  pages={135--150},
-  year={2016}
 }
 
 @inproceedings{belaramani2006practi,
@@ -1224,17 +1303,6 @@ publisher = {{USENIX} Association},
   publisher={ACM}
 }
 
-@article{kallman2008h,
-  title={H-store: a high-performance, distributed main memory transaction processing system},
-  author={Kallman, Robert and Kimura, Hideaki and Natkins, Jonathan and Pavlo, Andrew and Rasin, Alexander and Zdonik, Stanley and Jones, Evan PC and Madden, Samuel and Stonebraker, Michael and Zhang, Yang and others},
-  journal={Proceedings of the VLDB Endowment},
-  volume={1},
-  number={2},
-  pages={1496--1499},
-  year={2008},
-  publisher={VLDB Endowment}
-}
-
 @article{yu2014staring,
   title={Staring into the abyss: An evaluation of concurrency control with one thousand cores},
   author={Yu, Xiangyao and Bezerra, George and Pavlo, Andrew and Devadas, Srinivas and Stonebraker, Michael},
@@ -1296,24 +1364,6 @@ publisher = {{USENIX} Association},
 @misc{cavium,
 	title={Cavium XPliant Ethernet switch product family.},
 	note={\url{http://www.cavium.com/XPliant-Ethernet-Switch-Product-Family.html}}
-}
-
-@inproceedings{bai2017congestion,
-  title={Congestion Control for High-speed Extremely Shallow-buffered Datacenter Networks},
-  author={Bai, Wei and Chen, Kai and Hu, Shuihai and Tan, Kun and Xiong, Yongqiang},
-  booktitle={Proceedings of the First Asia-Pacific Workshop on Networking},
-  pages={29--35},
-  year={2017},
-  organization={ACM}
-}
-
-@inproceedings{sivaraman2016programmable,
-  title={Programmable Packet Scheduling at Line Rate},
-  author={Sivaraman, Anirudh and Subramanian, Suvinay and Alizadeh, Mohammad and Chole, Sharad and Chuang, Shang-Tse and Agrawal, Anurag and Balakrishnan, Hari and Edsall, Tom and Katti, Sachin and McKeown, Nick},
-  booktitle={Proceedings of the 2016 Conference on ACM SIGCOMM 2016 Conference},
-  pages={44--57},
-  year={2016},
-  organization={ACM}
 }
 
 @article{birman1994response,
@@ -1452,19 +1502,6 @@ publisher = {{USENIX} Association},
   year={2005}
 }
 
-
-
-@article{defago2004total,
-  title={Total order broadcast and multicast algorithms: Taxonomy and survey},
-  author={D{\'e}fago, Xavier and Schiper, Andr{\'e} and Urb{\'a}n, P{\'e}ter},
-  journal={ACM Computing Surveys (CSUR)},
-  volume={36},
-  number={4},
-  pages={372--421},
-  year={2004},
-  publisher={ACM}
-}
-
 @inproceedings{rajagopalan1989token,
   title={A token-based protocol for reliable, ordered multicast communication},
   author={Rajagopalan, B and McKinley, Philip K},
@@ -1505,22 +1542,6 @@ publisher = {{USENIX} Association},
   publisher={ACM}
 }
 
-@inproceedings{aguilera2000efficient,
-  title={Efficient atomic broadcast using deterministic merge},
-  author={Aguilera, Marcos Kawazoe and Strom, Robert E},
-  booktitle={Proceedings of the nineteenth annual ACM symposium on Principles of distributed computing},
-  pages={209--218},
-  year={2000},
-  organization={ACM}
-}
-
-@inproceedings{nishtala2013scaling,
-  title={Scaling Memcache at Facebook.},
-  author={Nishtala, Rajesh and Fugal, Hans and Grimm, Steven and Kwiatkowski, Marc and Lee, Herman and Li, Harry C and McElroy, Ryan and Paleczny, Mike and Peek, Daniel and Saab, Paul and others},
-  booktitle={NSDI},
-  year={2013]
-}
-
 @article{nakamoto2008bitcoin,
   title={Bitcoin: A peer-to-peer electronic cash system},
   author={Nakamoto, Satoshi},
@@ -1545,17 +1566,6 @@ publisher = {{USENIX} Association},
   year={2014}
 }
 
-@article{lamport1998part,
-  title={The part-time parliament},
-  author={Lamport, Leslie},
-  journal={ACM Transactions on Computer Systems (TOCS)},
-  volume={16},
-  number={2},
-  pages={133--169},
-  year={1998},
-  publisher={ACM}
-}
-
 @inproceedings{hunt2010zookeeper,
   title={ZooKeeper: Wait-free Coordination for Internet-scale Systems.},
   author={Hunt, Patrick and Konar, Mahadev and Junqueira, Flavio Paiva and Reed, Benjamin},
@@ -1564,17 +1574,6 @@ publisher = {{USENIX} Association},
   number={9},
   year={2010},
   organization={Boston, MA, USA}
-}
-
-@article{corbett2013spanner,
-  title={Spanner: Google’s globally distributed database},
-  author={Corbett, James C and Dean, Jeffrey and Epstein, Michael and Fikes, Andrew and Frost, Christopher and Furman, Jeffrey John and Ghemawat, Sanjay and Gubarev, Andrey and Heiser, Christopher and Hochschild, Peter and others},
-  journal={ACM Transactions on Computer Systems (TOCS)},
-  volume={31},
-  number={3},
-  pages={8},
-  year={2013},
-  publisher={ACM}
 }
 
 @inproceedings{junqueira2011zab,
@@ -1606,4 +1605,19 @@ publisher = {{USENIX} Association},
   pages={45--58},
   year={2007},
   publisher={ACM}
+}
+
+@misc{libvma,
+       title = {Messaging Accelerator (VMA)},
+       author = {Mellanox},
+       note = {Available at \url{https://github.com/mellanox/libvma}},
+}
+
+@inproceedings{nishtala2013scaling,
+  title={Scaling Memcache at Facebook.},
+  author={Nishtala, Rajesh and Fugal, Hans and Grimm, Steven and Kwiatkowski, Marc and Lee, Herman and Li, Harry C and McElroy, Ryan and Paleczny, Mike and Peek, Daniel and Saab, Paul and others},
+  booktitle={NSDI},
+  volume={13},
+  pages={385--398},
+  year={2013}
 }

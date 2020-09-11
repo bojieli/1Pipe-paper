@@ -1,4 +1,6 @@
-\documentclass[sigconf,preprint,10pt]{acmart}
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix2019_v3}
+
 \usepackage{epsfig}
 \usepackage{endnotes}
 \usepackage{amsfonts}
@@ -58,21 +60,23 @@
 	}
 	{\normalsize\end{list}}
     
-\newcommand{\sys}{{\footnotesize{\textsf{ROMS}}}\xspace}
+%\newcommand{\sys}{{\footnotesize{\textsf{1Pipe}}}\xspace}
+\newcommand{\sys}{{\textsf{1Pipe}}\xspace}
 \newcommand{\RED}[1]{{\color[rgb]{1,0,0}{(#1)}}}
 \newcommand{\REDBLU}[2]{{\color[rgb]{1,0,0}{+#1)}}{\color[rgb]{0,0,1}{(-#2}}}\usepackage[normalem]{ulem}
 \usepackage{eucal}
 \begin{document}
 
-\settopmatter{printfolios=true} % Add page numbers
-\settopmatter{printacmref=false} % Removes citation information below abstract
-\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
-\pagestyle{plain} % removes running headers
+%\settopmatter{printfolios=true} % Add page numbers
+%\settopmatter{printacmref=false} % Removes citation information below abstract
+%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+%\pagestyle{plain} % removes running headers
+%\settopmatter{printfolios=true}
 
 %don't want date printed
 \date{}
 
-\title{Scalable and Efficient Reliable Ordered Message Scattering in Data Center Networks}
+\title{\Large \bf 1Pipe: Scalable Total Order Communication in Data Center Networks}
 
 %for single author (just remove % characters)
 %\author{
@@ -86,7 +90,7 @@
 % {\rm Name}\\
 %Name Institution
 %} % end author
-\author{{\rm Eurosys'19 submission \#23}}
+\author{{\rm NSDI'21 submission \#78}}
 
 \maketitle
 
@@ -99,16 +103,15 @@
 \input{motivation}
 \input{background}
 \input{design}
+\input{design2}
 \input{implementation}
 \input{evaluation}
 \input{application}
 \input{related}
 \input{conclusion}
 
-{\footnotesize
-\bibliographystyle{acm}
+\bibliographystyle{plain}
 \bibliography{bibliography}
-}
 
 %\input{appendix}
 

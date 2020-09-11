@@ -1,6 +1,5 @@
-\section{Applications}
+\subsection{Applications}
 \label{sec:application}
-
 
 
 \begin{figure*}[t]
@@ -20,20 +19,32 @@
 \end{figure*}
 
 
-\subsection{Atomic Multi-Site Operations}
+We use the second testbed in Sec.\ref{sec:testbed} to benchmark applications, which has larger scale and higher reordering delay.
+
+\subsubsection{Transactional Key-Value Store}
 \label{subsec:eval-kvs}
 
 
+We evaluate the performance of a transactional key-value store using YCSB+T~\cite{dey2014ycsbt} workload.
+Read-only via best effort \sys{}, write via reliable \sys{}.
+Not replicated, stored in-memory.
+FaRM: read-only via versioned read, write via OCC.
 
-As a case study, we evaluate the performance of atomic multi-site operations using YCSB+T~\cite{dey2014ycsbt} skewed workload.
-For simplicity, we assume each site is an in-memory key-value store.
-Replication, logging and durability are out of scope of this paper.
-Clients scatter operations to sites and gather responses.
+\textbf{Comparison: NonTX, \sys{}, FaRM, Lock}
+
+\textbf{Scalability of operations - Number of processes (2 objects per atomic, 50\% GET) - YCSB. Expect: linear scale.}
+
+\textbf{Update percentage - Throughput - YCSB. Expect: straight line vs. drop for high update percentage in FaRM.}
+
+\textbf{Number of objects per atomic operation (50\% GET) - Throughput - YCSB. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
+
+\textbf{YCSB skewness - Throughput (50\% GET, 2 objects). Expect: in skewed workload, locking has higher transaction collision rate.}
+
+\textbf{YCSB skewness - Latency (50\% GET, 2 objects). Expect: slight increase in latency vs. high increase in latency due to aborts.}
 
 %As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 %For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
 
-We use the second testbed (Arista switches).
 Figure~\ref{fig:ycsb} shows the throughput and latency, where each atomic operation accesses two randomly chosen objects.
 \sys achieves 6.4~M transactions per server (0.8~M transactions per core) with 40~$\mu$s latency, close to an non-atomic system (NonTX) where operations are scattered directly without ordering.
 The throughput gap between \sys and NonTX is mainly due to CPU processing of reordering messages.
@@ -49,6 +60,7 @@ With more keys per scattering, the chance of transaction abort increases, becaus
 %Each transaction accesses 8 unique remote objects.
 %If the 8 objects are on two shards, OCC has 50\% chance of transaction abort, so the throughput is 50\% of non-transactional systems. When the objects are distributed on more shards, OCC has an exponentially higher chance of abort (Sec.~\ref{sec:toms}). The throughputs of other systems are unrelated to number of shards. \sys has 10x transaction throughput than lock-based systems, as well as OCC systems with more than 4 shards per transaction. The throughput of \sys is close to the theoretical bound of non-transactional system.
 
+\iffalse
 Finally, we study the efficiency of our loss detection and recovery mechanism in Sec.~\ref{sec:lossy}.
 Assume 1/10 of the transactions have conflicts, \textit{i.e.}, if a transaction is rollbacked, 1/10 of uncommitted transactions also need rollback.
 Figure~\ref{fig:ycsb-loss} simulates the transaction throughput and latency under different loss ratios.
@@ -59,6 +71,7 @@ On the latency side, reliable \sys adds one RTT of latency to derive the deliver
 If any packet is lost, reliable \sys needs to wait for an additional RTT to retransmit the packet.
 When packet loss is rare, as in most data center networks, handling loss by applications provides lower latency.
 Under high packet loss probability, however, handling losses in \sys is better.
+\fi
 
 \iffalse
 \begin{figure}[t]
@@ -72,16 +85,35 @@ Under high packet loss probability, however, handling losses in \sys is better.
 Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workload of TOMS and lock-based.
 \fi
 
-\subsection{Concurrency Control in Transactions}
+\subsubsection{Independent General Transactions}
 \label{subsec:eval-transactions}
 
-Now we apply \sys to concurrent control in one-shot transactions.
-We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
-To evaluate different concurrency control algorithms, we use 4 warehouses. 
+We apply \sys to independent general transactions (Sec.\ref{subsec:dao}), which can be implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris}.
+We benchmark New-Order and Payment transactions in TPC-C benchmark~\cite{tpcc}, which constitute 90\% of TPC-C workload.
+For simplicity, we do not implement other non-independent transactions in TPC-C, which should use traditional concurrency control mechanisms.
+We use 4 warehouses which are stored in-memory with 3 replicas.
 As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale, because each Payment transaction updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
-The throughput of \sys scales linearly with number of concurrent hosts. With 128 hosts, \sys supports 18M Payment, 3.2M New-Order or 5.3M combined transactions, which is close to a non-transactional (NonTX) baseline system.
+The throughput of \sys scales linearly with number of concurrent hosts. With 128 hosts, \sys supports 18M Payment, 3.2M New-Order or 5.3M combined transactions, which is close to a non-transactional (NonTX) baseline system. With more hosts, the performance would be limited by CPU processing capacity of contended resources.
 
+\textbf{Use one figure to save space.}
 
+\subsubsection{Distributed Data Structures}
+\label{subsec:eval-transactions}
+
+Finally, we apply \sys{} to distributed data structures in order to remove ordering hazards (Sec.\ref{subsec:order-hazards}).
+We implement a distributed concurrent hash table that uses a linked list to store key-value (KV) pairs in a same hash bucket, where hash buckets and KV pairs may be on different hosts.
+Clients access the hash table using RDMA one-sided read, write and CAS atomics.
+We measure KV insertion performance from one process on a host, while 16 processes on another host are looking up random keys.
+Using \sys{}, KV insertion throughput improves from 311K to 590K (1.9x) operations per second.
+This is because \sys{} removes the fence between writing KV pair and updating the pointer in hash bucket.
+KV lookup throughput reduces from 325K to 312K op/s (4\% reduction), due to overhead in reordering delay.
+
+If the hash table is replicated, a write op needs an additional RTT to the primary, which involves CPU software. However, reliable \sys{} does not need the client to wait for write completion.
+With 3 replicas, \sys{} improves KV insertion throughput from 169K to 544K (3.2x) op/s.
+
+\texttt{Failure recovery: faster than waiting for leader election triggered by raft heartbeat.}
+
+We also apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written in order. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 2 RTTs. Experimentation shows that in an idle system with Intel DC S3700 SSDs, 4KB random write average latency reduces from 160 $\mu$s to 58 $\mu$s (64\% reduction).
 
 
 %\subsection{Multiple Round-Trip Transactions}
