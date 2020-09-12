@@ -25,22 +25,30 @@ We use the second testbed in Sec.\ref{sec:testbed} to benchmark applications, wh
 \label{subsec:eval-kvs}
 
 
-We evaluate the performance of a transactional key-value store using YCSB+T~\cite{dey2014ycsbt} workload.
-Read-only via best effort \sys{}, write via reliable \sys{}.
-Not replicated, stored in-memory.
-FaRM: read-only via versioned read, write via OCC.
+We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory without replication using C++ \texttt{std::unordered\_map}.
+Clients route KV operation to server processes directly by hash of key.
+Read-only transactions (TXNs) are served by best effort \sys{}, while read-write TXNs use reliable \sys{}.
+For comparison, we implement non-replicated and non-durable FaRM~\cite{dragojevic2014farm} which also serves read-only TXNs in 1 RTT via versioned read. Read-write TXNs in FaRM use OCC~\cite{kung1981optimistic} and two-phase commit.
+As a theoretical performance upper bound, we also compare with a non-transactional system.
 
-\textbf{Comparison: NonTX, \sys{}, FaRM, Lock}
+Each TXN accesses two KVs by default.
+Keys are generated either uniformly random or by a Zipf distribution in YCSB+T~\cite{dey2014ycsbt}.
 
-\textbf{Scalability of operations - Number of processes (2 objects per atomic, 50\% GET) - YCSB. Expect: linear scale.}
+\textbf{Comparison: NonTX, \sys{}, FaRM}
 
-\textbf{Update percentage - Throughput - YCSB. Expect: straight line vs. drop for high update percentage in FaRM.}
+\textbf{Update percentage - RO (Read-only) Latency - YCSB/Uniform. FaRM RO becomes higher with updates, because updated objects lead to TX aborts due to inconsistent version. WR also becomes higher due to high collision and abort rate (even higher than locking). Expect: in skewed workload, FaRM has higher transaction collision rate.}
 
-\textbf{Number of objects per atomic operation (50\% GET) - Throughput - YCSB. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
+\textbf{Update percentage - WR (Read-write) Latency - YCSB/Uniform.}
 
-\textbf{YCSB skewness - Throughput (50\% GET, 2 objects). Expect: in skewed workload, locking has higher transaction collision rate.}
+\textbf{Update percentage - Throughput - YCSB/Uniform. Expect: straight line vs. drop for high update percentage in FaRM.}
 
-\textbf{YCSB skewness - Latency (50\% GET, 2 objects). Expect: slight increase in latency vs. high increase in latency due to aborts.}
+\textbf{Scalability of operations - Number of processes (2 objects per atomic, 50\% read-only) - YCSB/Uniform. Expect: linear scale.}
+
+\textbf{Number of objects per atomic operation (50\% GET) - Throughput - YCSB/Uniform. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
+
+%\textbf{YCSB skewness - Throughput (50\% GET, 2 objects). Expect: in skewed workload, locking has higher transaction collision rate.}
+
+%\textbf{YCSB skewness - Latency (50\% GET, 2 objects). Expect: slight increase in latency vs. high increase in latency due to aborts.}
 
 %As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 %For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
@@ -90,7 +98,7 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 
 We apply \sys to independent general transactions (Sec.\ref{subsec:dao}), which can be implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris}.
 We benchmark New-Order and Payment transactions in TPC-C benchmark~\cite{tpcc}, which constitute 90\% of TPC-C workload.
-For simplicity, we do not implement other non-independent transactions in TPC-C, which should use traditional concurrency control mechanisms.
+For simplicity, we do not implement non-independent transactions in TPC-C, which should fall back to traditional concurrency control mechanisms.
 We use 4 warehouses which are stored in-memory with 3 replicas.
 As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale, because each Payment transaction updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
 The throughput of \sys scales linearly with number of concurrent hosts. With 128 hosts, \sys supports 18M Payment, 3.2M New-Order or 5.3M combined transactions, which is close to a non-transactional (NonTX) baseline system. With more hosts, the performance would be limited by CPU processing capacity of contended resources.
