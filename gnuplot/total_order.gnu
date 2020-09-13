@@ -9,4 +9,4 @@ set format y "10^{%L}"
 #set mytics 4
 #set key width -0.8
 set xtics font "Arial, 28"
-plot for [i=2:6] fn u i:xtic(1) ti columnheader(i) w lp ls i-1
+plot for [i=2:7] fn u i:xtic(1) ti columnheader(i) w lp ls i-1
