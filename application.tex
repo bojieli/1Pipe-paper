@@ -3,6 +3,22 @@
 
 
 \begin{figure*}[t]
+	\centering
+	\subfloat[Scalability.\label{fig:kv_scalability}]
+	{\includegraphics[width=.32\textwidth]{gnuplot/kv_scalability.eps}}
+	\hspace{0.01\textwidth}
+	\subfloat[Latency of YCSB workload.\label{fig:kv_latency_ycsb}]
+	{\includegraphics[width=.32\textwidth]{gnuplot/kv_latency_ycsb.eps}}
+	\hspace{0.01\textwidth}
+	\subfloat[Different transaction sizes.\label{fig:kv_multikey}]
+	{\includegraphics[width=.32\textwidth]{gnuplot/multishard.eps}}
+	\vspace{-10pt}
+	\caption{Performance of a transactional key-value store.}
+	\vspace{-10pt}
+\end{figure*}
+
+
+\begin{figure*}[t]
 \centering
 	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpcc-combined}]
 	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
@@ -19,32 +35,90 @@
 \end{figure*}
 
 
-We use the second testbed in Sec.\ref{sec:testbed} to benchmark applications, which has larger scale and higher reordering delay.
-
 \subsubsection{Transactional Key-Value Store}
 \label{subsec:eval-kvs}
 
 
 We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory without replication using C++ \texttt{std::unordered\_map}.
-Clients route KV operation to server processes directly by hash of key.
-Read-only transactions (TXNs) are served by best effort \sys{}, while read-write TXNs use reliable \sys{}.
-For comparison, we implement non-replicated and non-durable FaRM~\cite{dragojevic2014farm} which also serves read-only TXNs in 1 RTT via versioned read. Read-write TXNs in FaRM use OCC~\cite{kung1981optimistic} and two-phase commit.
+A transaction (TXN) is composed of multiple independent KV read or write operations.
+TXN initiator routes KV operations to server processes by hash of key.
+Read-only (RO) TXNs are served by best effort \sys{}, while read-write (WR) and write-only (WO) TXNs use reliable \sys{}.
+For comparison, we implement non-replicated and non-durable FaRM~\cite{dragojevic2014farm} which serves RO TXNs in 1 RTT by reading the KVs and checking lock and version. WR and WO TXNs in FaRM use OCC~\cite{kung1981optimistic} and two-phase commit.
 As a theoretical performance upper bound, we also compare with a non-transactional system.
 
-Each TXN accesses two KVs by default.
-Keys are generated either uniformly random or by a Zipf distribution in YCSB+T~\cite{dey2014ycsbt}.
+Keys are 64-bit integers generated either uniformly random or by Zipf distribution in YCSB~\cite{cooper2010benchmarking}.
+The value size is randomly generated according to Facebook's ETC workload~\cite{atikoglu2012workload}.
+We increase the number of clients until throughput reaches peak, and record the average TXN latency.
+
+
+In Figure X, we fix each TXN to have 2 KV ops, where read and write are randomly chosen for each op.
+
+
+
+\iffalse
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.35\textwidth]{gnuplot/kv_scalability.eps}
+	\vspace{-10pt}
+	\caption{Scalability.}
+	%\label{fig:kv_scalability}
+	\vspace{-10pt}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.35\textwidth]{gnuplot/kv_latency_ycsb.eps}
+	\vspace{-10pt}
+	\caption{Latency YCSB.}
+	%\label{fig:kv_latency_ycsb}
+	\vspace{-10pt}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.35\textwidth]{gnuplot/multishard.eps}
+	\vspace{-10pt}
+	\caption{Multi-key Throughput.}
+	%\label{fig:kv_multikey}
+	\vspace{-10pt}
+\end{figure}
+\fi
+
+\textbf{Scalability of operations - Throughput - Number of processes - YCSB/Uniform. Expect: linear scale.}
+
+In Figure XX, We adjust the percentage of writes and measure TXN latency of RO, WO, and WR TXNs.
+
+\sys{} is 90\% of NonTX. YCSB is 80\% of Uniform due to contention on hot keys. FaRM Uniform is 30\% of 1Pipe because each RW/RO TXN requires write, prepare, validate and commit steps. But FaRM YCSB is much worse because
 
 \textbf{Comparison: NonTX, \sys{}, FaRM}
 
-\textbf{Update percentage - RO (Read-only) Latency - YCSB/Uniform. FaRM RO becomes higher with updates, because updated objects lead to TX aborts due to inconsistent version. WR also becomes higher due to high collision and abort rate (even higher than locking). Expect: in skewed workload, FaRM has higher transaction collision rate.}
+\textbf{Percentage of write ops - RO / WO / WR Latency (FaRM, 1Pipe) - YCSB. FaRM RO becomes higher with updates, because updated objects lead to TX aborts due to inconsistent version. WR also becomes higher due to high collision and abort rate (even higher than locking). Expect: in skewed workload, FaRM has higher transaction collision rate.}
 
-\textbf{Update percentage - WR (Read-write) Latency - YCSB/Uniform.}
+When percentage of write ops is low - high success rate, base WO latency.
 
-\textbf{Update percentage - Throughput - YCSB/Uniform. Expect: straight line vs. drop for high update percentage in FaRM.}
+%\textbf{Write percentage - RO / WO / WR Latency - Uniform.}
 
-\textbf{Scalability of operations - Number of processes (2 objects per atomic, 50\% read-only) - YCSB/Uniform. Expect: linear scale.}
+%\textbf{Write percentage - Throughput - Uniform/YCSB. Expect: straight line vs. drop for high update percentage in FaRM (higher overhead). Not good, affect throughput due to different ops.}
 
-\textbf{Number of objects per atomic operation (50\% GET) - Throughput - YCSB/Uniform. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
+FaRM RO latency = RTT / RO success rate
+RO success rate = both objects are unlocked; value write version not broken.
+FaRM WO latency = RTT * 3 (write, prepare + lock, commit + unlock) / WO success rate
+WO success rate = write lock succeed.
+FaRM WR latency = RTT * 4 (read/write, prepare + lock, validate, commit + unlock) / WO success rate
+WR success rate = write lock succeed; read version correct.
+\sys{} RO latency = RTT + best-effort reordering delay $\approx$ 2 RTT
+\sys{} WR/WO latency = RTT + reliable reordering delay $\approx$ 3 RTT
+NonTX latency = RTT
+
+\sys{} / NonTX throughput: unchanged.
+\sys{}  = NonTX / 1.1 due to additional round-trip in reliable.
+FaRM throughput: NonTX / ((1/RO success rate + 1.4/WR success rate + 1.3/WO success rate) / 3).
+
+50\% are read-only TXNs, 50\% are read-write TXNs.
+
+\textbf{Number of KVs per TXN - Throughput - YCSB/Uniform. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
+
+
 
 %\textbf{YCSB skewness - Throughput (50\% GET, 2 objects). Expect: in skewed workload, locking has higher transaction collision rate.}
 
@@ -53,16 +127,16 @@ Keys are generated either uniformly random or by a Zipf distribution in YCSB+T~\
 %As a case study, we study the transaction performance of transactional key-value stores under YCSB+T~\cite{dey2014ycsbt} skewed workload.
 %For the sake of simplicity, we focus on single round-trip (one-shot) transactions. Single-node transactions can be serialized on the server at the current timestamp, thus do not need \sys. General transactions with predetermined read and write sets can be reduced to single round-trip transactions, by sending the read and write set to each shard via \sys. During further execution of a general transaction, each shard can track the dependency and execute the read and write operations in timestamp order.
 
-Figure~\ref{fig:ycsb} shows the throughput and latency, where each atomic operation accesses two randomly chosen objects.
-\sys achieves 6.4~M transactions per server (0.8~M transactions per core) with 40~$\mu$s latency, close to an non-atomic system (NonTX) where operations are scattered directly without ordering.
-The throughput gap between \sys and NonTX is mainly due to CPU processing of reordering messages.
-The latency gap originates from the reordering delay.
-In comparison, the throughput of locks is limited by RTT.
-The throughput of centralized coordination is bottlenecked by the coordinator.
+%Figure~\ref{fig:ycsb} shows the throughput and latency, where each atomic operation accesses two randomly chosen objects.
+%\sys achieves 6.4~M transactions per server (0.8~M transactions per core) with 40~$\mu$s latency, close to an non-atomic system (NonTX) where operations are scattered directly without ordering.
+%The throughput gap between \sys and NonTX is mainly due to CPU processing of reordering messages.
+%The latency gap originates from the reordering delay.
+%In comparison, the throughput of locks is limited by RTT.
+%The throughput of centralized coordination is bottlenecked by the coordinator.
 
-Figure~\ref{fig:multishard} compares the single-core transaction throughput with an increasing number of keys per atomic scattering.
-Now we consider other timestamp-based methods.
-With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
+%Figure~\ref{fig:multishard} compares the single-core transaction throughput with an increasing number of keys per atomic scattering.
+%Now we consider other timestamp-based methods.
+%With more keys per scattering, the chance of transaction abort increases, because reordering in any one of the keys would cause transaction abort.
 
 %Figure~\ref{fig:multishard} compares the throughput of TOMS, OCC, lock-based and non-transactional key-value stores.
 %Each transaction accesses 8 unique remote objects.

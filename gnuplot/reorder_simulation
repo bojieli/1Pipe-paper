@@ -1,0 +1,5 @@
+"Reordering Delay"	"Baseline"	"Add delay to one sender"	"Add delay on one link"	"Add delay on two links"
+T-R1	100	100	200	100
+T-R2	100	100	100	100
+P-R1	100	200	200	200
+P-R2	100	200	100	200
