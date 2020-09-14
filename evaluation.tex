@@ -38,35 +38,19 @@
         		\includegraphics[width=\textwidth]{gnuplot/failure_recovery.eps}
         	}
         \vspace{-5pt}
-        	\caption{Failure recovery time of reliable \sys{}.}
+        	\caption{Failure recovery time of reliable \sys{}. Error bars show $5^{th}$ and $95^{th}$ percentile.}
         	\label{fig:failure-recovery}
         	\subfloat{
         		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
         	}
         	\vspace{-5pt}
-        	\caption{Beacon overhead on hosts.}
-			\label{fig:beacon-overhead}
+        	\caption{Reordering overhead on hosts.}
+			\label{fig:reorder-overhead}
         	\vspace{-10pt}
         \end{minipage}
 %\vspace{-1.6em}
 \vspace{-15pt}
 \end{figure*}
-
-\begin{figure}[t]
-	\centering
-	\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
-	{\includegraphics[width=0.22\textwidth]{gnuplot/beacon_network_overhead.eps}}
-	\hspace{0.01\textwidth}
-	\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
-	{\includegraphics[width=0.22\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
-	\vspace{-5pt}
-	\caption{
-		Beacon overhead under different beacon intervals.
-		CPU processing overhead for Arista switch is extrapolated.
-	}
-	\label{fig:overhead}
-	\vspace{-10pt}
-\end{figure}
 
 %We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}.
 We summarize the key findings as follows:
@@ -77,7 +61,7 @@ We summarize the key findings as follows:
 
 \parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
 
-\parab{Low network and CPU overhead.}\sys's beacons only consume 0.1\% link capacity. At switches, beacon packets can be processed by a CPU core. At hosts, reordering computation consumes less than 10\% of a core.
+\parab{Low network and CPU overhead.}\sys's beacons only consume 0.3\% link capacity. At switches, beacon packets can be processed by a CPU core.
 
 \parab{Fast failure recovery.}
 
@@ -138,15 +122,6 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \fi
 
 \iffalse
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=0.3\textwidth]{gnuplot/reorder_receiver.eps}
-	\caption{Reordering CPU and memory overhead on hosts.}
-	\label{fig:reorder-overhead}
-\end{figure}
-\fi
-
-\iffalse
 \begin{figure*}[t!]
 	\begin{minipage}{.31\textwidth}
     	\centering
@@ -189,13 +164,16 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \subsection{Microbenchmarks}
 
 \parab{Scalability.}
-Figure~\ref{fig:total-order} compares the scalability of best effort \sys{} with other total order multicast algorithms using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at programmable switch~\cite{eris} or host NIC~\cite{kaminsky2016design}.
-\sys{} scales linearly to 512 processes.
+Figure~\ref{fig:total-order} compares the scalability of \sys{} with other total order multicast algorithms using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at programmable switch~\cite{eris} or host NIC~\cite{kaminsky2016design}.
+\sys{} scales linearly to 512 processes, achieving 5M messages per second per process.
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
-Reconfigurable chip and host representative delivers the same high throughput because we decouple message forwarding from barrier propagation.
-In contrast, the sequencer is a central bottleneck and introduces extra network delays, especially when congestion appears at the sequencer.
+Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead.\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
+Reconfigurable chip and host representative deliver the same high throughput (not shown) because we decouple message forwarding from barrier propagation.
+
+In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets, especially when congestion appears at the sequencer when its throughput saturates.
 Token shows consistent low throughput because only one process may send at any time.
 Using Lamport timestamp, a receiver waits for timestamps from all other receivers before delivery, leading to quadratic number of beacons, so, the aggregated throughput decreases after reaching peak.
+
 %Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, \sys can achieve scalable and efficient log replication.
 
 %Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
@@ -205,14 +183,16 @@ Using Lamport timestamp, a receiver waits for timestamps from all other receiver
 
 
 
-\parab{Message Delivery Latency.}
+\parab{Message delivery latency.}
 Figure~\ref{fig:reorder-testbed} shows the average message delivery latency of best effort (BE) and reliable (R) \sys{}.
 Best effort \sys{} with reconfigurable chip delivers the smallest latency overhead than unordered delivery. The overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus clock skew. In contrast, end host representatives introduce extra forwarding delay from the switch to the end host. In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
 Reliable \sys{} adds an RTT to best effort \sys{} due to Prepare phase in 2PC, which is proportional to number of network hops.
 
-Figure~\ref{fig:reorder-loss} shows how packet loss affects latency.
+As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, so, it is rare that a packet loss blocks barrier propagation.
+We use NS-3~\cite{henderson2008network} to simulate how packet loss affects latency in the testbed with 512 processes.
+As Figure~\ref{fig:reorder-loss} shows, when loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
+%In the extreme case of high loss rate, there is always some in-flight message that gets lost, so the latency is high.
 
-\textbf{Reordering delay (Y) - packet loss rate (X); cluster scale (lines): simulation. A packet loss cause all delay.}
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
 
@@ -221,6 +201,13 @@ Figure~\ref{fig:reorder-loss} shows how packet loss affects latency.
 
 %Figure~\ref{fig:reorder-simulation} shows how minimax clock synchronization adapts to imbalanced link or host delays. We simulate two senders and two receivers connected via 4 links. When one sender $S_1$ has 10~$\mu$s more delay due to background traffic, minimax clock synchronization adjusts the sender's timestamp to preserve minimal reordering delay, while physical clock synchronization does not account for the different sender delays. When one network link $S_2 \rightarrow R_2$ has 100~$\mu$s more delay, due to multi-path, both synchronization mechanisms have more reordering delay. When two links $S_2 \rightarrow R_1$ and $S_2 \rightarrow R_2$ both have 10~$\mu$s more delay, minimax clock synchronization can compensate the change.
 
+
+\parab{Failure recovery.}
+Figure~\ref{fig:failure-recovery} depicts failure recovery time, which measures the average time of barrier timestamp stall for correct processes.
+In our testbed, a failure is detected if beacon is not received for 10 beacon intervals (30~$\mu$s).
+In addition to failure detection time, the recovery procedure in Sec.\ref{sec:reliable} requires 6 network diameters plus the time to transmit and process messages.
+Core link and switch failures do not affect connectivity, so, only the controller needs to be involved, and no process is considered to be failed.
+Host, NIC, host link, and ToR switch failures cause processes to disconnect from the system, so, the recovery takes longer because each correct process needs to discard messages from or to them.
 
 
 %\begin{figure}[t]
@@ -231,28 +218,35 @@ Figure~\ref{fig:reorder-loss} shows how packet loss affects latency.
 %\end{figure}
 
 
+\begin{figure}[t]
+	\centering
+	\subfloat[CPU processing overhead.\label{fig:cpu-overhead}]
+	{\includegraphics[width=0.22\textwidth]{gnuplot/beacon_cpu_overhead.eps}}
+	\hspace{0.01\textwidth}
+	\subfloat[Network bandwidth overhead.\label{fig:network-overhead}]
+	{\includegraphics[width=0.22\textwidth]{gnuplot/beacon_network_overhead.eps}}
+	\vspace{-5pt}
+	\caption{
+		Beacon overhead under different beacon intervals.
+		CPU processing overhead for Arista switch is extrapolated.
+	}
+	\label{fig:overhead}
+	\vspace{-10pt}
+\end{figure}
 
-\parab{Network overhead.}As shown in Figure~\ref{fig:network-overhead}, with the high link capacity and a reasonable beacon generation interval, beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
 
-\parab{CPU overhead.}The CPU overhead of \sys has two parts: beacon processing at switches and reordering at receivers. Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch. The Arista switch has 4 CPU cores. The raw packet processing capacity of a switch CPU core is 1/3 of a Xeon E5 CPU core. If we can bypass the kernel network stack and process packets efficiently at Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
+\parab{CPU overhead.}
+The CPU overhead of \sys has two parts: reordering at receivers and beacon processing at switches.
+As Figure~\ref{fig:reorder-overhead} shows, the maximal buffer size required on the receiver increases linearly with beacon interval, but only takes a few megabytes. The message delivery throughput degrades slightly with more messages to reorder.
 
-As shown in Figure~\ref{fig:reorder-overhead}, although the maximal buffer size required on the receiver increases linearly with beacon interval, the message reordering throughput of a CPU core does not degrade significantly.
+Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch.
+A host CPU core can sustain 3~$\mu$s beacon interval of the switch, which is our testbed setting.
+If switch CPUs are used instead, the raw packet processing capacity of a switch CPU is roughly 1/3 of a host CPU core.
+If we can bypass the kernel network stack and process packets efficiently at Arista switches, a single switch CPU core can sustain 10~$\mu$s beacon interval.
 
-\parab{Failure.}
-\textbf{Time from random failure occurs to recovery of timestamps. Bar chart: X - cluster scale, lines: types of failure (process, host, link, ToR switch).}
 
-Trigger failure if beacon packet is not received for 10 beacon intervals (30 us).
-Report to controller: D.
-Controller determine topology: N us.
-Broadcast: D + N/5.
-Discard: 2 us.
-Recall: D + D + processing (1 us)
-Callback: 1 us
-Response to controller: D + N/5.
-Controller gather: 1 us
-Notify remove link: D + N/5.
-
-Total: 30 + 6*D + 5 us + N*8/5.
+\parab{Network overhead.}
+As Figure~\ref{fig:network-overhead} shows, with high link capacity and a reasonable beacon generation interval, beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
 
 
 %Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.

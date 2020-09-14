@@ -37,6 +37,22 @@
 \end{table*}
 \fi
 
+\begin{figure*}[t!]
+	\centering
+	\subfloat[Reconfigurable switching chips.\label{fig:p4}]
+	{\includegraphics[width=.30\textwidth]{images/p4_implementation.pdf}}
+	\hspace{0.04\textwidth}
+	\subfloat[Switch CPU.\label{fig:commodity}]
+	{\includegraphics[width=.26\textwidth]{images/commodity_implementation.pdf}}
+	\hspace{0.04\textwidth}
+	\subfloat[End hosts only.\label{fig:end-host}]
+	{\includegraphics[width=.3\textwidth]{images/endhostonly_implementation.pdf}}
+	\vspace{-10pt}
+	\caption{\sys dataflow in networks with different programming capabilities.}
+	\label{fig:impl}
+	\vspace{-10pt}
+\end{figure*}
+
 
 \section{Implementation}
 \label{sec:impl}
@@ -102,21 +118,6 @@ When a shard recovers from failure, we replay the KV log and get the last update
 When a client recovers from failure, the uncompleted scatterings are already discarded.
 The client may simply report failures to user or implement logging to retry failed scatterings.
 \fi
-\begin{figure*}[thbp]
-	\centering
-	\subfloat[Reconfigurable switching chips.\label{fig:p4}]
-	{\includegraphics[width=.30\textwidth]{images/p4_implementation.pdf}}
-	\hspace{0.04\textwidth}
-	\subfloat[Switch CPU.\label{fig:commodity}]
-	{\includegraphics[width=.26\textwidth]{images/commodity_implementation.pdf}}
-	\hspace{0.04\textwidth}
-	\subfloat[End hosts only.\label{fig:end-host}]
-	{\includegraphics[width=.3\textwidth]{images/endhostonly_implementation.pdf}}
-    \vspace{-10pt}
-	\caption{\sys dataflow in networks with different programming capabilities.}
-	\label{fig:impl}
-	\vspace{-10pt}
-\end{figure*}
 
 
 \subsection{In-Network Processing}

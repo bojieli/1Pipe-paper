@@ -18,75 +18,29 @@
 \end{figure*}
 
 
-\begin{figure*}[t]
-\centering
-	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpcc-combined}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
-	\hspace{0.02\textwidth}
-	\subfloat[Payment 100\%.\label{fig:tpcc-payment}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-payment.eps}}
-    \hspace{0.02\textwidth}
-    \subfloat[New-Order 100\%.\label{fig:tpcc-neworder}]
-	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
-\vspace{-10pt}
-\caption{TPC-C benchmark with 4 warehouses.}
-\label{fig:tpc-c}
-\vspace{-10pt}
-\end{figure*}
-
-
 \subsubsection{Transactional Key-Value Store}
 \label{subsec:eval-kvs}
 
 
 We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory without replication using C++ \texttt{std::unordered\_map}.
 A transaction (TXN) is composed of multiple independent KV read or write operations.
-TXN initiator routes KV operations to server processes by hash of key.
+We use the same number of TXN initiator and server processes.
+Initiator routes KV operations to servers by hash of key.
 Read-only (RO) TXNs are served by best effort \sys{}, while read-write (WR) and write-only (WO) TXNs use reliable \sys{}.
 For comparison, we implement non-replicated and non-durable FaRM~\cite{dragojevic2014farm} which serves RO TXNs in 1 RTT by reading the KVs and checking lock and version. WR and WO TXNs in FaRM use OCC~\cite{kung1981optimistic} and two-phase commit.
 As a theoretical performance upper bound, we also compare with a non-transactional system.
 
 Keys are 64-bit integers generated either uniformly random or by Zipf distribution in YCSB~\cite{cooper2010benchmarking}.
 The value size is randomly generated according to Facebook's ETC workload~\cite{atikoglu2012workload}.
-We increase the number of clients until throughput reaches peak, and record the average TXN latency.
+We record average TXN latency at 95\% of peak throughput.
 
 
-In Figure X, we fix each TXN to have 2 KV ops, where read and write are randomly chosen for each op.
+In Figure~\ref{fig:kv_scalability}, we fix each TXN to have 2 KV ops, where read and write are randomly chosen for each op.
 
-
-
-\iffalse
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=.35\textwidth]{gnuplot/kv_scalability.eps}
-	\vspace{-10pt}
-	\caption{Scalability.}
-	%\label{fig:kv_scalability}
-	\vspace{-10pt}
-\end{figure}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=.35\textwidth]{gnuplot/kv_latency_ycsb.eps}
-	\vspace{-10pt}
-	\caption{Latency YCSB.}
-	%\label{fig:kv_latency_ycsb}
-	\vspace{-10pt}
-\end{figure}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=.35\textwidth]{gnuplot/multishard.eps}
-	\vspace{-10pt}
-	\caption{Multi-key Throughput.}
-	%\label{fig:kv_multikey}
-	\vspace{-10pt}
-\end{figure}
-\fi
 
 \textbf{Scalability of operations - Throughput - Number of processes - YCSB/Uniform. Expect: linear scale.}
 
-In Figure XX, We adjust the percentage of writes and measure TXN latency of RO, WO, and WR TXNs.
+In Figure~\ref{fig:kv_latency_ycsb}, We adjust the percentage of writes and measure TXN latency of RO, WO, and WR TXNs.
 
 \sys{} is 90\% of NonTX. YCSB is 80\% of Uniform due to contention on hot keys. FaRM Uniform is 30\% of 1Pipe because each RW/RO TXN requires write, prepare, validate and commit steps. But FaRM YCSB is much worse because
 
@@ -115,6 +69,8 @@ NonTX latency = RTT
 FaRM throughput: NonTX / ((1/RO success rate + 1.4/WR success rate + 1.3/WO success rate) / 3).
 
 50\% are read-only TXNs, 50\% are read-write TXNs.
+
+In Figure~\ref{fig:kv_multikey}, 
 
 \textbf{Number of KVs per TXN - Throughput - YCSB/Uniform. Expect: reverse proportional with number of objects, but NonTX and \sys{} are similar. More objects, higher contention rate.}
 
@@ -167,11 +123,31 @@ Under high packet loss probability, however, handling losses in \sys is better.
 Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workload of TOMS and lock-based.
 \fi
 
+
+
+\begin{figure*}[t]
+	\centering
+	\subfloat[New-Order 50\%, Payment 50\%.\label{fig:tpcc-combined}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-combined.eps}}
+	\hspace{0.02\textwidth}
+	\subfloat[Payment 100\%.\label{fig:tpcc-payment}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-payment.eps}}
+	\hspace{0.02\textwidth}
+	\subfloat[New-Order 100\%.\label{fig:tpcc-neworder}]
+	{\includegraphics[width=.3\textwidth]{gnuplot/tpcc-neworder.eps}}
+	\vspace{-10pt}
+	\caption{TPC-C benchmark with 4 warehouses.}
+	\label{fig:tpc-c}
+	\vspace{-10pt}
+\end{figure*}
+
+
 \subsubsection{Independent General Transactions}
 \label{subsec:eval-transactions}
 
 We apply \sys to independent general transactions (Sec.\ref{subsec:dao}), which can be implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris}.
-We benchmark New-Order and Payment transactions in TPC-C benchmark~\cite{tpcc}, which constitute 90\% of TPC-C workload.
+We benchmark New-Order and Payment transactions in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
+We assume the transactions never abort.
 For simplicity, we do not implement non-independent transactions in TPC-C, which should fall back to traditional concurrency control mechanisms.
 We use 4 warehouses which are stored in-memory with 3 replicas.
 As shown in Figure~\ref{fig:tpc-c}, lock and OCC do not scale, because each Payment transaction updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
@@ -180,7 +156,7 @@ The throughput of \sys scales linearly with number of concurrent hosts. With 128
 \textbf{Use one figure to save space.}
 
 \subsubsection{Distributed Data Structures}
-\label{subsec:eval-transactions}
+\label{subsec:data-structure}
 
 Finally, we apply \sys{} to distributed data structures in order to remove ordering hazards (Sec.\ref{subsec:order-hazards}).
 We implement a distributed concurrent hash table that uses a linked list to store key-value (KV) pairs in a same hash bucket, where hash buckets and KV pairs may be on different hosts.
