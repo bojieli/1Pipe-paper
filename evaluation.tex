@@ -52,6 +52,7 @@
 \vspace{-15pt}
 \end{figure*}
 
+\iffalse
 %We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}.
 We summarize the key findings as follows:
 
@@ -68,6 +69,7 @@ We summarize the key findings as follows:
 %\parab{Resilient to background traffic.}\sys is adaptive to delay variance in the network by re-synchronizing clocks. Hence, \sys can share the network fairly with background TCP traffic.
 
 \parab{Improve application throughput.} Compared to locking, \sys{} improves throughput by 50x for a transactional key-value store.
+\fi
 
 \subsection{Methodology}
 \label{sec:testbed}
@@ -75,8 +77,7 @@ We summarize the key findings as follows:
 Our testbed has 32 servers and 10 Arista 7060CX 100G switches~\cite{arista}, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
 Each server has 2 Xeon E5 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
 We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch, so beacon packets do not need encapsulation.
-Because we do not have a switch with reconfigurable chip, to compare its performance, we do back-of-envelope analysis according to the specification of Barefoot Tofino~\cite{tofino}.
-
+Because we only have one switch with Barefoot Tofino~\cite{tofino} reconfigurable chip, we only use it for microbenchmarks.
 %We use the second testbed in most benchmarks because it has larger scale.
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}.
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
@@ -84,6 +85,7 @@ Because we do not have a switch with reconfigurable chip, to compare its perform
 In small-scale experiments (1$\sim$32 processes), each process runs on a distinct server. Each process uses a pair of threads for sending and receiving, respectively.
 For experiments with 64$\sim$512 processes, each server hosts the same number of processes.
 %With 16 processes per NIC, the throughput of NICs is saturated.
+Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\%).
 We choose beacon interval to be 3~$\mu$s.
 
 
@@ -165,12 +167,14 @@ To make simulations faster, each sender only sends one message to a randomly cho
 
 \parab{Scalability.}
 Figure~\ref{fig:total-order} compares the scalability of \sys{} with other total order multicast algorithms using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at programmable switch~\cite{eris} or host NIC~\cite{kaminsky2016design}.
+Each process broadcasts messages to all processes.
 \sys{} scales linearly to 512 processes, achieving 5M messages per second per process.
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
 Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead.\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
 Reconfigurable chip and host representative deliver the same high throughput (not shown) because we decouple message forwarding from barrier propagation.
 
-In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets, especially when congestion appears at the sequencer when its throughput saturates.
+In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets.
+The latency soars when throughput of sequencer saturates and congestion appears.
 Token shows consistent low throughput because only one process may send at any time.
 Using Lamport timestamp, a receiver waits for timestamps from all other receivers before delivery, leading to quadratic number of beacons, so, the aggregated throughput decreases after reaching peak.
 

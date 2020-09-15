@@ -10,8 +10,8 @@
 %\end{figure}
 
 Best effort \sys{} provides total order, causal, and FIFO message delivery with at-most-once semantics.
-One naive approach is ordering all messages with a centralized sequencer, but it would be a bottleneck.
-We aim to preserve routing topology of messages and achieve scalable ordering in a distributed way.
+A naive approach is ordering all messages with a centralized sequencer, but it would be a bottleneck.
+We aim to preserve message routing topology and achieve scalable ordering in a distributed way.
 %In this section, we design best effort \sys{}.
 %The key idea is to aggregate the minimum message timestamp over the network links, and provide receiver processes with a timestamp lower bound of all future messages.
 
@@ -46,14 +46,14 @@ We aim to preserve routing topology of messages and achieve scalable ordering in
 \label{sec:loss-free}
 
 \parab{Message timestamp.}
-\sys assigns a non-decreasing timestamp for each message.
+\sys sender assigns a non-decreasing timestamp for each message. Messages in a batch have a same timestamp.
 %A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps.
-Given recent efforts on accurate clock synchronization in data centers~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, we synchronize monotonic time on hosts similar to Spanner~\cite{corbett2013spanner}, and use the local clock time as message timestamps.
+Given recent efforts on sub-$\mu$s accurate clock synchronization in data centers~\cite{correll2005design,lee2016globally,geng2018exploiting}, we synchronize monotonic time of hosts, and use the local clock time as message timestamps.
 Message timestamp determines the delivery order at receiver.
-To achieve ordered message scattering, the receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through sender ID).
+The receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through sender ID).
 
 \parab{Barrier timestamp.}
-When a receiver wants to deliver a message with timestamp $T$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $T$.
+When a receiver delivers a message with timestamp $T$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $T$.
 Since different network paths have different propagation and queuing delays, this is not trivial.
 To this end, we introduce the concept of \emph{barrier timestamp}.
 A barrier timestamp is associated with either a link or a node (i.e., a switch or an end host) in the routing graph.

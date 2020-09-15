@@ -6,7 +6,7 @@
 
 
 This paper proposes \sys{}, a communication abstraction that enables different receivers to process messages from senders in a consistent total order.
-\sys{} can simplify and accelerate many distributed applications, e.g., transactional key-value stores, log replication, and distributed data structures.
+\sys{} can simplify and accelerate many distributed applications, \emph{e.g.}, transactional key-value stores, log replication, and distributed data structures.
 
 We propose a scalable and efficient method to implement \sys{} inside data centers. To achieve total order delivery in a scalable manner, \sys separates the bookkeeping of order information from message forwarding, and distributes the work to each switch and host. \sys aggregates order information using in-network computation at switches. This forms the ``control plane'' of the system. On the ``data plane'', \sys forwards messages in the network as usual and reorders them at the receiver based on the order information.
 
@@ -14,7 +14,7 @@ We propose a scalable and efficient method to implement \sys{} inside data cente
 
 We build two \sys prototypes using Barefoot and Arista switches.
 Our evaluation shows that \sys achieves high performance with low CPU and network overheads.
-As a case study, compared to locking, \sys improves throughput by up to 50x for a transactional key-value store, and up to 100x for TPC-C Payment transactions.
+As a case study, compared to locking, \sys improves throughput by up to 50x for a transactional key-value store, and up to 100x for TPC-C Payment transactions. \textbf{Need update.}
 
 %In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
 

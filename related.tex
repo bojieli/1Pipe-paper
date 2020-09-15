@@ -2,11 +2,12 @@
 \label{sec:related}
 
 \parab{Total order communication.}
-Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
+%Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
+There has been extensive research in total order multicast and broadcast.
 One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
-This causes extra network communication overhead and delay, thus degrading system efficiency.
+This causes extra delay and network bandwidth overhead.
 A third line of work assumes a synchronous network, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
 However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
@@ -19,6 +20,7 @@ Mostly Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just}
 However, consensus does not imply FIFO ordering~\cite{junqueira2011zab}.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
 NetChain~\cite{jin2018netchain} uses a chain of switches for scale-free sub-RTT coordination.
+Spanner~\cite{corbett2013spanner} and FaRMv2~\cite{shamis2020fast} leverage accurate global time for fast distributed transactions.
 %\sys{} is inspired by Lamport's idea that the absence of a message can carry information in a synchronous network~\cite{lamport1984using}. %We achieve synchrony via timestamp barriers.
 
 %Using Time instead of Timeout for fault-tolerant distributed systems.

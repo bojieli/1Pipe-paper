@@ -141,15 +141,15 @@ DAO is widely used in transactional key-value store~\cite{dey2014ycsbt}, caches 
 Traditionally, a DAO is implemented as (1) locking the objects, (2) if all locks succeed, send operations to the participants, and (3) unlock the objects.
 Using \sys{}, a DAO can be implemented as a batch of messages with a same timestamp from the initiator.
 Each recipient processes messages from all DAOs in timestamp order\footnote{When multiple DAOs have a same timestamp, a recipient can break the tie by the ID of initiator.}, so, the DAOs are sequentially consistent.
-If a recipient or the network permanently fails, atomicity violation does not matter because it cannot be accessed by any subsequent operations.
+If a recipient or the network permanently fails, atomicity violation is not observable because the objects cannot be accessed by any subsequent operation.
 %Using \sys{}, a DAO can be completed in 1 RTT, and there is no locking or waiting.
 
 %Reliable \sys{} can handle packet loss and failures.
 %If the sender or a receiver fails, none of the messages in a batch are delivered. If both sender and all receivers are correct, all messages are delivered in total order.
 
-If we do not need strict ordering among DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried.
+If we do not need strict wall-clock ordering of DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried without violating sequential consistency.
 
-Now, we consider an alternative approach that uses best effort \sys{}. Due to its unreliability, it provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff. Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition, because read-only DAOs do not need to lock the objects, the concurrency can be significantly improved. Compared to FaRM~\cite{dragojevic2014farm}, \sys{} read-only DAOs never return inconsistent versions, thus reducing retries.
+There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff. Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition, because read-only DAOs do not lock the objects, concurrency can improve significantly. Compared to FaRM~\cite{dragojevic2014farm}, \sys{} read-only DAOs never return inconsistent versions, thus reducing retries.
 
 %Problem arises when some of the receivers fail, because \sys{} does not provide atomic delivery of a batch of messages. However, we can achieve atomic delivery by leveraging that \sys{} broadcasts process failure notification to all processes. The initiator of DAO sends the recipient list of DAO to all recipients. Each process records process failure notifications from \sys{}. When a process receives a DAO with timestamp $T$ that involves a recipient that fails before $T$, it drops the DAO. So, the DAO is committed if and only if all recipients are correct at $T$. If a recipient fails after $T$ but have not received the DAO, 
 
@@ -180,6 +180,7 @@ SMR can solve arbitrary synchronization problems~\cite{lamport1978time}. An exam
 %If a lock manager grants resource in FIFO order, due to variable network delay, it is possible that $A$ requests the resource and sends a message to $B$, then $B$ requests the resource, but $B$ gets the resource.
 With reliable \sys{}, either implementing SMR on all hosts or using Sec.\ref{subsec:order-hazards} to implement the lock manager can solve the mutual exclusion problem.
 
+\iffalse
 \subsubsection{Reduce Timeout}
 
 By simply sending a message to itself via best effort \sys{}, a process can measure \emph{real-time} sum of maximum clock skew and maximum network delay.
@@ -191,6 +192,7 @@ Leases~\cite{gray1989leases} is a use case of this real-time measurement.
 A lease grants exclusive access to a process within a time interval. Between two leases, there is a quiet period that must be higher than the maximum clock skew. Otherwise, two hosts with different clocks may be actually accessing the same leased object at the same time, leading to inconsistency.
 Traditionally, the quiet period is set to the maximum possible clock skew.
 With \sys{}, the quiet period can be set to the real-time clock skew plus network delay, which is much shorter and thus improves concurrency.
+\fi
 
 \iffalse
 Another use case is reducing RPC timeouts.
