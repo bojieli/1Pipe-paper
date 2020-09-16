@@ -7,4 +7,5 @@ load "lp.gnu"
 #set format y "10^{%L}"
 #set yrange [0:2.2]
 #set xlabel offset 0, graph -0.05
+set ylabel offset -5
 plot for [i=2:7] fn u i:xticlabels(1) ti columnheader(i) w lp ls i-1

@@ -8,6 +8,7 @@
 
 \begin{table}[htbp]
 \centering
+\scalebox{0.9}{
 \begin{tabular}{l}
 	\hline
 	\texttt{TS = GTO\_send(vec[<dst, msg>])} \\
@@ -30,8 +31,11 @@
 	\texttt{GTO\_exit()} \\
 	\hline
 \end{tabular}
+}
+\vspace{-5pt}
 \caption{Programming API of \sys{}. \texttt{vec[<dst, msg>]} indicates a batch of messages that have a same timestamp.}
 \label{tab:abstraction}
+\vspace{-15pt}
 \end{table}
 
 As Figure~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{GTO\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{GTO\_unreliable\_recv} returns all messages with a same timestamp as a batch.
@@ -81,6 +85,7 @@ Applications may solve permanent failures with replication and traditional conse
     %\hspace{0.01\textwidth}
 	%\subfloat[Independent multi-write.\label{fig:ordering-imw}]
 	%{\includegraphics[width=.11\textwidth,page=3]{images/ordering-cropped.pdf}}
+	\vspace{-0.5em}
 	\caption{Ordering hazards in a distributed system.}
 	\label{fig:ordering}
 	\vspace{-1.5em}
@@ -141,7 +146,7 @@ A \emph{distributed atomic operation} (DAO) is a transaction that atomically rea
 DAO is widely used in transactional key-value store~\cite{dey2014ycsbt}, caches in web services, distributed in-memory computing, and index cache of distributed storage.
 Traditionally, a DAO is implemented as (1) locking the objects, (2) if all locks succeed, send operations to the participants, and (3) unlock the objects.
 Using \sys{}, a DAO can be implemented as a batch of messages with a same timestamp from the initiator.
-Each recipient processes messages from all DAOs in timestamp order\footnote{When multiple DAOs have a same timestamp, a recipient can break the tie by the ID of initiator.}, so, the DAOs are sequentially consistent.
+Each recipient processes messages from all DAOs in timestamp order\footnote{DAOs with a same timestamp are ordered by the ID of initiator.}, so, the DAOs are sequentially consistent.
 If a recipient or the network permanently fails, atomicity violation is not observable because the objects cannot be accessed by any subsequent operation.
 %Using \sys{}, a DAO can be completed in 1 RTT, and there is no locking or waiting.
 
@@ -150,7 +155,9 @@ If a recipient or the network permanently fails, atomicity violation is not obse
 
 If we do not need strict wall-clock ordering of DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried without violating sequential consistency.
 
-There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff. Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition, because read-only DAOs do not lock the objects, concurrency can improve significantly. Compared to FaRM~\cite{dragojevic2014farm}, \sys{} read-only DAOs never return inconsistent versions, thus reducing retries.
+%There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff.
+%Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition,
+%Because read-only DAOs do not lock the objects, concurrency improves. Compared to FaRM~\cite{dragojevic2014farm}, \sys{} read-only DAOs never return inconsistent versions, thus reducing retries.
 
 %Problem arises when some of the receivers fail, because \sys{} does not provide atomic delivery of a batch of messages. However, we can achieve atomic delivery by leveraging that \sys{} broadcasts process failure notification to all processes. The initiator of DAO sends the recipient list of DAO to all recipients. Each process records process failure notifications from \sys{}. When a process receives a DAO with timestamp $T$ that involves a recipient that fails before $T$, it drops the DAO. So, the DAO is committed if and only if all recipients are correct at $T$. If a recipient fails after $T$ but have not received the DAO, 
 
@@ -162,10 +169,6 @@ Similar to DAO, snapshot reads and independent transactions can be implemented a
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
 The next subsection will show that \sys{} can achieve replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
 
-%optimistic concurrency control (OCC). If OCC is used, \sys{} timestamps can be used as versions. 
-
-%Next, we extend DAO to distributed transactions.
-%\sys{} simplifies 
 
 \subsubsection{Replication}
 
@@ -174,7 +177,7 @@ There are two traditional replication methods: (1) leader-follower, where a init
 (2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
 
 Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery if no replica fails.
-When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and the leader notifies clients so that future logs exclude the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
+When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and the leader notifies clients so that future logs are not sent to the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
 Because \sys{} leverages the data center network to detect failures, it is typically faster than application heartbeat timeout.
 
 Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
@@ -192,8 +195,8 @@ Using \sys{}, RPC timeout can be set to waiting for two loop-back messages (maxi
 
 \subsubsection{Global Synchronization Point}
 
-Finally, we show that \sys{} timestamp provides a global synchronization point.
-For example, to take a distributed snapshot~\cite{chandy1985distributed} in a \sys{} system, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state when the message is received. Each process also records in-flight sent messages with a higher timestamp than $T$.
+\sys{} timestamp provides a global synchronization point.
+For example, to take a distributed snapshot~\cite{chandy1985distributed}, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state upon reception. Each process also records in-flight sent messages with a higher timestamp than $T$.
 This is a consistent snapshot algorithm, because no message with timestamp higher than $T$ has been received by any process in the snapshot.
 %Compared with a stop-the-world snapshot algorithm, processes keep running during taking the snapshot.
 %Compared with the classical algorithm~\cite{chandy1985distributed} with all-to-all communication channels, processes do not need to broadcast marks after receiving a mark, thus reducing message complexity from $O(n^2)$ to $O(n)$, where $n$ is the number of processes.

@@ -1,7 +1,7 @@
 \section{Reliable 1Pipe}
 \label{sec:reliable}
 
-Now, we design the reliable \sys{} service.
+Now, we design reliable \sys{} that handles packet loss and failure.
 When a receiver delivers a message with timestamp $T$, it must make sure that all messages below $T$ are delivered.
 So, if a receiver is unaware of packet loss, it cannot reliably deliver messages according to the barrier timestamp.
 It seems that in-network packet loss detection can solve the problem, but it is still incorrect, because \emph{host failure and packet loss may happen together}.
@@ -31,15 +31,14 @@ The key idea of reliable \sys{} is a \emph{Two Phase Commit (2PC)} approach, as 
 Like in Sec.~\ref{sec:beacon}, crash failure of a component is detected by its neighbors not hearing any message after a timeout.
 However, a failed component cannot be simply removed as in Sec.~\ref{sec:beacon}, because otherwise, the in-flight messages sent by the failed component cannot be consistently delivered or discarded.
 
-Reliable \sys{} requires conditional failure atomicity in Sec.\ref{subsec:abstration}.
-We use the network controller in data centers as a perfect failure detector~\cite{chandra1996unreliable}, which collects failure timestamps of processes and broadcasts them to all correct processes.
+To achieve restricted failure atomicity in Sec.\ref{subsec:abstration}, we use the network controller in data centers as a perfect failure detector~\cite{chandra1996unreliable}, which collects failure timestamps of processes and broadcasts them to all correct processes.
 The controller itself is replicated using Paxos~\cite{lamport1998part} or Raft~\cite{raft}, so, it is highly available, and only one controller is active at any time.
 
 The procedure to handle failure is as follows:
 
 \begin{ecompact}
 \item \textbf{Detect}: The neighbors of failed components notifies controller along with its last commit timestamp $T$.
-\item \textbf{Determine}: Controller determines \emph{failed processes} and their \emph{failure timestamps} from failed components based on network topology. \emph{A process that cannot connect to controller is regarded as failed}.
+\item \textbf{Determine}: Controller determines \emph{failed processes} and their \emph{failure timestamps} from failed components based on routing graph (Figure~\ref{fig:dcn}). \emph{A process that cannot connect to controller is regarded as failed}.
 For example, if a host or the only network link from a host fails, all processes on it are disconnected from the data center network, so they are considered to fail simultaneously.
 If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.
 Failure timestamp of a process $P$ is a commit timestamp sent by $P$ but not propagated to any receiver, which is computed as the maximum last commit timestamp reported by all neighbors of $P$ (formally, a cut in routing graph that includes $P$ but excludes any receiver).
@@ -55,7 +54,7 @@ After all failed processes have been handled by all correct processes, controlle
 %Before this step, commit barrier $T$ from $P$ is never delivered.
 \end{ecompact}
 
-\parab{Liveness Mechanism.} If a network failure affects connectivity between $S$ and $R$, the Commit phase in 2PC and the Recall step in failure handling may stall: $S$ repeatedly retransmits a message but cannot receive ACK from $R$. In this case, $S$ asks the controller to forward the message to $R$, and wait for ACK from the controller. If the controller also cannot deliver the message, $R$ will be announced as failed, and the undeliverable recall message is recorded. If the controller manages to deliver the message but cannot deliver ACK to $S$, $S$ will be announced as failed. In summary, if a process does not respond the controller within timeout, the process is considered as failed.
+\parab{Liveness Mechanism.} If a network failure affects connectivity between $S$ and $R$, the Commit phase in 2PC and the Recall step in failure handling may stall: $S$ repeatedly retransmits a message but cannot receive ACK from $R$. In this case, $S$ asks controller to forward the message to $R$, and wait for ACK from controller. If controller also cannot deliver the message, $R$ will be announced as failed, and the undeliverable recall message is recorded. If controller receives ACK of a recall message but cannot forward it to $S$, $S$ will be announced as failed. In summary, if a process does not respond controller within timeout, it is considered as failed.
 
 \parab{Receiver Recovery.} If a process recovers from failure (\emph{e.g.}, the network link or switch recovers), it needs to consistently deliver or discard messages in receive buffer. The controller notifies process of its own failure. Then, the process contacts controller to get host failure notifications since its failure and undeliverable recall messages that are stored at controller. A message with timestamp $T$ in receive buffer is delivered if and only if it is not recalled and the sender is correct at $T$. After delivering buffered messages, because \sys{} assumes a fail-stop model, the recovered process need to join \sys{} as a new process.
 

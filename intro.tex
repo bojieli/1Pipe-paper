@@ -209,17 +209,18 @@ We implement three incarnations of \sys on network devices with different progra
 %We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
 We evaluate the performance of \sys in a 32-server cluster.
-In normal cases, best effort \sys{} adds low delay to message delivery. Reliable \sys{} can deliver messages within \textbf{10 $\mu$s}.
-%In normal cases, \sys can deliver messages reliably in two \emph{network diameters}, i.e., the maximum one-way delay between two hosts.
-%\sys can recover from packet loss with only two additional network diameters, identical to the latency of two-phase commit.
-\sys also achieves low network bandwidth and CPU processing overhead in both small and large system scales.
+\sys{} achieves linearly scalable throughput with 512 processes, achieving 5M messages per second per thread.
+Best effort \sys{} adds less than 10$\mu$s delay to message delivery, while reliable \sys{} adds less than 21$\mu$s.
+\sys{} has robust performance with packet loss, and can recover from failures in 50$\sim$500 $\mu$s.
+\sys{} only adds 0.3\% network bandwidth overhead and a CPU core per switch for periodic beacons.
 %\sys also supports incremental deployment, as new hosts, switches and links can join the system within only one round-trip time.
 
 %As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
-As a case study, in YCSB+T~\cite{dey2014ycsbt} transactional key-value store, \sys achieves 6.4 million transactions per server and 40~$\mu$s latency for independent transactions, which is 10x more efficient than MVCC concurrency control and Paxos-based replication. The performance is almost the same as a non-transactional system.
-Moreover, the performance scales linearly with number of servers.
+As a case study, \sys{} scales linearly for a transactional key-value store in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2-20x especially under contention.
+The latency of \sys{} is consistently low.
+\sys{} also scales linearly for TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. In addition, \sys{} is resilient to packet loss.
+Finally, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2-4x.
 
-\textbf{Need update evaluation results.}
 %For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
 
 %\textcolor{red}{Do we need to add: the rest of the paper is organized as follows. .....}

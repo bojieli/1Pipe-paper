@@ -41,6 +41,16 @@ We aim to preserve message routing topology and achieve scalable ordering in a d
 %Sec.\ref{sec:inter-dc} extends the design to inter-DC topology where routing paths are not loop-free.
 
 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
+	\vspace{-5pt}
+	\caption{Hierarchical barrier timestamp aggregation.} %\RED{Change logos smaller. Use computer logo instead of this logo. Make the network links vertical (orthogonal to horizontal). MODIFIED, NEED REVIEW}
+	\label{fig:hierarchical_merge}
+	\vspace{-15pt}
+\end{figure}
+
+
 %\subsection{Hierarchical Merge of Barriers}
 \subsection{Message and Barrier Timestamp}
 \label{sec:loss-free}
@@ -86,15 +96,6 @@ B_{new}:=\min\{R_i| i\in \mathcal{I}\}
 %\mathcal{I}_o =\{i| i\rightarrow o, i \in \mathcal{I} \}
 %\end{equation}
 
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.4\textwidth]{images/hierarchical_merge.pdf}
-\vspace{-10pt}
-\caption{Hierarchical barrier timestamp aggregation.} %\RED{Change logos smaller. Use computer logo instead of this logo. Make the network links vertical (orthogonal to horizontal). MODIFIED, NEED REVIEW}
-\label{fig:hierarchical_merge}
-\vspace{-10pt}
-\end{figure}
 
 
 %Here $\rightarrow$ means \textit{can be forwarded to}. 

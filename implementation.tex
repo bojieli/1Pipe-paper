@@ -85,7 +85,7 @@ When \texttt{lib1pipe} initializes, it registers to the controller and spawns a 
 
 All processes on a host connect to the network via RDMA NIC. If the NIC capable of aggregating timestamp barriers, we consider the NIC as a last-level ``switch'' that interconnects processes. Otherwise, processes within a host need to be exposed directly to its Top-of-Rack (ToR) switch, and the ToR aggregates timestamps of all processes in the rack.
 
-The controller is a replicated service that stores network topology, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
+The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
 
 %We do not need to take special care of intra-host communication between processes: because the packets loopback at the NIC, they take a shorter path than looping back at the switch, so, the packets must arrive earlier than the barrier timestamp.
 
@@ -158,6 +158,54 @@ First, the barriers are updated by periodical beacons instead of by every packet
 Second, compared to switching chip, switch CPU introduces higher processing delay.
 So, the average delay overhead is (switch processing delay $\times$ number of hops + beacon interval/2 + clock skew).
 
+\begin{figure*}[t]
+	\begin{minipage}[]{.32\textwidth}
+		\centering
+		\subfloat[Throughput.]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
+		}
+		\newline
+		\subfloat[Latency.]{
+			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
+		}
+		\vspace{-5pt}
+		\caption{Scalability comparison of total order multicast algorithms.}
+		\label{fig:total-order}
+	\end{minipage}
+	\hspace{0.01\textwidth}
+	\begin{minipage}[]{.32\textwidth}
+		\centering
+		\subfloat[Scalability on testbed.\label{fig:reorder-testbed}]{
+			\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}
+		}
+		\newline
+		\subfloat[Simulation of varying packet loss rates.\label{fig:reorder-loss}]{
+			\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}
+		}
+		\vspace{-5pt}
+		%\subfloat[Simulation with different end-host delays.
+		%T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
+		%{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
+		\caption{Average message delivery latency.}
+	\end{minipage}
+	\hspace{0.01\textwidth}
+	\begin{minipage}[]{.32\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gnuplot/failure_recovery.eps}
+		\vspace{-15pt}
+		\caption{Failure recovery time of reliable \sys{}. Error bars show $5^{th}$ and $95^{th}$ percentile.}
+		\label{fig:failure-recovery}
+		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
+		\vspace{-15pt}
+		\caption{Reorder overhead on hosts.}
+		\label{fig:reorder-overhead}
+		\vspace{-10pt}
+	\end{minipage}
+	%\vspace{-1.6em}
+	\vspace{-10pt}
+\end{figure*}
+
+
 \subsubsection{Delegate Switch Processing to a Host}
 \label{sec:end-host}
 
@@ -168,5 +216,3 @@ We install tunnel termination rules in each network switch to de-capsulate one l
 
 Beacon packets use one-sided RDMA write to update per-input-link barriers on representative host. A thread on the host iteratively computes minimum barrier and broadcasts new beacons to representatives of downstream switches.
 The average delay overhead is ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew). Because end hosts support RDMA and its CPUs are more powerful than switch's, the overall reordering delay may be shorter than using switch CPU.
-
-%\textbf{Note:} reliable \sys{} does not rely on the best effort barrier. If a cluster only needs reliable \sys{} service, only one commit barrier needs to be maintained. If both best effort and reliable \sys{} are needed, switches need to maintain two barriers independently.

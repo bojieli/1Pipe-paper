@@ -1,52 +1,6 @@
 \section{Evaluation}
 \label{sec:evaluation}
 
-\begin{figure*}[t]
-        \begin{minipage}[]{.32\textwidth}
-                \centering
-                \subfloat[Throughput.]{
-                    \includegraphics[width=\textwidth]{gnuplot/total_order.eps}
-                }
-                \newline
-                \subfloat[Latency.]{
-                    \includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
-                }
-                \vspace{-5pt}
-                \caption{Scalability comparison of total order multicast algorithms.}
-                \label{fig:total-order}
-        \end{minipage}
-        \hspace{0.01\textwidth}
-        \begin{minipage}[]{.32\textwidth}
-                \centering
-                \subfloat[Scalability on testbed.\label{fig:reorder-testbed}]{
-                	\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}
-                }
-                \newline
-                \subfloat[Simulation of varying packet loss rates.\label{fig:reorder-loss}]{
-                	\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}
-                }
-                \vspace{-5pt}
-                %\subfloat[Simulation with different end-host delays.
-                %T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
-                %{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
-                \caption{Average message delivery latency.}
-        \end{minipage}
-        \hspace{0.01\textwidth}
-        \begin{minipage}[]{.32\textwidth}
-        	\centering
-        	\includegraphics[width=\textwidth]{gnuplot/failure_recovery.eps}
-            \vspace{-15pt}
-        	\caption{Failure recovery time of reliable \sys{}. Error bars show $5^{th}$ and $95^{th}$ percentile.}
-        	\label{fig:failure-recovery}
-        	\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
-        	\vspace{-15pt}
-        	\caption{Reorder overhead on hosts.}
-			\label{fig:reorder-overhead}
-        	\vspace{-10pt}
-        \end{minipage}
-%\vspace{-1.6em}
-\vspace{-15pt}
-\end{figure*}
 
 \iffalse
 %We prove the correctness and liveness of \sys in Appendix~\ref{appx:proof}.
@@ -174,11 +128,6 @@ The latency soars when throughput of sequencer saturates and congestion appears.
 Token shows consistent low throughput because only one process may send at any time.
 Using Lamport timestamp, a receiver waits for timestamps from all other receivers before delivery, leading to quadratic number of beacons, so, the aggregated throughput decreases after reaching peak.
 
-%Note that serializable log replication to multiple replicas can be implemented by scattering each log entry to all replicas. Hence, \sys can achieve scalable and efficient log replication.
-
-%Although recent advances in RDMA~\cite{kaminsky2016design} and programmable switches~\cite{eris} make sequencers fast, it is still a central bottleneck and introduces extra network delay.
-
-
 
 
 
@@ -189,9 +138,8 @@ Best effort \sys{} with reconfigurable chip delivers the smallest latency overhe
 Reliable \sys{} adds an RTT to best effort \sys{} due to Prepare phase in 2PC, which is proportional to number of network hops.
 
 As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, so, it is rare that a packet loss blocks barrier propagation.
-We use NS-3~\cite{henderson2008network} to simulate how packet loss affects latency in the testbed with 512 processes.
+We simulate random message drop in \texttt{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
 As Figure~\ref{fig:reorder-loss} shows, when loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
-%In the extreme case of high loss rate, there is always some in-flight message that gets lost, so the latency is high.
 
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
@@ -246,7 +194,7 @@ If we can bypass the kernel network stack and process packets efficiently at Ari
 
 
 \parab{Network overhead.}
-As Figure~\ref{fig:network-overhead} shows, with high link capacity and a reasonable beacon generation interval, beacon traffic is a tiny portion of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
+As Figure~\ref{fig:network-overhead} shows, with high link capacity and a reasonable beacon generation interval (\emph{e.g.} 3~$\mu$s), beacon traffic is a tiny portion (\emph{e.g.} 0.3\%) of available link capacity. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not change with the system scale.
 
 
 %Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
