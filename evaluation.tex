@@ -2,7 +2,7 @@
 \label{sec:evaluation}
 
 \begin{figure*}[t]
-        \begin{minipage}[t]{.32\textwidth}
+        \begin{minipage}[]{.32\textwidth}
                 \centering
                 \subfloat[Throughput.]{
                     \includegraphics[width=\textwidth]{gnuplot/total_order.eps}
@@ -16,7 +16,7 @@
                 \label{fig:total-order}
         \end{minipage}
         \hspace{0.01\textwidth}
-        \begin{minipage}[t]{.32\textwidth}
+        \begin{minipage}[]{.32\textwidth}
                 \centering
                 \subfloat[Scalability on testbed.\label{fig:reorder-testbed}]{
                 	\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}
@@ -32,19 +32,15 @@
                 \caption{Average message delivery latency.}
         \end{minipage}
         \hspace{0.01\textwidth}
-        \begin{minipage}[t]{.32\textwidth}
+        \begin{minipage}[]{.32\textwidth}
         	\centering
-        	\subfloat{
-        		\includegraphics[width=\textwidth]{gnuplot/failure_recovery.eps}
-        	}
-        \vspace{-5pt}
+        	\includegraphics[width=\textwidth]{gnuplot/failure_recovery.eps}
+            \vspace{-15pt}
         	\caption{Failure recovery time of reliable \sys{}. Error bars show $5^{th}$ and $95^{th}$ percentile.}
         	\label{fig:failure-recovery}
-        	\subfloat{
-        		\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
-        	}
-        	\vspace{-5pt}
-        	\caption{Reordering overhead on hosts.}
+        	\includegraphics[width=\textwidth]{gnuplot/reorder_receiver.eps}
+        	\vspace{-15pt}
+        	\caption{Reorder overhead on hosts.}
 			\label{fig:reorder-overhead}
         	\vspace{-10pt}
         \end{minipage}
@@ -85,7 +81,7 @@ Because we only have one switch with Barefoot Tofino~\cite{tofino} reconfigurabl
 In small-scale experiments (1$\sim$32 processes), each process runs on a distinct server. Each process uses a pair of threads for sending and receiving, respectively.
 For experiments with 64$\sim$512 processes, each server hosts the same number of processes.
 %With 16 processes per NIC, the throughput of NICs is saturated.
-Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\%).
+Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\%), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
 We choose beacon interval to be 3~$\mu$s.
 
 

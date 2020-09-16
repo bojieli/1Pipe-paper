@@ -138,7 +138,7 @@ In this way, barriers propagate in the DAG network, and the receiver can deliver
 If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
 
 Considering packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and receiver are correct.
-In addition, the reliable service ensures \emph{restricted failure atomicity}: either all or none messages in a batch are delivered unless a receiver fails or network partitions permanently after the messages are sent.
+In addition, the reliable service ensures \emph{restricted failure atomicity}: either all or none messages in a batch are delivered unless a receiver fails permanently or network partitions after the messages are sent.
 The reliable service uses a two-phase commit (2PC) approach, where the first phase is end-to-end, and the second phase aggregates \emph{commit barriers} through the network.
 It adds one network round-trip time (RTT) compared to the best effort service.
 

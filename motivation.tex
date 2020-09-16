@@ -49,10 +49,11 @@ When a process or network fails, message delivery stalls.
 If a message cannot be delivered, the send failure callback is invoked.
 In addition, each process may register a callback function via \texttt{set\_proc\_failure\_callback} to get notified of failed processes.
 Message delivery is resumed after all correct processes finish their callback functions.
-In addition to ordering, reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of a batch of messages with the exception that if a receiver fails or network partitions \emph{permanently} after the decision to deliver is made, the receiver can never deliver it.
-If failures eventually recover, the receiver can deliver messages consistently.
-In fact, failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
-Applications may solve permanent failures by replication.
+In addition to ordering, reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of a batch of messages with the exception that if a receiver fails \emph{permanently} or network partitions after the decision to deliver is made, the receiver can never deliver it.
+Specifically, atomicity is guaranteed on sender failure.
+If receivers recover from failure, they deliver or discard messages consistently with correct receivers.
+In fact, full failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
+Applications may solve permanent failures with replication and traditional consensus algorithms~\cite{lamport1998part,raft}.
 %As we will show in Sec.~\ref{sec:reliable}, compared to best effort \sys{}, reliable \sys{} adds one RTT to message delivery.
 
 \iffalse
@@ -172,27 +173,16 @@ Replication is central to achieve fault tolerance and to scale performance.
 There are two traditional replication methods: (1) leader-follower, where a initiator sends to the leader, and leader replicates to followers. The leader is the performance bottleneck.
 (2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
 
-Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery.
-In addition, process failure notification in \sys{} enables fast detection of replica failures, which is typically faster than application heartbeat timeout.
+Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery if no replica fails.
+When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and the leader notifies clients so that future logs exclude the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
+Because \sys{} leverages the data center network to detect failures, it is typically faster than application heartbeat timeout.
 
 Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
 SMR can solve arbitrary synchronization problems~\cite{lamport1978time}. An example problem is mutual exclusion that requires the resource to be granted in the order that the request is made~\cite{lamport1978time}.
 %If a lock manager grants resource in FIFO order, due to variable network delay, it is possible that $A$ requests the resource and sends a message to $B$, then $B$ requests the resource, but $B$ gets the resource.
 With reliable \sys{}, either implementing SMR on all hosts or using Sec.\ref{subsec:order-hazards} to implement the lock manager can solve the mutual exclusion problem.
 
-\iffalse
-\subsubsection{Reduce Timeout}
 
-By simply sending a message to itself via best effort \sys{}, a process can measure \emph{real-time} sum of maximum clock skew and maximum network delay.
-This is because any straggler clock will require messages from other hosts to wait for it.
-Similarly, any slow network link causes messages from other links to wait.
-%This will become more clear when the timestamp aggregation mechanism of \sys{} is explained in Sec.~\ref{sec:unreliable}.
-
-Leases~\cite{gray1989leases} is a use case of this real-time measurement.
-A lease grants exclusive access to a process within a time interval. Between two leases, there is a quiet period that must be higher than the maximum clock skew. Otherwise, two hosts with different clocks may be actually accessing the same leased object at the same time, leading to inconsistency.
-Traditionally, the quiet period is set to the maximum possible clock skew.
-With \sys{}, the quiet period can be set to the real-time clock skew plus network delay, which is much shorter and thus improves concurrency.
-\fi
 
 \iffalse
 Another use case is reducing RPC timeouts.
@@ -208,7 +198,21 @@ This is a consistent snapshot algorithm, because no message with timestamp highe
 %Compared with a stop-the-world snapshot algorithm, processes keep running during taking the snapshot.
 %Compared with the classical algorithm~\cite{chandy1985distributed} with all-to-all communication channels, processes do not need to broadcast marks after receiving a mark, thus reducing message complexity from $O(n^2)$ to $O(n)$, where $n$ is the number of processes.
 
+Apart from the use cases in this section, \sys{} may enable many other optimizations, \emph{e.g.}, reducing timeout and wasted lease term~\cite{gray1989leases} because \sys{} measures \emph{real-time} maximum sum of clock skew and network delay.
 
+\iffalse
+\subsubsection{Reduce Timeout}
+
+By simply sending a message to itself via best effort \sys{}, a process can measure \emph{real-time} sum of maximum clock skew and maximum network delay.
+This is because any straggler clock will require messages from other hosts to wait for it.
+Similarly, any slow network link causes messages from other links to wait.
+%This will become more clear when the timestamp aggregation mechanism of \sys{} is explained in Sec.~\ref{sec:unreliable}.
+
+Leases~\cite{gray1989leases} is a use case of this real-time measurement.
+A lease grants exclusive access to a process within a time interval. Between two leases, there is a quiet period that must be higher than the maximum clock skew. Otherwise, two hosts with different clocks may be actually accessing the same leased object at the same time, leading to inconsistency.
+Traditionally, the quiet period is set to the maximum possible clock skew.
+With \sys{}, the quiet period can be set to the real-time clock skew plus network delay, which is much shorter and thus improves concurrency.
+\fi
 
 \iffalse
 \begin{figure}[t]

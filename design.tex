@@ -126,9 +126,9 @@ When the receiver receives a packet with barrier timestamp $B$, it first buffers
 
 
 \parab{Causality.}
-To preserve causal order in the Lamport logical clock sense~\cite{lamport1978time}, the local clock time should be strictly higher than delivered timestamps.
-This would be the normal case, because the offset among clocks is typically lower than the network diameter.
-If this causality condition does not hold, message delivery should be delayed until the local clock catches up.
+To preserve causal order in the Lamport logical clock sense~\cite{lamport1978time}, the local clock time should be higher than delivered timestamps.
+This is implied by timestamp aggregation because each process has both sender $S$ and receiver $R$ roles, and a barrier $T$ received by $R$ is aggregated from all senders including $S$.
+Because the local clock is monotonic, $S$'s timestamp is higher than $T$ when $R$ receives barrier $T$.
 
 
 

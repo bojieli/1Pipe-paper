@@ -80,12 +80,12 @@ An RC message has 6 bytes of header, representing the timestamp.
 The UD message has the same format as best effort \sys{}.
 We maintain a receive buffer to reorder messages before delivery and a send buffer to track unACKed messages.
 
-\texttt{lib1pipe} spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer, and deliver messages to application threads.
-\texttt{lib1pipe} uses polling rather than interrupt because RDMA latency is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
+When \texttt{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer and deliver them to application threads.
+\texttt{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
 
 All processes on a host connect to the network via RDMA NIC. If the NIC capable of aggregating timestamp barriers, we consider the NIC as a last-level ``switch'' that interconnects processes. Otherwise, processes within a host need to be exposed directly to its Top-of-Rack (ToR) switch, and the ToR aggregates timestamps of all processes in the rack.
 
-The controller is a replicated etcd~\cite{etcd} service.
+The controller is a replicated service that stores network topology, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
 
 %We do not need to take special care of intra-host communication between processes: because the packets loopback at the NIC, they take a shorter path than looping back at the switch, so, the packets must arrive earlier than the barrier timestamp.
 
