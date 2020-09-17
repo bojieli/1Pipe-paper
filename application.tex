@@ -25,33 +25,34 @@
 We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory without replication using C++ \texttt{std::unordered\_map}.
 A transaction (TXN) is composed of multiple independent KV read or write operations.
 %We use the same number of TXN initiator and server processes.
-TXN initiators route KV operations to server processes by hash of key.
+TXN initiators dispatch KV operations to server processes by hash of key.
 Read-only (RO) TXNs are served by best effort \sys{}, while read-write (WR) and write-only (WO) TXNs use reliable \sys{}.
 For comparison, we implement non-replicated and non-durable FaRM~\cite{dragojevic2014farm} which serves RO TXNs in 1 RTT by reading the KVs and checking lock and version. WR and WO TXNs in FaRM use OCC~\cite{kung1981optimistic} and two-phase commit.
 As a theoretical performance upper bound, we also compare with a non-transactional system.
 
 Each TXN has 2 KV ops by default, where read and write are randomly chosen for each op.
-Keys are 64-bit integers generated either uniformly random or by Zipf distribution in YCSB~\cite{cooper2010benchmarking}.
+Keys are 64-bit integers generated either uniformly random or by Zipf distribution in YCSB~\cite{cooper2010benchmarking}. YCSB has hot keys.
 The value size is randomly generated according to Facebook's ETC workload~\cite{atikoglu2012workload}.
 We record average TXN latency at 95\% of peak throughput.
 
 
-In Figure~\ref{fig:kv_scalability}, 50\% of KV ops are write.
+In Figure~\ref{fig:kv_scalability}, 50\% of TXNs are read-only.
 In both uniform and YCSB distribution, \sys{} delivers scalable throughput (per-process throughput does not degrade), which is 90\% of a non-transactional key-value store (NonTX).
 As number of processes increase, YCSB scales not as linearly as uniform, because contention on hot keys lead to load imbalance of different servers.
-With 512 processes, YCSB throughput is 70\% of uniform.
-In uniform workload that is free of contention, FaRM delivers 1/2 throughput of \sys{} because WR and WO TXNs need 3 or 4 RTTs.
-In YCSB workload, FaRM does not scale because it needs to \emph{lock} keys for 2 RTTs during WO/WR TXN commit, and the hot keys block all conflicting TXNs.
+With 512 processes, YCSB has 70\% throughput of uniform both for \sys{} and NonTX.
+In uniform workload that is free of contention, FaRM delivers 50\% throughput of \sys{} because WR and WO TXNs need 3 or 4 RTTs.
+In YCSB workload, FaRM does not scale because it \emph{locks} keys for 2 RTTs during WO/WR TXN commit, and the hot keys block all conflicting TXNs.
 In contrast, \sys{} does not lock keys. Each server processes TXNs on a same key in order.
 
 In Figure~\ref{fig:kv_latency_ycsb}, we adjust the percentage of write ops and measure latency of RO, WO, and WR TXNs with 512 processes.
 The latency of \sys{} is almost constant because servers process read and write ops on a same key in order. WO and WR use reliable \sys{}, which is slower than RO that uses best effort \sys{}.
 For pure RO workload, FaRM has lower latency than \sys{} because it completes in 1 RTT and does not wait for network-wide reorder.
 Non-contended FaRM WO and WR consumes 3 and 4 RTTs, respectively, which is slightly worse than \sys{}.
-However, with higher write percentage, FaRM latency skyrockets due to contention on locked hot keys and TXN aborts due to inconsistent read version.
+However, with high write percentage, FaRM latency skyrockets due to lock contention on hot keys and TXN aborts due to inconsistent read version.
 
-In Figure~\ref{fig:kv_multikey}, we fix write percentage to 5\%, alter the number of keys per TXN, and measure total KV op/s with 512 processes.
-\sys{} and non-transactional baseline are agnostic of TXN size because its throughput is only bounded by CPU processing and network messaging rate.
+In Figure~\ref{fig:kv_multikey}, we alter the number of keys per TXN, and measure total KV op/s with 512 processes.
+95\% of TXNs are read-only.
+\sys{} and NonTX are agnostic of TXN size because their throughputs are only bounded by CPU processing and network messaging rate.
 With a low write percentage (5\%), FaRM/YCSB delivers 40\% throughput of \sys{} with 2 KV ops per TXN, but the performance plummets with larger TXN size, because TXN abort rate is roughly proportional with the number of keys in a TXN.
 
 %\textbf{Write percentage - RO / WO / WR Latency - Uniform.}
@@ -137,14 +138,14 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
     	\subfloat[Resilience of packet loss.\label{fig:tpcc-loss}]
     	{\includegraphics[width=.49\textwidth]{gnuplot/tpcc-loss.eps}}
     	\vspace{-5pt}
-    	\caption{TPC-C benchmark.}
+    	\caption{TPC-C transaction benchmark.}
     	\label{fig:tpc-c}
     \end{minipage}
     \hspace{0.01\textwidth}
     \begin{minipage}[]{.32\textwidth}
         \includegraphics[width=\textwidth]{gnuplot/remote-hashtable.eps}
         \vspace{-15pt}
-    	\caption{Performance of a replicated remote hash table.}
+    	\caption{Per-client throughput of a replicated remote hash table.}
     	\label{fig:remote-hashtable}
     	\vspace{-15pt}
     \end{minipage}
@@ -173,21 +174,20 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 \label{subsec:eval-transactions}
 
 We apply \sys to independent general TXNs (Sec.\ref{subsec:dao}).
-Concurrency control and replication are implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris} but replaces its central sequencer with timestamps.
-We assume TXNs never abort.
 We benchmark New-Order and Payment TXNs in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 For simplicity, we do not implement non-independent TXNs in TPC-C, which should fall back to traditional concurrency control mechanisms.
 We use 4 warehouses which are stored in-memory with 3 replicas.
-As shown in Figure~\ref{fig:tpcc-combined}, two-phase locking (2PL) and OCC do not scale, because each Payment TXN updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}.
+Concurrency control and replication are implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris} but replaces its central sequencer with timestamps.
+We assume TXNs never abort.
+As shown in Figure~\ref{fig:tpcc-combined}, two-phase locking (2PL) and OCC do not scale, because each Payment TXN updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}, leading to 4 hot entries.
 When conflicts are few, OCC is better; with more conflicts, 2PL is better~\cite{mu2014extracting}.
-\sys{} scales linearly with number of processes. With 512 processes, \sys supports 10M TXNs per second, which is 71\% of a non-transactional baseline system. With more processes, the performance of \sys{} would be limited by CPU processing capacity of contended warehouse entries.
+\sys{} scales linearly with number of processes. With 512 processes, \sys achieves 10.35M TXNs per second, which is 71\% of a non-transactional baseline system, 10x of lock (256 processes), and 17x of OCC (64 processes). With more processes, \sys{} would be bounded by CPU processing capacity of contended entries.
 
 Figure~\ref{fig:tpcc-loss} shows TXN throughput under different simulated packet loss rates.
-We fix process number to 64.
-With \sys{}, although packet loss affects TXN latency (similar to Figure~\ref{fig:reorder-loss}), the impact on throughput is insignificant because the network is fully utilized to transmit new TXNs during retransmission.
-However, in 2PL, a locked object cannot be released until the TXN completes, so, the throughput under contention is inversely proportional to TXN latency.
-TXN latency increases with packet loss rate because replicas wait for the last retransmitted packet to maintain serial log ordering.
-In OCC, packet losses cause TXN reordering that leads to conflict aborts.
+We fix process number to be 64.
+With \sys{}, although packet loss affects TXN latency (not measured in TPC-C benchmark, but should be similar to Figure~\ref{fig:reorder-loss}), the impact on throughput is insignificant. %because the network is fully utilized to transmit new TXNs during retransmission.
+However, in 2PL and OCC commit, a locked object cannot be released until the TXN completes, so, TXN throughput under contention is inversely proportional to TXN latency.
+TXN latency increases with packet loss rate because replicas wait for the last retransmitted packet to maintain sequential log ordering.
 
 Finally, we evaluate failure recovery of replicas by disconnecting the link of host. \sys{} detects failure and removes the replica in $181 \pm 21 \mu$s. The affected TXNs are aborted and retried, with an average delay of $308 \pm 122 \mu$s. It is much faster than using application heartbeats to detect failures, which typically takes milliseconds. After the link reconnects, replica synchronizes log from other replicas in 25 ms.
 
@@ -195,12 +195,12 @@ Finally, we evaluate failure recovery of replicas by disconnecting the link of h
 \label{subsec:data-structure}
 
 \sys{} can remove ordering hazards in remote data structure access (Sec.\ref{subsec:order-hazards}).
-We implement a distributed concurrent hash table that uses a linked list to store key-value (KV) pairs in a same hash bucket, where hash buckets and KV pairs may be on different hosts.
-Different from Sec.\ref{subsec:eval-kvs} where servers process KVs, in this section, client processes access the remote hash table using RDMA \emph{one-sided} read, write and CAS.
+We implement a distributed concurrent hash table that uses a linked list to store key-value pairs (KVs) in a same hash bucket, where hash buckets and KVs may be on different hosts.
+Different from Sec.\ref{subsec:eval-kvs} where servers process KV ops, in this section, client processes access the remote hash table using RDMA \emph{one-sided} read, write, and CAS.
 The baseline system uses leader-follower replication.
 16 clients lookup or insert uniformly random keys in parallel.
 
-As Figure~\ref{fig:remote-hashtable} shows, without replication, \sys{} improves per-client KV insertion throughput to 1.9x because \sys{} removes the fence between writing KV pair and updating the pointer in hash bucket.
+As Figure~\ref{fig:remote-hashtable} shows, without replication, \sys{} improves per-client KV insertion throughput to 1.9x because \sys{} removes the \emph{fence} between writing KV pair and updating the pointer in hash bucket.
 KV lookup throughput reduces by 10\%, due to additional reordering delay.
 If the hash table is replicated traditionally, a write op is sent to the leader, which involves CPU software to replicate to followers.
 With 3 replicas, \sys{} improves KV insertion throughput to 3.4x.
@@ -211,7 +211,7 @@ In contrast, with leader-follower replication, to maintain consistency of reads 
 \subsubsection{Replication in Distributed Storage}
 \label{subsec:ceph}
 
-We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written in order. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 2 RTTs. Experiment shows that in an idle system with Intel DC S3700 SSDs, 4KB random write average latency reduces from 160 $\mu$s to 58 $\mu$s (64\% reduction).
+We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written in order. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 2 RTTs. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 62 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
 
 
 %\subsection{Multiple Round-Trip Transactions}

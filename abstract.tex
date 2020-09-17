@@ -10,10 +10,10 @@ This paper proposes \sys{}, a communication abstraction that enables different r
 
 We propose a scalable and efficient method to implement \sys{} inside data centers. To achieve total order delivery in a scalable manner, \sys separates the bookkeeping of order information from message forwarding, and distributes the work to each switch and host. \sys aggregates order information using in-network computation at switches. This forms the ``control plane'' of the system. On the ``data plane'', \sys forwards messages in the network as usual and reorders them at the receiver based on the order information.
 
-\sys{} provides a best effort service that delivers each message at most once, and a reliable service that guarantees delivery as long as both sender and receiver are correct. Reliable \sys{} also provides atomic delivery for a group of messages, which uses a two-phase commit approach.
+\sys{} provides a best effort service that delivers each message at most once, and a reliable service that guarantees delivery as long as both sender and receiver are correct. Reliable \sys{} also provides restricted atomic delivery for a group of messages, which uses a two-phase commit approach.
 
-Evaluation on a 32-server testbed shows that \sys achieves scalable throughput and low latency with negligible CPU and network overheads.
-As a case study, \sys{} achieves linearly scalable throughput and consistently low latency in transactional key-value store and TPC-C that outperforms traditional design by 2-20x, as well accelerating remote data structures.
+Evaluation on a 32-server testbed shows that \sys achieves scalable throughput and low latency with little CPU and network overhead.
+As case studies, \sys{} achieves linearly scalable throughput and consistently low latency in transactional key-value store and TPC-C that outperforms traditional design by 2-20x, as well accelerating remote data structures.
 
 %In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
 

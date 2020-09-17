@@ -15,7 +15,7 @@
 \end{figure}
 \fi
 
-The lack of order in communication often complicates distributed system design.
+The lack of total order communication often complicates distributed system design.
 For example, when a host atomically reads or writes multiple objects on different remote hosts, there is no guarantee that the messages arrive at different remote hosts at the same time, so, locks are often required to achieve consistency.
 As another example, multiple shards of a distributed database generate logs to multiple replicas, and each replica may receive logs from the shards in a different interleaving ordering, thus violating data consistency.
 %A centralized sequencer can solve this problem, but it introduces a central bottleneck.
@@ -38,7 +38,7 @@ As another example, multiple shards of a distributed database generate logs to m
 In this work, we propose \sys{}, a communication primitive that provides a single FIFO pipe abstraction in a distributed system. As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receivers to process messages from senders in a consistent order.
 More precisely, \sys{} provides Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers. In addition, \emph{batching} in \sys{} enables grouping multiple messages at the same position of the total order. (2) Messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. (3) Messages between a pair of sender and receiver are in \emph{FIFO} order.
 
-\sys{} can achieve distributed atomic multi-object read and write with a single batch of messages. Replication in \sys{} is simply a batch of messages. \sys{} also provides a total ordering of communication events, thus improving concurrency of distributed systems.
+\sys{} can achieve distributed atomic multi-object read and write with a single batch of messages because they are delivered at the same logical time. Replication in \sys{} is simply a batch of messages. \sys{} also provides a total ordering of communication events, thus reducing fences and improving concurrency of distributed systems.
 
 
 \begin{figure}[t]
@@ -137,7 +137,7 @@ Each switch aggregates barrier information of all ingress links to derive the ba
 In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
 
-Considering packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and receiver are correct.
+Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and receiver are correct.
 In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a batch are delivered unless a receiver fails permanently or network partitions after the messages are sent.
 Reliable \sys{} uses a two-phase commit (2PC) approach, where the first phase is end-to-end packet loss recovery, and the second phase aggregates \emph{commit barriers} through the network.
 It relies on a highly available network controller to coordinate failure handling.
@@ -209,18 +209,18 @@ We implement three incarnations of \sys on network devices with different progra
 
 %We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
-We evaluate the performance of \sys in a 32-server cluster.
+We evaluate \sys in a 32-server cluster with 3-layer fat-tree topology.
 \sys{} achieves linearly scalable throughput with 512 processes, achieving 5M messages per second per thread.
-Best effort \sys{} adds less than 10$\mu$s delay to message delivery, while reliable \sys{} adds less than 21$\mu$s.
-\sys{} has robust performance with packet loss, and can recover from failures in 50$\sim$500 $\mu$s.
-\sys{} only adds 0.3\% network bandwidth overhead and a CPU core per switch for periodic beacons.
-%\sys also supports incremental deployment, as new hosts, switches and links can join the system within only one round-trip time.
+Best effort \sys{} adds up to $10 \mu$s delay to message delivery, while reliable \sys{} adds up to $21 \mu$s.
+\sys{} has robust performance under packet loss, and can recover from failures in $50 \sim 500 \mu$s.
+\sys{} only needs 0.3\% network bandwidth overhead and a CPU core per switch for periodic beacons.
 
 %As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
-As a case study, \sys{} scales linearly for a transactional key-value store in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2-20x especially under contention.
+As case studies, first, \sys{} scales linearly for a transactional key-value store in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2$\sim$20x especially under high contention.
 The latency of \sys{} is consistently low.
-\sys{} also scales linearly for TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. In addition, \sys{} is resilient to packet loss.
-Finally, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2-4x.
+Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. \sys{}'s performance is resilient to packet loss.
+Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2$\sim$4x.
+Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
 
 %For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
 

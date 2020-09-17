@@ -8,7 +8,7 @@ One line of work leverages logically centralized coordination, \textit{e.g.}, ce
 As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
 This causes extra delay and network bandwidth overhead.
-A third line of work assumes a synchronous network, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
+A third line of work assumes a synchronous network~\cite{lamport1984using}, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
 However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
 Critics and proponents of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 

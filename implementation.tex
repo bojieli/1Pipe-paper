@@ -72,7 +72,7 @@ A UD packet has 20 bytes of headers: three timestamps including message, barrier
 A timestamp is a 48-bit integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 4 seconds, 
 We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
 Ideally, we would like to attach timestamps to packets using a programmable NIC.
-However, with a standard RDMA NIC, \sys{} assigns timestamp in software.
+However, with a standard RDMA NIC, \sys{} obtains timestamp from CPU cycle counter and assigns it to message in software.
 \sys{} uses PFC~\cite{pfc} to avoid congestion loss. We leave congestion control to future work.
 
 For reliable \sys{}, we use RDMA Reliable Connection (RC) to send messages in prepare phase, and use UD to send commit barrier to ToR switch.
@@ -123,7 +123,7 @@ The client may simply report failures to user or implement logging to retry fail
 \subsection{In-Network Processing}
 \label{sec:in-network-processing}
 
-In the following, we present implementations of in-network processing at three types of network switches with different programming capabilities.
+We implement in-network processing at three types of network switches with different programming capabilities.
 
 
 \subsubsection{Reconfigurable Switching Chips}
@@ -186,7 +186,7 @@ So, the average delay overhead is (switch processing delay $\times$ number of ho
 		%\subfloat[Simulation with different end-host delays.
 		%T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
 		%{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
-		\caption{Average message delivery latency.}
+		\caption{Average message delivery latency of \sys{} variants.}
 	\end{minipage}
 	\hspace{0.01\textwidth}
 	\begin{minipage}[]{.32\textwidth}

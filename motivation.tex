@@ -11,24 +11,24 @@
 \scalebox{0.9}{
 \begin{tabular}{l}
 	\hline
-	\texttt{TS = GTO\_send(vec[<dst, msg>])} \\
+	\texttt{TS = onepipe\_send(vec[<dst, msg>])} \\
 	\hline
 	\hline
-	\texttt{TS, vec[<src, msg>] = GTO\_unreliable\_recv()} \\
+	\texttt{TS, vec[<src, msg>] = onepipe\_unreliable\_recv()} \\
 	\hline
-	\texttt{set\_send\_failure\_callback(func(TS,dst,msg))} \\
-	\hline
-	\hline
-	\texttt{TS, vec[<src, msg>] = GTO\_reliable\_recv()} \\
-	\hline
-	\texttt{set\_proc\_failure\_callback(func(host, TS))} \\
+	\texttt{onepipe\_send\_fail\_callback(func(TS, dst, msg))} \\
 	\hline
 	\hline
-	\texttt{TS = get\_timestamp()} \\
+	\texttt{TS, vec[<src, msg>] = onepipe\_reliable\_recv()} \\
 	\hline
-	\texttt{GTO\_init(src, dst)} \\
+	\texttt{onepipe\_proc\_fail\_callback(func(proc, TS))} \\
 	\hline
-	\texttt{GTO\_exit()} \\
+	\hline
+	\texttt{TS = onepipe\_get\_timestamp()} \\
+	\hline
+	\texttt{onepipe\_init()} \\
+	\hline
+	\texttt{onepipe\_exit()} \\
 	\hline
 \end{tabular}
 }
@@ -38,22 +38,23 @@
 \vspace{-15pt}
 \end{table}
 
-As Figure~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{GTO\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{GTO\_unreliable\_recv} returns all messages with a same timestamp as a batch.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{onepipe\_unreliable\_recv} returns all messages with a same timestamp as a batch.
 It is worth mentioning that modern data centers with PFC flow control~\cite{pfc} or advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
 So, the application can assume that best effort \sys{} is almost reliable, but should guard against the failure cases.
 Best effort \sys{} does not retransmit packets.
-The application should use \texttt{set\_send\_failure\_callback} to detect lost packets and possible remote host failure.
+The application should use \texttt{onepipe\_send\_fail\_callback} to detect lost packets and possible remote host failure.
 
-Second, \texttt{GTO\_reliable\_recv} is a \emph{reliable} service which in addition to causality and total ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
+Second, \texttt{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
 The reliable service retransmits packets in the case of packet loss.
 In this paper, we only consider crash failures.
 When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
 If a message cannot be delivered, the send failure callback is invoked.
-In addition, each process may register a callback function via \texttt{set\_proc\_failure\_callback} to get notified of failed processes.
+In addition, each process may register a callback function via \texttt{onepipe\_proc\_fail\_callback} to get notified of failed processes.
 Message delivery is resumed after all correct processes finish their callback functions.
-In addition to ordering, reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of a batch of messages with the exception that if a receiver fails \emph{permanently} or network partitions after the decision to deliver is made, the receiver can never deliver it.
+
+Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a batch of messages} with the exception that if a receiver fails \emph{permanently} or network partitions after the decision to deliver is made, the receiver can never deliver it.
 Specifically, atomicity is guaranteed on sender failure.
 If receivers recover from failure, they deliver or discard messages consistently with correct receivers.
 In fact, full failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
@@ -126,8 +127,8 @@ Because the fence between $A \rightarrow O$ and $A \rightarrow B$ is removed, th
 If an application needs to process a lot of WAW communication tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. Using \sys{}, the application can send messages in pipeline, so, the throughput is only limited by computation speed and network bandwidth.
 
 The argument above neglects possible packet loss.
-In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so $B$ still needs to check the version of $O$ after reading. If it does not match $A$, $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
-$A$ needs to register send failure callback, and perform rollback recovery when $A$ is notified of a send failure.
+In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so $B$ still needs to check the version of $O$ after reading. If it does not match $A$, then $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
+$A$ registers send failure callback and performs rollback recovery when $A$ is notified of a send failure.
 If we use reliable \sys{}, $O$ does not need to maintain a version, but it adds an RTT to each message delivery, so, the end-to-end latency is increased from 2.5 RTTs to 3.5 RTTs. However, $A$ can still send messages in pipeline, and have much higher throughput than the traditional way.
 
 A similar argument shows that \sys{} removes IRIW hazard, and improves minimum end-to-end latency from 3 RTTs to 1 RTT because two fences are removed. The minimum latency is achieved when $A$ and $B$ initiate read and write simultaneously.
@@ -177,7 +178,7 @@ There are two traditional replication methods: (1) leader-follower, where a init
 (2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
 
 Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery if no replica fails.
-When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and the leader notifies clients so that future logs are not sent to the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
+When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and then the leader notifies clients so that future logs are not sent to the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
 Because \sys{} leverages the data center network to detect failures, it is typically faster than application heartbeat timeout.
 
 Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
