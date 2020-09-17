@@ -14,7 +14,7 @@
 	{\includegraphics[width=.32\textwidth]{gnuplot/multishard.eps}}
 	\vspace{-5pt}
 	\caption{Performance of a transactional key-value store.}
-	\vspace{-10pt}
+	\vspace{-15pt}
 \end{figure*}
 
 
@@ -173,7 +173,7 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 \label{subsec:eval-transactions}
 
 We apply \sys to independent general TXNs (Sec.\ref{subsec:dao}).
-Concurrency control and replication are implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris}.
+Concurrency control and replication are implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris} but replaces its central sequencer with timestamps.
 We assume TXNs never abort.
 We benchmark New-Order and Payment TXNs in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 For simplicity, we do not implement non-independent TXNs in TPC-C, which should fall back to traditional concurrency control mechanisms.

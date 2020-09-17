@@ -4,7 +4,7 @@
 Now, we design reliable \sys{} that handles packet loss and failure.
 When a receiver delivers a message with timestamp $T$, it must make sure that all messages below $T$ are delivered.
 So, if a receiver is unaware of packet loss, it cannot reliably deliver messages according to the barrier timestamp.
-It seems that in-network packet loss detection can solve the problem, but it is still incorrect, because \emph{host failure and packet loss may happen together}.
+In-network packet loss detection still does not solve the problem, because \emph{host failure and packet loss may happen together}.
 Consider an example where host $A$ sends to $B$, and then sends to $C$ via a different network path. The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes. The packet $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered. Failure to deliver $A \rightarrow B$ and delivery of $A \rightarrow C$ violates reliable ordering property.
 Although the probability of simultaneous packet loss and host failure is very low, a reliable service still needs to take this into account.
 
@@ -21,7 +21,7 @@ Although the probability of simultaneous packet loss and host failure is very lo
 The key idea of reliable \sys{} is a \emph{Two Phase Commit (2PC)} approach, as Figure~\ref{fig:2PC} shows:
 
 \begin{ecompact}
-\item \textbf{Prepare phase}: Sender puts messages into send buffer, and transmits them with timestamps. Network switches do NOT need to aggregate timestamp barriers. Receivers store the messages in receive buffer, and respond with ACKs. Senders wait for end-to-end ACKs, and retransmit messages if packets are lost in-flight.
+\item \textbf{Prepare phase}: Sender puts messages into send buffer, and transmits them with timestamps. Network switches do NOT need to aggregate timestamp barriers. Receivers store the messages in receive buffer, and respond with ACKs. Senders wait for end-to-end ACKs, and retransmit messages if packets are lost in-flight. Packet loss detection is end-to-end (as in TCP).
 \item \textbf{Commit phase}: When a sender collects all ACKs below or equal to $T$, it sends a \emph{commit message} that carries timestamp $T$ and \emph{commit barrier} $T$. Each network switch aggregates minimum commit barriers on input links, and produce commit barriers to propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.~\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.
 \end{ecompact}
 
@@ -38,10 +38,10 @@ The procedure to handle failure is as follows:
 
 \begin{ecompact}
 \item \textbf{Detect}: The neighbors of failed components notifies controller along with its last commit timestamp $T$.
-\item \textbf{Determine}: Controller determines \emph{failed processes} and their \emph{failure timestamps} from failed components based on routing graph (Figure~\ref{fig:dcn}). \emph{A process that cannot connect to controller is regarded as failed}.
+\item \textbf{Determine}: Controller determines \emph{failed processes} and their \emph{failure timestamps} from failed components based on routing graph (Figure~\ref{fig:dcn}). \emph{A process that disconnects from controller in routing graph is regarded as failed}.
 For example, if a host or the only network link from a host fails, all processes on it are disconnected from the data center network, so they are considered to fail simultaneously.
 If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.
-Failure timestamp of a process $P$ is a commit timestamp sent by $P$ but not propagated to any receiver, which is computed as the maximum last commit timestamp reported by all neighbors of $P$ (formally, a cut in routing graph that includes $P$ but excludes any receiver).
+Failure timestamp of a process $P$ is a commit timestamp sent by $P$ but not propagated to any receiver, which is computed as the maximum last commit timestamp reported by all neighbors of $P$ (formally, a cut in routing graph that separates $P$ and all receivers).
 If severe network partition occurs and controller cannot access such a cut, controller may either wait for recovery or sacrifice atomicity between isolated partitions.
 %If a Leaf, Spine, or Core switch fails, and the connectivity among hosts is not interrupted, no process is considered to fail.
 %If network partition occurs, only one partition may connect to controller, and controller will announce failure of all processes in other network partitions.
