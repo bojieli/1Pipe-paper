@@ -189,7 +189,7 @@ With \sys{}, although packet loss affects TXN latency (not measured in TPC-C ben
 However, in 2PL and OCC commit, a locked object cannot be released until the TXN completes, so, TXN throughput under contention is inversely proportional to TXN latency.
 TXN latency increases with packet loss rate because replicas wait for the last retransmitted packet to maintain sequential log ordering.
 
-Finally, we evaluate failure recovery of replicas by disconnecting the link of host. \sys{} detects failure and removes the replica in $181 \pm 21 \mu$s. The affected TXNs are aborted and retried, with an average delay of $308 \pm 122 \mu$s. It is much faster than using application heartbeats to detect failures, which typically takes milliseconds. After the link reconnects, replica synchronizes log from other replicas in 25 ms.
+Finally, we evaluate failure recovery of replicas by disconnecting the physical link of host. \sys{} detects failure and removes the replica in $181 \pm 21 \mu$s. The affected TXNs are aborted and retried, with an average delay of $308 \pm 122 \mu$s. It is much faster than using application heartbeats to detect failures, which typically takes milliseconds. After the link reconnects, replica synchronizes log from other replicas in 25 ms.
 
 \subsubsection{Remote Data Structures}
 \label{subsec:data-structure}

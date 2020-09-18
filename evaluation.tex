@@ -35,7 +35,7 @@ Because we only have one switch with Barefoot Tofino~\cite{tofino} reconfigurabl
 In small-scale experiments (1$\sim$32 processes), each process runs on a distinct server. Each process uses a pair of threads for sending and receiving, respectively.
 For experiments with 64$\sim$512 processes, each server hosts the same number of processes.
 %With 16 processes per NIC, the throughput of NICs is saturated.
-Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\%), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
+Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\% percentile), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
 We choose beacon interval to be 3~$\mu$s.
 
 
