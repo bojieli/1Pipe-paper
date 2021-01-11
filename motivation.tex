@@ -4,38 +4,42 @@
 \subsection{Abstractions of 1Pipe}
 \label{subsec:abstration}
 
+\RED{Explain the magic sauce of \sys{}.}
+
+\RED{Total order unicast, does not have the concept of multicast group.}
+
+\RED{Return failure and let application retry if end-to-end flow control or congestion control does not allow. Keep in-network queues low to minimize reordering delay.}
+
+\RED{messages can be multi-packet.}
+
 \sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host in the distributed system maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. When a process sends a batch of messages, they are labeled with timestamp of the host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
 \centering
-\scalebox{0.9}{
 \begin{tabular}{l}
 	\hline
-	\texttt{TS = onepipe\_send(vec[<dst, msg>])} \\
+	TS = onepipe\_send(vec[<dst, msg>]) \\
 	\hline
 	\hline
-	\texttt{TS, vec[<src, msg>] = onepipe\_unreliable\_recv()} \\
+	TS, vec[<src, msg>] = onepipe\_unreliable\_recv() \\
 	\hline
-	\texttt{onepipe\_send\_fail\_callback(func(TS, dst, msg))} \\
-	\hline
-	\hline
-	\texttt{TS, vec[<src, msg>] = onepipe\_reliable\_recv()} \\
-	\hline
-	\texttt{onepipe\_proc\_fail\_callback(func(proc, TS))} \\
+	onepipe\_send\_fail\_callback(func(TS, dst, msg)) \\
 	\hline
 	\hline
-	\texttt{TS = onepipe\_get\_timestamp()} \\
+	TS, vec[<src, msg>] = onepipe\_reliable\_recv() \\
 	\hline
-	\texttt{onepipe\_init()} \\
+	onepipe\_proc\_fail\_callback(func(proc, TS)) \\
 	\hline
-	\texttt{onepipe\_exit()} \\
+	\hline
+	TS = onepipe\_get\_timestamp() \\
+	\hline
+	onepipe\_init() \\
+	\hline
+	onepipe\_exit() \\
 	\hline
 \end{tabular}
-}
-\vspace{-5pt}
-\caption{Programming API of \sys{}. \texttt{vec[<dst, msg>]} indicates a batch of messages that have a same timestamp.}
+\caption{Programming API of \sys{}. Vec[<dst, msg>] indicates a batch of messages that have a same timestamp.}
 \label{tab:abstraction}
-\vspace{-15pt}
 \end{table}
 
 As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{onepipe\_unreliable\_recv} returns all messages with a same timestamp as a batch.
@@ -124,6 +128,10 @@ Consequently, $A \rightarrow O$ is before $B \rightarrow O$.
 Therefore, the write operation is delivered before the read operation, thus avoiding WAW hazard.
 Because the fence between $A \rightarrow O$ and $A \rightarrow B$ is removed, the end-to-end latency is reduced from 2.5 RTTs to 1.5 RTTs.
 
+\RED{causal order: avoid failure cases, e.g., A fail to write to B, A send to C will also fail. (reliable \sys{})}
+
+\RED{Why not let the application provide dependency among messages? Can remove false dependency in \sys{}. isis labeling psync, but cannot improve performance by much (cite ken birman response to understanding the limits)}
+
 If an application needs to process a lot of WAW communication tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. Using \sys{}, the application can send messages in pipeline, so, the throughput is only limited by computation speed and network bandwidth.
 
 The argument above neglects possible packet loss.
@@ -137,11 +145,32 @@ The ability to totally order communication events is the root power of removing 
 This power is also a perfect match with \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} in a distributed shared memory (DSM) system. In TSO, each processor observes a consistent ordering of writes from all other cores. In other words, processors must not observe WAW and IRIW hazards.
 Compared to weaker memory models, TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}, thereby simplifying programming and reducing fence overheads.
 
+\subsubsection{Replication}
+
+%The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
+
+
+\RED{1 rtt replication -- unreliable \sys{}, add timestamps together (or use a stronger hash function to avoid coincidental conflict), blockchain like approach. When clients see unequal responses, there must be lost messages, and the failure recovery protocol is triggered.}
+
+\RED{Traditional approaches require at least 2 RTTs, first for serialization, second for replication. cite Exploiting Commutativity For Practical Fast Replication.}
+Replication is central to achieve fault tolerance and to scale performance.
+There are two traditional replication methods: (1) leader-follower, where a initiator sends to the leader, and leader replicates to followers. The leader is the performance bottleneck.
+(2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
+
+Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery if no replica fails.
+When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and then the leader notifies clients so that future logs are not sent to the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
+Because \sys{} leverages the data center network to detect failures, it is typically faster than application heartbeat timeout.
+
+Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
+SMR can solve arbitrary synchronization problems~\cite{lamport1978time}. An example problem is mutual exclusion that requires the resource to be granted in the order that the request is made~\cite{lamport1978time}.
+%If a lock manager grants resource in FIFO order, due to variable network delay, it is possible that $A$ requests the resource and sends a message to $B$, then $B$ requests the resource, but $B$ gets the resource.
+With reliable \sys{}, either implementing SMR on all hosts or using Sec.\ref{subsec:order-hazards} to implement the lock manager can solve the mutual exclusion problem.
+
 
 \subsubsection{Distributed Atomic Operation (DAO)}
 \label{subsec:dao}
 
-The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
+
 
 A \emph{distributed atomic operation} (DAO) is a transaction that atomically reads or updates objects in multiple hosts.
 DAO is widely used in transactional key-value store~\cite{dey2014ycsbt}, caches in web services, distributed in-memory computing, and index cache of distributed storage.
@@ -154,7 +183,9 @@ If a recipient or the network permanently fails, atomicity violation is not obse
 %Reliable \sys{} can handle packet loss and failures.
 %If the sender or a receiver fails, none of the messages in a batch are delivered. If both sender and all receivers are correct, all messages are delivered in total order.
 
-If we do not need strict wall-clock ordering of DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried without violating sequential consistency.
+If we do not need strict wall-clock ordering of read-only DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried without violating sequential consistency.
+
+\RED{In terms of SNOW and NOCS theorem, 1 RTT for read-only TXN, throughput optimal, latency close to optimal (wait for barrier).}
 
 %There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff.
 %Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition,
@@ -168,23 +199,10 @@ DAO can be extended to two important classes of distributed transactions: snapsh
 The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
 Similar to DAO, snapshot reads and independent transactions can be implemented as a batch of messages to multiple hosts in \sys{}.
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
-The next subsection will show that \sys{} can achieve replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
+Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
 
+\RED{General transactions with Opacity (cite FaRMv2): can remove waiting for clock uncertainty in read and write timestamps. Because \sys{} ensures locks of previous transaction are visible to new read or commit transactions.}
 
-\subsubsection{Replication}
-
-Replication is central to achieve fault tolerance and to scale performance.
-There are two traditional replication methods: (1) leader-follower, where a initiator sends to the leader, and leader replicates to followers. The leader is the performance bottleneck.
-(2) Sequence number (SN) based, where the initiator first gets a SN from leader, then replicates to all replicas. Each replica orders logs according to SN. %, and delays logging until all previous SNs are received. When an initiator fails, replicas need consensus to remove holes in SNs.
-
-Using \sys{}, the initiator directly replicates to all replicas with a batch of messages, and each replica orders logs according to timestamp. Here, the timestamp serves the purpose of sequence number. Reliable \sys{} achieves all-or-nothing batch delivery if no replica fails.
-When failure occurs, all correct replicas are notified via the callback, so they may elect a new leader using Raft~\cite{raft}, and then the leader notifies clients so that future logs are not sent to the failed replica. When the failed replica recovers, it synchronizes log from other replicas and notifies clients.
-Because \sys{} leverages the data center network to detect failures, it is typically faster than application heartbeat timeout.
-
-Similar to replication, \sys{} can achieve state machine replication (SMR)~\cite{lamport1978time} or virtual synchrony~\cite{birman1987exploiting}. In a SMR-based distributed system, all messages are broadcast to all processes, and each process uses the same sequence of input messages.
-SMR can solve arbitrary synchronization problems~\cite{lamport1978time}. An example problem is mutual exclusion that requires the resource to be granted in the order that the request is made~\cite{lamport1978time}.
-%If a lock manager grants resource in FIFO order, due to variable network delay, it is possible that $A$ requests the resource and sends a message to $B$, then $B$ requests the resource, but $B$ gets the resource.
-With reliable \sys{}, either implementing SMR on all hosts or using Sec.\ref{subsec:order-hazards} to implement the lock manager can solve the mutual exclusion problem.
 
 
 

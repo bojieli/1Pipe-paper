@@ -211,6 +211,8 @@ In contrast, with leader-follower replication, to maintain consistency of reads 
 \subsubsection{Replication in Distributed Storage}
 \label{subsec:ceph}
 
+\RED{replication latency = 1 RTT plus overhead}
+
 We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written in order. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 2 RTTs. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 62 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
 
 

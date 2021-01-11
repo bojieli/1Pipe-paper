@@ -8,11 +8,13 @@ One line of work leverages logically centralized coordination, \textit{e.g.}, ce
 As a result, it is challenging to scale the system.
 Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
 This causes extra delay and network bandwidth overhead.
-A third line of work assumes a synchronous network~\cite{lamport1984using}, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
+A third line of work assumes a synchronous network~\cite{lamport1984using}. %, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
 However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
-Critics and proponents of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive~\cite{cheriton1994understanding,birman1994response,van1994bother}. 
+
+Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive. 
 \sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
+
 
 \parab{Network and system co-design.}
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
@@ -23,6 +25,8 @@ NetChain~\cite{jin2018netchain} uses a chain of switches for scale-free sub-RTT 
 Spanner~\cite{corbett2013spanner} and FaRMv2~\cite{shamis2020fast} leverage accurate global time for fast distributed transactions.
 %\sys{} is inspired by Lamport's idea that the absence of a message can carry information in a synchronous network~\cite{lamport1984using}. %We achieve synchrony via timestamp barriers.
 
+\RED{Towards Causal Datacenter Networks}
+
 %Using Time instead of Timeout for fault-tolerant distributed systems.
 
 %Lamport: the absence of a message can carry information.
@@ -31,6 +35,7 @@ Spanner~\cite{corbett2013spanner} and FaRMv2~\cite{shamis2020fast} leverage accu
 
 %\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
 
+\RED{Consider to remove tree-based total order.}
 
 \parab{Tree-based total order.}
 Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}, which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.

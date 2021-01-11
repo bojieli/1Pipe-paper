@@ -38,6 +38,10 @@ As another example, multiple shards of a distributed database generate logs to m
 In this work, we propose \sys{}, a communication primitive that provides a single FIFO pipe abstraction in a distributed system. As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receivers to process messages from senders in a consistent order.
 More precisely, \sys{} provides Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers. In addition, \emph{batching} in \sys{} enables grouping multiple messages at the same position of the total order. (2) Messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. (3) Messages between a pair of sender and receiver are in \emph{FIFO} order.
 
+\RED{no concept of CATOCS channel/group, one CATOCS channel}
+
+\RED{novelty: unicast and destination-addressed multicast, not group multicast}
+
 \sys{} can achieve distributed atomic multi-object read and write with a single batch of messages because they are delivered at the same logical time. Replication in \sys{} is simply a batch of messages. \sys{} also provides a total ordering of communication events, thus reducing fences and improving concurrency of distributed systems.
 
 
@@ -128,6 +132,7 @@ The sender attaches a non-decreasing timestamp to each message.
 %Messages sent by a host with the same timestamp are considered to form a scattering.
 %Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message.
 Each receiver delivers messages in non-decreasing timestamp order.
+
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys forwards timestamped messages as usual in the network, and buffers them at the receiver side.
@@ -221,6 +226,8 @@ The latency of \sys{} is consistently low.
 Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. \sys{}'s performance is resilient to packet loss.
 Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2$\sim$4x.
 Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
+
+\RED{Contributions of this paper is as follows: ...}
 
 %For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
 

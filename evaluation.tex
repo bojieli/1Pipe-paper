@@ -123,6 +123,8 @@ The throughput of \sys is limited by CPU processing and RDMA messaging rate.
 Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead.\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
 Reconfigurable chip and host representative deliver the same high throughput (not shown) because we decouple message forwarding from barrier propagation.
 
+\RED{Compare with optimized Lamport timestamp where received timestamps are exchanged per interval. Optimized Lamport timestamp has a trade-off between latency and throughput. e.g. use 10\% throughput for timestamp exchange: 0.8M msg/s, 512 processes, 1.5K msg/s, interval = 1/1.5K = 700 us.}
+
 In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets.
 The latency soars when throughput of sequencer saturates and congestion appears.
 Token shows consistent low throughput because only one process may send at any time.

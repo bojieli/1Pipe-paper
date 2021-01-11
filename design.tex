@@ -12,6 +12,11 @@
 Best effort \sys{} provides total order, causal, and FIFO message delivery with at-most-once semantics.
 A naive approach is ordering all messages with a centralized sequencer, but it would be a bottleneck.
 We aim to preserve message routing topology and achieve scalable ordering in a distributed way.
+
+\RED{Strawman approach: only deliver received messages that are in order, and drop all out-of-order messages. Need to evaluate that this simple approach drops too many messages.}
+
+\RED{add a protection to reordered messages: when one receives a message higher than barrier timestamp, it is dropped and respond with NAK.}
+
 %In this section, we design best effort \sys{}.
 %The key idea is to aggregate the minimum message timestamp over the network links, and provide receiver processes with a timestamp lower bound of all future messages.
 
@@ -160,6 +165,8 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
 When a host or link fails, the barrier timestamp of its neighbors stop to increase. 
 In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a threshold time, e.g., three beacon intervals, the input link is considered to be dead and removed from the input link list.
 After removal of the failed component, the barrier timestamp resumes increasing.
+
+\RED{Addition of new nodes.}
 
 %The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.
 %The reordering delay may increase by at most $T_{beacon}$ because the receiver of an idle link can only increase its barrier timestamp every time it receives a beacon.

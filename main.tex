@@ -1,5 +1,4 @@
-\documentclass[letterpaper,twocolumn,10pt]{article}
-\usepackage{usenix2019_v3}
+\documentclass[sigconf]{acmart}
 
 \usepackage{epsfig}
 \usepackage{endnotes}
@@ -67,16 +66,36 @@
 \usepackage{eucal}
 \begin{document}
 
-%\settopmatter{printfolios=true} % Add page numbers
-%\settopmatter{printacmref=false} % Removes citation information below abstract
-%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
-%\pagestyle{plain} % removes running headers
-%\settopmatter{printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference info
+\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+
+% DOI
+\acmDOI{}
+
+% ISBN
+\acmISBN{}
+
+%Conference
+%\acmConference[Submitted for review to SIGCOMM]{}
+%\acmYear{2018}
+%\copyrightyear{}
+
+%% {} with no args suppresses printing of the price
+\acmPrice{}
 
 %don't want date printed
 \date{}
 
-\title{\Large \bf 1Pipe: Scalable Total Order Communication in Data Center Networks}
+\title{1Pipe: Scalable Total Order Communication in Data Center Networks}
 
 %for single author (just remove % characters)
 %\author{
@@ -90,13 +109,11 @@
 % {\rm Name}\\
 %Name Institution
 %} % end author
-\author{{\rm NSDI'21 submission \#78}}
+\author{Paper \#XXX, 12 pages body, 14 pages total}
+
+\renewcommand{\shortauthors}{X.et al.}
 
 \maketitle
-
-% Use the following at camera-ready time to suppress page numbers.
-% Comment it out when you first submit the paper for review.
-%\thispagestyle{empty}
 
 \input{abstract}
 \input{intro}
