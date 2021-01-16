@@ -51,7 +51,6 @@ More precisely, \sys{} provides Causally and Totally Ordered Communication Suppo
 	\vspace{-0.5em}
 	\caption{\sys{} abstraction.}
 	\label{fig:1pipe}
-	\vspace{-1.5em}
 \end{figure}
 
 %Besides ordering, another desirable abstraction is a reliable communication system that is able to deliver a group of messages atomically: either all the messages in a group are delivered to the desired targets, or non is delivered. 
@@ -226,6 +225,8 @@ The latency of \sys{} is consistently low.
 Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. \sys{}'s performance is resilient to packet loss.
 Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2$\sim$4x.
 Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
+
+In summary, the contributions of this paper are: (1) 
 
 \RED{Contributions of this paper is as follows: ...}
 

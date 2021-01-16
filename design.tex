@@ -91,7 +91,7 @@ In \sys, we attach two timestamp fields to each message packet. The first is \te
 
 \emph{When a switch or a host receives a packet with barrier timestamp $B$ from a network link $L$, it indicates that the message timestamp and barrier timestamp of future arrival packets from link $L$ will be larger than $B$.}
 
-To derive barriers, the sender initializes both fields of all packets in a message\footnote{A large message may consist of multiple packets.} with the non-decreasing message timestamp. The switch maintains a register $R_i$ for each input link $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all input links. After forwarding a packet with barrier timestamp $B$ from input link $i$ to output link $o$, the switch performs two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
+To derive barriers, the sender initializes both fields of all packets in a message with the non-decreasing message timestamp. The switch maintains a register $R_i$ for each input link $i \in \mathcal{I}$, where $\mathcal{I}$ is the set of all input links. After forwarding a packet with barrier timestamp $B$ from input link $i$ to output link $o$, the switch performs two updates. First, it updates register $R_i := B$. Second, it modifies the barrier timestamp of the packet to $B_{new}$ as follows:
 \begin{equation}\label{equ:derive_barriers}
 B_{new}:=\min\{R_i| i\in \mathcal{I}\}
 \end{equation}

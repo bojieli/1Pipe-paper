@@ -35,7 +35,6 @@
 	\vspace{-25pt}
 	\label{tab:api}
 \end{table*}
-\fi
 
 \begin{figure*}[t!]
 	\centering
@@ -52,7 +51,7 @@
 	\label{fig:impl}
 	\vspace{-15pt}
 \end{figure*}
-
+\fi
 
 \section{Implementation}
 \label{sec:impl}
@@ -137,7 +136,9 @@ We implement in-network processing at three types of network switches with diffe
 A reconfigurable switching chip can maintain 
 a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip. 
 
-We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively. \sys{} also needs 2 state registers to store the minimum of per-link barriers. As Figure~\ref{fig:p4} shows, for each packet, barrier of the input link is first updated, then switch barrier is updated to the minimum of link barrier and the original switch barrier. Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
+We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively. \sys{} also needs 2 state registers to store the minimum of per-link barriers.
+%As Figure~\ref{fig:p4} shows, 
+For each packet, barrier of the input link is first updated, then switch barrier is updated to the minimum of link barrier and the original switch barrier. Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
 
 
 %We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, loss-free barrier and delivery barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
@@ -155,7 +156,7 @@ For a switch without a reconfigurable router chip, \textit{e.g.,} Arista 7060CX,
 Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
 
-Because the switch CPU cannot process every packet, data packets are forwarded by the switching chip directly, as Figure~\ref{fig:commodity} shows.
+Because the switch CPU cannot process every packet, data packets are forwarded by the switching chip directly.%, as Figure~\ref{fig:commodity} shows.
 The switch CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 
@@ -217,7 +218,8 @@ So, the average delay overhead is (switch processing delay $\times$ number of ho
 
 If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. The challenge is to maintain the FIFO property on network links, \emph{i.e.}, beacons with barrier timestamps on a network link $L$ must pass through $L$. To this end, we designate an \emph{end-host representative} for each network switch. %The location of the representative is arbitrary and does not need to be unique.
 
-As Figure~\ref{fig:end-host} shows, for two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the route between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
+%As Figure~\ref{fig:end-host} shows, 
+For two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the route between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
 We install tunnel termination rules in each network switch to de-capsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
 
 Beacon packets use one-sided RDMA write to update per-input-link barriers on representative host. A thread on the host iteratively computes minimum barrier and broadcasts new beacons to representatives of downstream switches.

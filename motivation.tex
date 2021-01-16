@@ -10,9 +10,7 @@
 
 \RED{Return failure and let application retry if end-to-end flow control or congestion control does not allow. Keep in-network queues low to minimize reordering delay.}
 
-\RED{messages can be multi-packet.}
-
-\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host in the distributed system maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. When a process sends a batch of messages, they are labeled with timestamp of the host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
+\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host in the distributed system maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a batch of messages (possibly with different destinations), all packets of the messages are labeled with a same timestamp of the host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
 \centering
@@ -42,20 +40,20 @@
 \label{tab:abstraction}
 \end{table}
 
-As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \texttt{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \texttt{onepipe\_unreliable\_recv} returns all messages with a same timestamp as a batch.
-It is worth mentioning that modern data centers with PFC flow control~\cite{pfc} or advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp as a batch.
+Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
 So, the application can assume that best effort \sys{} is almost reliable, but should guard against the failure cases.
 Best effort \sys{} does not retransmit packets.
-The application should use \texttt{onepipe\_send\_fail\_callback} to detect lost packets and possible remote host failure.
+The application should use \textit{onepipe\_send\_fail\_callback} to detect lost packets and possible remote host failure.
 
-Second, \texttt{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
+Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
 The reliable service retransmits packets in the case of packet loss.
 In this paper, we only consider crash failures.
 When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
 If a message cannot be delivered, the send failure callback is invoked.
-In addition, each process may register a callback function via \texttt{onepipe\_proc\_fail\_callback} to get notified of failed processes.
+In addition, each process may register a callback function via \textit{onepipe\_proc\_fail\_callback} to get notified of failed processes.
 Message delivery is resumed after all correct processes finish their callback functions.
 
 Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a batch of messages} with the exception that if a receiver fails \emph{permanently} or network partitions after the decision to deliver is made, the receiver can never deliver it.
@@ -212,6 +210,7 @@ To avoid false positives, timeouts are typically on the order of milliseconds, w
 Using \sys{}, RPC timeout can be set to waiting for two loop-back messages (maximum network delay) plus the estimated processing time.
 \fi
 
+\iffalse
 \subsubsection{Global Synchronization Point}
 
 \sys{} timestamp provides a global synchronization point.
@@ -221,6 +220,7 @@ This is a consistent snapshot algorithm, because no message with timestamp highe
 %Compared with the classical algorithm~\cite{chandy1985distributed} with all-to-all communication channels, processes do not need to broadcast marks after receiving a mark, thus reducing message complexity from $O(n^2)$ to $O(n)$, where $n$ is the number of processes.
 
 Apart from the use cases in this section, \sys{} may enable many other optimizations, \emph{e.g.}, reducing timeout and wasted lease term~\cite{gray1989leases} because \sys{} measures \emph{real-time} maximum sum of clock skew and network delay.
+\fi
 
 \iffalse
 \subsubsection{Reduce Timeout}
