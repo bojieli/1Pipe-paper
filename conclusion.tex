@@ -2,10 +2,10 @@
 \label{sec:conclusion}
 
 %The ordering of events and messages is fundamental to many distributed systems.
-We propose a total order communication abstraction, \sys{}, that delivers messages in sender's wall clock time order and provides restricted failure atomicity. 
+We propose a causal and total order communication abstraction, \sys{}, that delivers messages in sender's wall clock time order and provides restricted failure atomicity. 
 \sys{} leverages programmable data center networks to separate the bookkeeping of order information from the forwarding of data packets.
-\sys{} simplifies design and improves performance of transactional key-value stores, independent transactions, distributed data structures, and log replication.
-We expect more applications to exploit total ordering of events and messages.
+\sys{} simplifies design and improves performance of many applications, and we expect future work to explore more. %transactional key-value stores, independent transactions, distributed data structures, and log replication.
+%We expect more applications to exploit total ordering of events and messages.
 %We design and implement \sys to achieve linearizable and serializable message scattering with scalability, efficiency and fault tolerance.
 %Programmable data center networks make modern data centers resemble a warehouse-scale computer more than a traditional distributed system.
 %We expect more applications to leverage \sys{}'s total ordering and enjoy higher consistency without sacrificing performance.

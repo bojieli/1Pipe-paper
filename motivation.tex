@@ -10,7 +10,7 @@
 
 \RED{Return failure and let application retry if end-to-end flow control or congestion control does not allow. Keep in-network queues low to minimize reordering delay.}
 
-\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host in the distributed system maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a batch of messages (possibly with different destinations), all packets of the messages are labeled with a same timestamp of the host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
+\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destinations, all packets of the messages are labeled with a same timestamp of the sender host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
 \centering
@@ -19,12 +19,12 @@
 	TS = onepipe\_send(vec[<dst, msg>]) \\
 	\hline
 	\hline
-	TS, vec[<src, msg>] = onepipe\_unreliable\_recv() \\
+	TS, src, msg = onepipe\_unreliable\_recv() \\
 	\hline
 	onepipe\_send\_fail\_callback(func(TS, dst, msg)) \\
 	\hline
 	\hline
-	TS, vec[<src, msg>] = onepipe\_reliable\_recv() \\
+	TS, src, msg = onepipe\_reliable\_recv() \\
 	\hline
 	onepipe\_proc\_fail\_callback(func(proc, TS)) \\
 	\hline
@@ -36,18 +36,18 @@
 	onepipe\_exit() \\
 	\hline
 \end{tabular}
-\caption{Programming API of \sys{}. Vec[<dst, msg>] indicates a batch of messages that have a same timestamp.}
+\caption{Programming API of \sys{}. Vec[<dst, msg>] indicates a scattering of messages that have a same timestamp.}
 \label{tab:abstraction}
 \end{table}
 
-As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. \textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp as a batch.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
 Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
 So, the application can assume that best effort \sys{} is almost reliable, but should guard against the failure cases.
 Best effort \sys{} does not retransmit packets.
 The application should use \textit{onepipe\_send\_fail\_callback} to detect lost packets and possible remote host failure.
 
-Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes are correct}.
+Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes do not fail}.
 The reliable service retransmits packets in the case of packet loss.
 In this paper, we only consider crash failures.
 When a process or network fails, message delivery stalls.
@@ -88,10 +88,8 @@ Applications may solve permanent failures with replication and traditional conse
     %\hspace{0.01\textwidth}
 	%\subfloat[Independent multi-write.\label{fig:ordering-imw}]
 	%{\includegraphics[width=.11\textwidth,page=3]{images/ordering-cropped.pdf}}
-	\vspace{-0.5em}
 	\caption{Ordering hazards in a distributed system.}
 	\label{fig:ordering}
-	\vspace{-1.5em}
 \end{figure}
 
 
@@ -174,7 +172,7 @@ A \emph{distributed atomic operation} (DAO) is a transaction that atomically rea
 DAO is widely used in transactional key-value store~\cite{dey2014ycsbt}, caches in web services, distributed in-memory computing, and index cache of distributed storage.
 Traditionally, a DAO is implemented as (1) locking the objects, (2) if all locks succeed, send operations to the participants, and (3) unlock the objects.
 Using \sys{}, a DAO can be implemented as a batch of messages with a same timestamp from the initiator.
-Each recipient processes messages from all DAOs in timestamp order\footnote{DAOs with a same timestamp are ordered by the ID of initiator.}, so, the DAOs are sequentially consistent.
+Each recipient processes messages from all DAOs in timestamp order (ties are broken by the ID of initiator). So, the DAOs are sequentially consistent.
 If a recipient or the network permanently fails, atomicity violation is not observable because the objects cannot be accessed by any subsequent operation.
 %Using \sys{}, a DAO can be completed in 1 RTT, and there is no locking or waiting.
 
@@ -199,7 +197,8 @@ Similar to DAO, snapshot reads and independent transactions can be implemented a
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
 Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
 
-\RED{General transactions with Opacity (cite FaRMv2): can remove waiting for clock uncertainty in read and write timestamps. Because \sys{} ensures locks of previous transaction are visible to new read or commit transactions.}
+\RED{General transactions with Opacity (cite FaRMv2): can remove waiting for clock uncertainty in read and write timestamps. Because \sys{} ensures locks of previous transaction are visible to new read or commit transactions.
+FaRMv2~\cite{shamis2020fast} leverage accurate global time for fast distributed transactions.}
 
 
 

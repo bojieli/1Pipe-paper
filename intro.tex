@@ -35,23 +35,20 @@ As another example, multiple shards of a distributed database generate logs to m
 
 
 
-In this work, we propose \sys{}, a communication primitive that provides a single FIFO pipe abstraction in a distributed system. As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receivers to process messages from senders in a consistent order.
-More precisely, \sys{} provides Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers. In addition, \emph{batching} in \sys{} enables grouping multiple messages at the same position of the total order. (2) Messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. (3) Messages between a pair of sender and receiver are in \emph{FIFO} order.
-
-\RED{no concept of CATOCS channel/group, one CATOCS channel}
-
-\RED{novelty: unicast and destination-addressed multicast, not group multicast}
-
-\sys{} can achieve distributed atomic multi-object read and write with a single batch of messages because they are delivered at the same logical time. Replication in \sys{} is simply a batch of messages. \sys{} also provides a total ordering of communication events, thus reducing fences and improving concurrency of distributed systems.
+In this work, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receivers to process messages from senders in a consistent order.
+More precisely, \sys{} resembles Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers; (2) messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. In addition to unicast, \sys{} also supports \emph{scattering}, which groups multiple messages to different receivers at the same position of the total order. Different from traditional multicast, each message in a scattering has distinct content and destination. Users do not need to define multicast channels or groups because the network is a big CATOCS channel.
 
 
 \begin{figure}[t]
-\centering
+	\centering
 	\includegraphics[width=.45\textwidth]{images/1pipe.pdf}
-	\vspace{-0.5em}
 	\caption{\sys{} abstraction.}
 	\label{fig:1pipe}
 \end{figure}
+
+
+\sys{} can achieve distributed atomic multi-object read and write with a single scattering because they are delivered at the same logical time. Replication in \sys{} takes one round-trip time (RTT). \sys{} also provides a total ordering of communication events, thus reducing fences and improving concurrency of distributed systems.
+
 
 %Besides ordering, another desirable abstraction is a reliable communication system that is able to deliver a group of messages atomically: either all the messages in a group are delivered to the desired targets, or non is delivered. 
 %Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve atomic broadcast and multicast~\cite{defago2004total}. However, existing solutions suffer from scalability or efficiency limitations~\cite{eris,rajagopalan1989token,kim1997total,ekwall2004token,lamport1978time,birman1985replication,chandra1996unreliable}. 
@@ -122,10 +119,10 @@ More precisely, \sys{} provides Causally and Totally Ordered Communication Suppo
 %In \sys, hosts send messages to other hosts. A timestamp is attached to every message by the sender. The timestamps satisfy two requirements. First, for a given host the timestamps are non-decreasing, meaning that when a host sends out two messages, the latter one will have a timestamp equal or larger than that of the first one. Messages sent by a host with the same timestamp are considered to form a scattering group. Second, the timestamps satisfy causality property, meaning that when \sys delivers a message to a host, it guarantees that all future messages sent by the host will have timestamps larger than that of the delivered message. \sys achieves reliable ordered message delivery. Unless the host is faulty or unreachable, all messages sent to a particular host will be delivered exactly once according to the timestamp order.  
 
 \sys{} seems to require a central serialization point, which is not scalable.
-In this work, we propose a scalable and efficient implementation of \sys{} in a data center network, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, and switches have generally good programmability.
-Our principle is to co-design end hosts with underlying data center networks.
-We synchronize the clocks on hosts.
-The sender attaches a non-decreasing timestamp to each message.
+In this work, we propose a scalable and efficient implementation of \sys{} in a DCN, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, and switches have generally good programmability.
+Our principle is to co-design end hosts with the underlying DCN.
+We synchronize the clocks on hosts and ensure they are non-decreasing.
+The sender attaches a same timestamp to each packet in a unicast message or scattering.
 %The timestamps satisfy two reqirements.
 %First, for a given host the timestamps are non-decreasing.
 %Messages sent by a host with the same timestamp are considered to form a scattering.
@@ -134,18 +131,18 @@ Each receiver delivers messages in non-decreasing timestamp order.
 
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
-\sys forwards timestamped messages as usual in the network, and buffers them at the receiver side.
+\sys forwards timestamped packets as usual in the network, and buffers them at the receiver side.
 The key challenge is to let a receiver know that all packets below a certain timestamp has arrived.
 To this end, we introduce a \emph{barrier} timestamp on each link and switch, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
 Each switch aggregates barrier information of all ingress links to derive the barrier for all egress links.
 In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
 
-Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and receiver are correct.
-In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a batch are delivered unless a receiver fails permanently or network partitions after the messages are sent.
+Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and all receivers in the scattering are correct.
+In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.
 Reliable \sys{} uses a two-phase commit (2PC) approach, where the first phase is end-to-end packet loss recovery, and the second phase aggregates \emph{commit barriers} through the network.
 It relies on a highly available network controller to coordinate failure handling.
-Reliable \sys{} adds one network round-trip time (RTT) compared to best effort \sys{}.
+Reliable \sys{} adds one round-trip time (RTT) compared to best effort \sys{}.
 
 \iffalse
 To take advantage of the fact that data centers are typically well engineered and have very low packet loss rates~\cite{ports2015designing}, when packet loss does not occur, a host can \emph{reliably deliver} a message when it is sure that all hosts have received messages with lower timestamps.
@@ -220,15 +217,15 @@ Best effort \sys{} adds up to $10 \mu$s delay to message delivery, while reliabl
 \sys{} only needs 0.3\% network bandwidth overhead and a CPU core per switch for periodic beacons.
 
 %As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
-As case studies, first, \sys{} scales linearly for a transactional key-value store in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2$\sim$20x especially under high contention.
+As case studies, first, \sys{} scales linearly for a transactional key-value store (KVS) in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2$\sim$20x especially under high contention.
 The latency of \sys{} is consistently low.
 Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. \sys{}'s performance is resilient to packet loss.
 Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2$\sim$4x.
 Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
 
-In summary, the contributions of this paper are: (1) 
+In summary, the contributions of this paper are: (1) a novel abstraction \sys{} that provides causally and totally ordered unicast and scattering; (2) design and implementation of scalable and efficient \sys{} in DCNs; (3) design and evaluation of transactional KVS, 1-RTT replication, and remote data structures using \sys{}.
 
-\RED{Contributions of this paper is as follows: ...}
+This work does not raise any ethical issues.
 
 %For New-Order and Payment transactions in TPC-C~\cite{tpcc} benchmark with 4 warehouses, \sys scales to thousands of concurrent clients, while MVCC only scales to tens of clients.
 

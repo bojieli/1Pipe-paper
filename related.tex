@@ -13,19 +13,18 @@ However, in data center systems, waiting for worst-case delay leads to unaccepta
 
 
 Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive. 
-\sys achieves scalability with in-network computation and incurs little overhead, thus removing one of the biggest criticisms of this primitive.
+\sys provides a scattering primitive with restricted atomicity, and achieves scalability with in-network computation that incurs little overhead, thus removing two criticisms (can't say together and efficiency).
+Although \sys is not a panacea for ordering problems, it shows effectiveness in applications in Sec.\ref{sec:application}.
 
 
 \parab{Network and system co-design.}
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
-Mostly Ordered Multicast~\cite{ports2015designing} and NOPaxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve fast consensus.
-However, consensus does not imply FIFO ordering~\cite{junqueira2011zab}.
+Mostly Ordered Multicast~\cite{ports2015designing} and NO-Paxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve totally ordered broadcast.
+Different from broadcast, \sys{} provides a scattering primitive, and a scalable implementation.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
 NetChain~\cite{jin2018netchain} uses a chain of switches for scale-free sub-RTT coordination.
-Spanner~\cite{corbett2013spanner} and FaRMv2~\cite{shamis2020fast} leverage accurate global time for fast distributed transactions.
+Omnisequencing~\cite{michael2018towards} finds out that DCN topology can provide causal message delivery.
 %\sys{} is inspired by Lamport's idea that the absence of a message can carry information in a synchronous network~\cite{lamport1984using}. %We achieve synchrony via timestamp barriers.
-
-\RED{Towards Causal Datacenter Networks}
 
 %Using Time instead of Timeout for fault-tolerant distributed systems.
 
@@ -35,10 +34,8 @@ Spanner~\cite{corbett2013spanner} and FaRMv2~\cite{shamis2020fast} leverage accu
 
 %\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
 
-\RED{Consider to remove tree-based total order.}
-
 \parab{Tree-based total order.}
-Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}, which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
+Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}. %which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
 At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
 However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
 In addition, it is not practical to implement deterministic merge in commodity network switches.

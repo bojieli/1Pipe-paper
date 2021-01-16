@@ -27,24 +27,20 @@
 
 \begin{figure}[t]
 \centering
-{\includegraphics[width=.48\textwidth]{images/dcn_dag.pdf}}
-\vspace{-20pt}
+\includegraphics[width=.45\textwidth]{images/dcn_dag.pdf}
 \caption{
 	Routing topology of a typical data center network.
 	Each physical switch is split into two logical switches, one for \textit{uplink} and one for \textit{downlink}.
     Dashed virtual link between corresponding uplink and downlink switch indicates ``loopback'' traffic from a lower-layer switch or host to another one.
 }
 \label{fig:dcn}
-\vspace{-1em}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.3\textwidth]{images/cropped_switch_architecture.pdf}
-\vspace{-10pt}
 \caption{Architecture of a typical network switch.}
 \label{fig:switch}
-\vspace{-15pt}
 \end{figure}
 
 Modern data centers typically adopt multi-rooted tree topologies~\cite{leiserson1985fat,greenberg2009vl2} to interconnect hundreds of thousands of hosts. In a multi-rooted tree topology, the shortest path between two hosts first goes up to one of the lowest common ancestor switches, then goes down to the destination.
