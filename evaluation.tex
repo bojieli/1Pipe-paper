@@ -141,7 +141,7 @@ Reliable \sys{} adds an RTT to best effort \sys{} due to Prepare phase in 2PC.
 The RTT and host forwarding delay are proportional to network hop count.
 
 As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, but faulty links may have loss rates above $10^{-6}$.
-We simulate random message drop in \texttt{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
+We simulate random message drop in \textit{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
 As Figure~\ref{fig:reorder-loss} shows, when loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
 Packet loss has almost no impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} latency are 30~$\mu$s and 50~$\mu$s, respectively.
