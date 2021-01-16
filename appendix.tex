@@ -5,7 +5,7 @@
 \parab{Correctness Analysis.}
 A message $M: S \rightarrow R$ with timestamp $T$ should be delivered if and only if $S$ commits $T$ and does not recall $M$. Next, we analyze each type of failure:
 \begin{ecompact}
-	\item Packet loss: deliver because 2PC retransmits packets.
+	\item Packet loss on a fair-loss link: deliver because 2PC retransmits packets.
 	\item $S$ fails before sending commit timestamp $T$: discard according to Discard step. Failure timestamp $T'$ of $S$ is determined by controller, which ensures $S$ has committed $T'$ but no message after $T'$ is delivered.
 	\item $S$ fails after sending commit timestamp $T$: deliver according to 2PC.
 	\item $R$ fails before ACK in Prepare phase: discard according to Recall step.
