@@ -1,5 +1,22 @@
 \section{Appendix}
 \label{appx:proof}
+
+
+\parab{Correctness Analysis.}
+A message $M: S \rightarrow R$ with timestamp $T$ should be delivered if and only if $S$ commits $T$ and does not recall $M$. Next, we analyze each type of failure:
+\begin{ecompact}
+	\item Packet loss: deliver because 2PC retransmits packets.
+	\item $S$ fails before sending commit timestamp $T$: discard according to Discard step. Failure timestamp $T'$ of $S$ is determined by controller, which ensures $S$ has committed $T'$ but no message after $T'$ is delivered.
+	\item $S$ fails after sending commit timestamp $T$: deliver according to 2PC.
+	\item $R$ fails before ACK in Prepare phase: discard according to Recall step.
+	\item $R$ fails after ACK in Prepare phase: deliver after recovery according to Receiver Recovery. If it fails permanently, atomicity is violated.
+	\item $R$ of another message in the same batch fails before ACK: discard according to Recall step.
+	\item $R$ of another message in the same batch fails after ACK: deliver according to 2PC.
+	\item Network is partitioned before $R$ receives commit barrier $T$: deliver after network recovery. Atomicity is violated if network partitions permanently.
+\end{ecompact}
+
+
+\iffalse
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -217,3 +234,4 @@ From (\ref{proof:newnewOle}) and (\ref{proof:newnewOge}), we have $\forall i \in
 	If choose \textbf{avg}, several faster timestamp may be held by many slower timestamp, which leads to a very long convergence time.
 	This is unacceptable when merging two established clusters.
 \end{note}
+\fi

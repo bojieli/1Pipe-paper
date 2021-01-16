@@ -32,13 +32,13 @@ However, a failed component cannot be simply removed as in Sec.~\ref{sec:beacon}
 To achieve restricted failure atomicity in Sec.\ref{subsec:abstration}, we use the network controller in data centers as a perfect failure detector~\cite{chandra1996unreliable}, which collects failure timestamps of processes and broadcasts them to all correct processes.
 The controller itself is replicated using Paxos~\cite{lamport1998part} or Raft~\cite{raft}, so, it is highly available, and only one controller is active at any time.
 
-The procedure to handle failure is as follows:
+The procedure to handle failure is as follows: (see Appendix for correctness analysis)
 
 \begin{ecompact}
 \item \textbf{Detect}: The neighbors of failed components notifies controller along with its last commit timestamp $T$.
 \item \textbf{Determine}: Controller determines \emph{failed processes} and their \emph{failure timestamps} from failed components based on routing graph (Figure~\ref{fig:dcn}). \emph{A process that disconnects from controller in routing graph is regarded as failed}.
 For example, if a host or the only network link from a host fails, all processes on it are disconnected from the data center network, so they are considered to fail simultaneously.
-If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.
+%If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.
 Failure timestamp of a process $P$ is a commit timestamp sent by $P$ but not propagated to any receiver, which is computed as the maximum last commit timestamp reported by all neighbors of $P$ (formally, a cut in routing graph that separates $P$ and all receivers).
 If severe network partition occurs and controller cannot access such a cut, controller may either wait for recovery or sacrifice atomicity between isolated partitions.
 %If a Leaf, Spine, or Core switch fails, and the connectivity among hosts is not interrupted, no process is considered to fail.
@@ -55,19 +55,6 @@ After all failed processes have been handled by all correct processes, controlle
 \parab{Liveness Mechanism.} If a network failure affects connectivity between $S$ and $R$, the Commit phase in 2PC and the Recall step in failure handling may stall: $S$ repeatedly retransmits a message but cannot receive ACK from $R$. In this case, $S$ asks controller to forward the message to $R$, and wait for ACK from controller. If controller also cannot deliver the message, $R$ will be announced as failed, and the undeliverable recall message is recorded. If controller receives ACK of a recall message but cannot forward it to $S$, $S$ will be announced as failed. In summary, if a process does not respond controller within timeout, it is considered as failed.
 
 \parab{Receiver Recovery.} If a process recovers from failure (\emph{e.g.}, the network link or switch recovers), it needs to consistently deliver or discard messages in receive buffer. The controller notifies process of its own failure. Then, the process contacts controller to get host failure notifications since its failure and undeliverable recall messages that are stored at controller. A message with timestamp $T$ in receive buffer is delivered if and only if it is not recalled and the sender is correct at $T$. After delivering buffered messages, because \sys{} assumes a fail-stop model to avoid repeated failure of a process, the recovered process needs to join \sys{} as a new process.
-
-\parab{Correctness Analysis.}
-A message $M: S \rightarrow R$ with timestamp $T$ should be delivered if and only if $S$ commits $T$ and does not recall $M$. Next, we analyze each type of failure:
-\begin{ecompact}
-\item Packet loss: deliver because 2PC retransmits packets.
-\item $S$ fails before sending commit timestamp $T$: discard according to Discard step. Failure timestamp $T'$ of $S$ is determined by controller, which ensures $S$ has committed $T'$ but no message after $T'$ is delivered.
-\item $S$ fails after sending commit timestamp $T$: deliver according to 2PC.
-\item $R$ fails before ACK in Prepare phase: discard according to Recall step.
-\item $R$ fails after ACK in Prepare phase: deliver after recovery according to Receiver Recovery. If it fails permanently, atomicity is violated.
-\item $R$ of another message in the same batch fails before ACK: discard according to Recall step.
-\item $R$ of another message in the same batch fails after ACK: deliver according to 2PC.
-\item Network is partitioned before $R$ receives commit barrier $T$: deliver after network recovery. Atomicity is violated if network partitions permanently.
-\end{ecompact}
 
 %The 2PC procedure ensures that if a message $M$ from $S$ to $R$ with timestamp $T$ is delivered, then all messages from $S$ and below $T$ have been buffered in their corresponding receivers. If the receiver $R$ is correct when it receives commit barrier $T$, $M$ should be delivered.
 %In addition, timestamp aggregation ensures that if a message to $R$ with $T$ is committed, all messages to $R$ below $T$ are also committed.

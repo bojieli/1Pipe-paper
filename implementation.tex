@@ -65,7 +65,7 @@
 
 \RED{Why not RC? Why UD? because RC QPs are out of order. End-to-end flow control and congestion control before assigning the timestamp. Flow control: initial window, after receiving the first packet, receiver allocate fixed receive window according to estimated BDP. Congestion control: can follow DCQCN but did not implement. In RoCEv2, PFC works on Ethernet link layer, can co-work with RDMA UD. RDMA UD is back-pressured by PFC, so the new UD WQEs fail to enqueue, and then return failure to application... Deadlock: flow control vs. barrier message. Congestion control: when multicast a group of messages, wait until all destinations have flow control or congestion control window, then get timestamp and send out.}
 
-We implement an \sys{} library, \texttt{lib1pipe}, at the end host. The library is built on top of RDMA verbs API.
+We implement an \sys{} library, \textit{lib1pipe}, at the end host. The library is built on top of RDMA verbs API.
 For best effort \sys{}, to ensure timestamp monotonicity, the transport must not retransmit packets.
 So, we use RDMA Unreliable Datagram (UD).
 Each \sys{} message is sent as one or more UD packets, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
@@ -81,8 +81,8 @@ An RC message has 6 bytes of header, representing the timestamp.
 The UD message has the same format as best effort \sys{}.
 We maintain a receive buffer to reorder messages before delivery and a send buffer to track unACKed messages.
 
-When \texttt{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer and deliver them to application threads.
-\texttt{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
+When \textit{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer and deliver them to application threads.
+\textit{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
 
 All processes on a host connect to the network via RDMA NIC. If the NIC capable of aggregating timestamp barriers, we consider the NIC as a last-level ``switch'' that interconnects processes. Otherwise, processes within a host need to be exposed directly to its Top-of-Rack (ToR) switch, and the ToR aggregates timestamps of all processes in the rack.
 
