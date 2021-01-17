@@ -13,9 +13,7 @@ Best effort \sys{} provides total order, causal, and FIFO message delivery with 
 A naive approach is ordering all messages with a centralized sequencer, but it would be a bottleneck.
 We aim to preserve message routing topology and achieve scalable ordering in a distributed way.
 
-\RED{Strawman approach: only deliver received messages that are in order, and drop all out-of-order messages. Need to evaluate that this simple approach drops too many messages.}
-
-\RED{add a protection to reordered messages: when one receives a message higher than barrier timestamp, it is dropped and respond with NAK.}
+%\RED{Strawman approach: only deliver received messages that are in order, and drop all out-of-order messages. Need to evaluate that this simple approach drops too many messages.}
 
 %In this section, we design best effort \sys{}.
 %The key idea is to aggregate the minimum message timestamp over the network links, and provide receiver processes with a timestamp lower bound of all future messages.
@@ -67,9 +65,10 @@ The receivers should deliver arrival messages in ascending order of their timest
 
 \parab{Barrier timestamp.}
 When a receiver delivers a message with timestamp $T$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $T$.
-Since different network paths have different propagation and queuing delays, this is not trivial.
+A strawman approach is to only deliver messages with non-decreasing timestamps, and drop all out-of-order messages.
+However, since different network paths have different propagation and queuing delays, the strawman approach will drop too many messages, \textit{e.g.}, 57\% in an experiment where 8 hosts send to one receiver.
 To this end, we introduce the concept of \emph{barrier timestamp}.
-A barrier timestamp is associated with either a link or a node (i.e., a switch or an end host) in the routing graph.
+A barrier timestamp is associated with either a link or a node (\textit{i.e.}, a switch or an end host) in the routing graph.
 The barrier timestamp is the lower bound of message timestamps of all \emph{future arrival messages} from the link or at the node.
 Each receiver can maintain its own barrier timestamp and deliver the messages whose timestamps are smaller than the barrier timestamp.
 
@@ -112,6 +111,7 @@ This algorithm maintains the property of barrier timestamps, given the FIFO prop
 
 
 When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue that sorts packets based on the message timestamp. The receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
+If a process receives an out-of-order message with timestamp above $B$, it is dropped, and a NAK message is returned to the sender. So, if a link or switch is not strictly FIFO, out-of-order messages will not violate correctness.
 
 
 
@@ -161,10 +161,11 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
 
 \parab{Handling host and link failures.}
 When a host or link fails, the barrier timestamp of its neighbors stop to increase. 
-In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a threshold time, e.g., three beacon intervals, the input link is considered to be dead and removed from the input link list.
+In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a threshold time, \textit{e.g.}, 10 beacon intervals, the input link is considered to be dead and removed from the input link list.
 After removal of the failed component, the barrier timestamp resumes increasing.
 
-\RED{Addition of new nodes.}
+\parab{Addition of new nodes.}
+The timestamp of the new node is synchronized with the maximum timestamp of its neighbors. We have to periodically synchronize to the fastest clock because timestamps are monotonic. After the new node syncs clock, each neighbor adds it to the list of input links.
 
 %The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.
 %The reordering delay may increase by at most $T_{beacon}$ because the receiver of an idle link can only increase its barrier timestamp every time it receives a beacon.

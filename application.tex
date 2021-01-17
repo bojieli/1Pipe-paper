@@ -200,7 +200,7 @@ KV lookup throughput reduces by 10\%, due to additional reordering delay.
 If the hash table is replicated traditionally, a write op is sent to the leader, which involves CPU software to replicate to followers.
 With 3 replicas, \sys{} improves KV insertion throughput to 3.4x.
 In \sys{}, all KV operations are ordered by timestamp, so all replicas can serve lookup requests, and the throughput scales with number of replicas.
-In contrast, with leader-follower replication, to maintain consistency of reads and writes, only the leader can serve lookups.
+In contrast, with leader-follower replication, to maintain serializability of reads and writes, only the leader can serve lookups.
 
 
 \subsubsection{Replication in Distributed Storage}

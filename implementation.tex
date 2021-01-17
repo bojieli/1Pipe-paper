@@ -65,16 +65,25 @@
 
 \RED{Why not RC? Why UD? because RC QPs are out of order. End-to-end flow control and congestion control before assigning the timestamp. Flow control: initial window, after receiving the first packet, receiver allocate fixed receive window according to estimated BDP. Congestion control: can follow DCQCN but did not implement. In RoCEv2, PFC works on Ethernet link layer, can co-work with RDMA UD. RDMA UD is back-pressured by PFC, so the new UD WQEs fail to enqueue, and then return failure to application... Deadlock: flow control vs. barrier message. Congestion control: when multicast a group of messages, wait until all destinations have flow control or congestion control window, then get timestamp and send out.}
 
+
+\RED{Return failure and let application retry if end-to-end flow control or congestion control does not allow. Keep in-network queues low to minimize reordering delay.}
+
+
 We implement an \sys{} library, \textit{lib1pipe}, at the end host. The library is built on top of RDMA verbs API.
-For best effort \sys{}, to ensure timestamp monotonicity, the transport must not retransmit packets.
-So, we use RDMA Unreliable Datagram (UD).
+Ideally, we would like to attach timestamps to packets using a programmable NIC.
+However, with a standard RDMA NIC, \sys{} obtains timestamp from CPU cycle counter and assigns it to messages in software.
+Because RDMA RC buffers messages in different QPs, we cannot ensure timestamp monotonicity on the NIC-to-ToR link.
+So, we use RDMA UD instead.
 Each \sys{} message is sent as one or more UD packets, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
-A UD packet has 20 bytes of headers: three timestamps including message, barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, and a packet sequence number for fast loss detection and defragmentation.
+\sys{} implements end-to-end flow and congestion control in software. When a destination is first accessed, it provisions a buffer for the source process.
+
+
+A UD packet has 20 bytes of headers: three timestamps including message, barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, and a packet sequence number for fast loss detection and defragmentation, plus a flag that marks end of message.
 A timestamp is a 48-bit integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 4 seconds, 
 We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
-Ideally, we would like to attach timestamps to packets using a programmable NIC.
-However, with a standard RDMA NIC, \sys{} obtains timestamp from CPU cycle counter and assigns it to message in software.
-\sys{} uses PFC~\cite{pfc} to avoid congestion loss. We leave congestion control to future work.
+
+
+%\sys{} uses PFC~\cite{pfc} to avoid congestion loss. We leave congestion control to future work.
 
 For reliable \sys{}, we use RDMA Reliable Connection (RC) to send messages in prepare phase, and use UD to send commit barrier to ToR switch.
 An RC message has 6 bytes of header, representing the timestamp.
