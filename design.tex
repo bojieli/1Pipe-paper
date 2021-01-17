@@ -111,7 +111,7 @@ This algorithm maintains the property of barrier timestamps, given the FIFO prop
 
 
 When the receiver receives a packet with barrier timestamp $B$, it first buffers the packet in a priority queue that sorts packets based on the message timestamp. The receiver knows that the message timestamp of all future arrival packets will be larger than $B$. Hence, it delivers all buffered packets with the message timestamp below $B$ to the application for processing.
-If a process receives an out-of-order message with timestamp above $B$, it is dropped, and a NAK message is returned to the sender. So, if a link or switch is not strictly FIFO, out-of-order messages will not violate correctness.
+If a process receives a message with timestamp above $B$, it is dropped, and a NAK message is returned to the sender. So, if a link or switch is not strictly FIFO, out-of-order messages will not violate correctness.
 
 
 

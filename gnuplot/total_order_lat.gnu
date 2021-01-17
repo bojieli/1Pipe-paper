@@ -2,7 +2,7 @@ fn = "total_order_lat"
 xlbl = "Number of Processes"
 ylbl = "Latency (us, log)"
 load "lp.gnu"
-set yrange [4:100]
+set yrange [4:128]
 #set yrange [0.0625:64]
 set logscale y 2
 set format y "2^{%L}"

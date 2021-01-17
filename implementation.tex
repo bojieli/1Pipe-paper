@@ -63,10 +63,7 @@
 
 \subsection{Processing on End Hosts}
 
-\RED{Why not RC? Why UD? because RC QPs are out of order. End-to-end flow control and congestion control before assigning the timestamp. Flow control: initial window, after receiving the first packet, receiver allocate fixed receive window according to estimated BDP. Congestion control: can follow DCQCN but did not implement. In RoCEv2, PFC works on Ethernet link layer, can co-work with RDMA UD. RDMA UD is back-pressured by PFC, so the new UD WQEs fail to enqueue, and then return failure to application... Deadlock: flow control vs. barrier message. Congestion control: when multicast a group of messages, wait until all destinations have flow control or congestion control window, then get timestamp and send out.}
-
-
-\RED{Return failure and let application retry if end-to-end flow control or congestion control does not allow. Keep in-network queues low to minimize reordering delay.}
+%\RED{Why not RC? Why UD? because RC QPs are out of order. End-to-end flow control and congestion control before assigning the timestamp. Flow control: initial window, after receiving the first packet, receiver allocate fixed receive window according to estimated BDP. Congestion control: can follow DCQCN but did not implement. In RoCEv2, PFC works on Ethernet link layer, can co-work with RDMA UD. RDMA UD is back-pressured by PFC, so the new UD WQEs fail to enqueue, and then return failure to application... Deadlock: flow control vs. barrier message. Congestion control: when multicast a group of messages, wait until all destinations have flow control or congestion control window, then get timestamp and send out.}
 
 
 We implement an \sys{} library, \textit{lib1pipe}, at the end host. The library is built on top of RDMA verbs API.
@@ -74,21 +71,23 @@ Ideally, we would like to attach timestamps to packets using a programmable NIC.
 However, with a standard RDMA NIC, \sys{} obtains timestamp from CPU cycle counter and assigns it to messages in software.
 Because RDMA RC buffers messages in different QPs, we cannot ensure timestamp monotonicity on the NIC-to-ToR link.
 So, we use RDMA UD instead.
-Each \sys{} message is sent as one or more UD packets, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
-\sys{} implements end-to-end flow and congestion control in software. When a destination is first accessed, it provisions a buffer for the source process.
+Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
 
+\sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the API returns fail. When all messages of a scattering satisfy both receive and congestion windows, they are attached with the current timestamp and sent out.
+This means that when some destinations of a scattering are congested, it is held back in the send buffer rather than slowing down the entire network.
+Beacons are periodically sent to the ToR switch.
 
-A UD packet has 20 bytes of headers: three timestamps including message, barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, and a packet sequence number for fast loss detection and defragmentation, plus a flag that marks end of message.
+A UD packet in \sys{} adds 24 bytes of headers: 3 timestamps including message, best-effort barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, PSN, plus an opcode and a flag that marks end of message.
 A timestamp is a 48-bit integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 4 seconds, 
 We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
 
 
 %\sys{} uses PFC~\cite{pfc} to avoid congestion loss. We leave congestion control to future work.
 
-For reliable \sys{}, we use RDMA Reliable Connection (RC) to send messages in prepare phase, and use UD to send commit barrier to ToR switch.
-An RC message has 6 bytes of header, representing the timestamp.
-The UD message has the same format as best effort \sys{}.
-We maintain a receive buffer to reorder messages before delivery and a send buffer to track unACKed messages.
+%For reliable \sys{}, we use RDMA Reliable Connection (RC) to send messages in prepare phase, and use UD to send commit barrier to ToR switch.
+%An RC message has 6 bytes of header, representing the timestamp.
+%The UD message has the same format as best effort \sys{}.
+%We maintain a receive buffer to reorder messages before delivery and a send buffer to track unACKed messages.
 
 When \textit{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer and deliver them to application threads.
 \textit{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
@@ -97,9 +96,8 @@ All processes on a host connect to the network via RDMA NIC. If the NIC capable 
 
 The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
 
-\RED{finding the minimum timestamp in a single (/small) clock cycle, where you have 256 ports, or the potential need to access a register in multiple places in the pipeline (the last point must have been addressed, else the evaluation would have failed).}
+%\RED{finding the minimum timestamp in a single (/small) clock cycle, where you have 256 ports, or the potential need to access a register in multiple places in the pipeline (the last point must have been addressed, else the evaluation would have failed).}
 
-\RED{wall-clock reset to earlier time: clock monotonic}
 
 %We do not need to take special care of intra-host communication between processes: because the packets loopback at the NIC, they take a shorter path than looping back at the switch, so, the packets must arrive earlier than the barrier timestamp.
 
@@ -143,11 +141,13 @@ We implement in-network processing at three types of network switches with diffe
 \subsubsection{Reconfigurable Switching Chips}
 \label{sec:p4}
 A reconfigurable switching chip can maintain 
-a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip. 
+a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip.
 
-We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively. \sys{} also needs 2 state registers to store the minimum of per-link barriers.
+We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively.
+For ToR switches, each process in the cluster is regarded as an input link because the NIC cannot aggregate barriers.
+\sys{} also needs 2 state registers to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
-For each packet, barrier of the input link is first updated, then switch barrier is updated to the minimum of link barrier and the original switch barrier. Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
+For each packet, barrier of the input link is first updated, then switch barrier is updated to the minimum of link barrier and the original switch barrier. The switch uses multi-stage hierarchical merge to compute the minimum. Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
 
 
 %We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, loss-free barrier and delivery barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
