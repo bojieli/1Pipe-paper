@@ -161,8 +161,8 @@ We introduce a beacon interval $T_{beacon}$. When a host or a switch output link
 
 \parab{Handling host and link failures.}
 When a host or link fails, the barrier timestamp of its neighbors stop to increase. 
-In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a threshold time, \textit{e.g.}, 10 beacon intervals, the input link is considered to be dead and removed from the input link list.
-After removal of the failed component, the barrier timestamp resumes increasing.
+In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a timeout, \textit{e.g.}, 10 beacon intervals, the input link is considered to be dead and removed from the input link list.
+After removal of the failed link, the barrier timestamp resumes increasing.
 
 \parab{Addition of new nodes.}
 The timestamp of the new node is synchronized with the maximum timestamp of its neighbors. We have to periodically synchronize to the fastest clock because timestamps are monotonic. After the new node syncs clock, each neighbor adds it to the list of input links.
