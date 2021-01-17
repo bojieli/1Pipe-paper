@@ -73,9 +73,9 @@ Because RDMA RC buffers messages in different QPs, we cannot ensure timestamp mo
 So, we use RDMA UD instead.
 Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
 
-\sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the API returns fail. When all messages of a scattering satisfy both receive and congestion windows, they are attached with the current timestamp and sent out.
+\sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the send API returns fail. When all messages of a scattering are within both receive and congestion windows, they are attached with the current timestamp and sent out.
 This means that when some destinations of a scattering are congested, it is held back in the send buffer rather than slowing down the entire network.
-Beacons are periodically sent to the ToR switch.
+Beacon packets are sent to the ToR switch, and they are not blocked by flow control.
 
 A UD packet in \sys{} adds 24 bytes of headers: 3 timestamps including message, best-effort barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, PSN, plus an opcode and a flag that marks end of message.
 A timestamp is a 48-bit integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 4 seconds, 
@@ -144,7 +144,6 @@ A reconfigurable switching chip can maintain
 a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip.
 
 We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively.
-For ToR switches, each process in the cluster is regarded as an input link because the NIC cannot aggregate barriers.
 \sys{} also needs 2 state registers to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
 For each packet, barrier of the input link is first updated, then switch barrier is updated to the minimum of link barrier and the original switch barrier. The switch uses multi-stage hierarchical merge to compute the minimum. Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
@@ -165,23 +164,23 @@ For a switch without a reconfigurable router chip, \textit{e.g.,} Arista 7060CX,
 Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
 
-Because the switch CPU cannot process every packet, data packets are forwarded by the switching chip directly.%, as Figure~\ref{fig:commodity} shows.
+Because the switch CPU cannot process every packet, data packets are forwarded by the switching chip directly. %, as Figure~\ref{fig:commodity} shows.
 The switch CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 
-Compared with the reconfigurable switching chip, this approach slacks the barriers in two aspects.
-First, the barriers are updated by periodical beacons instead of by every packet.
-Second, compared to switching chip, switch CPU introduces higher processing delay.
-So, the average delay overhead is (switch processing delay $\times$ number of hops + beacon interval/2 + clock skew).
+%Compared with the reconfigurable switching chip, this approach slacks the barriers in two aspects.
+%First, the barriers are updated by periodical beacons instead of by every packet.
+%Second, compared to switching chip, switch CPU introduces higher processing delay.
+%So, the average delay overhead is (switch processing delay $\times$ number of hops + beacon interval/2 + clock skew).
 
 \begin{figure*}[t]
 	\begin{minipage}[]{.32\textwidth}
 		\centering
-		\subfloat[Throughput.]{
+		\subfloat[Throughput.\label{fig:total-order-tput}]{
 			\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
 		}
 		\newline
-		\subfloat[Latency.]{
+		\subfloat[Latency.\label{fig:total-order-lat}]{
 			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
 		}
 		\caption{Scalability comparison of total order multicast algorithms.}
@@ -223,8 +222,8 @@ So, the average delay overhead is (switch processing delay $\times$ number of ho
 If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. The challenge is to maintain the FIFO property on network links, \emph{i.e.}, beacons with barrier timestamps on a network link $L$ must pass through $L$. To this end, we designate an \emph{end-host representative} for each network switch. %The location of the representative is arbitrary and does not need to be unique.
 
 %As Figure~\ref{fig:end-host} shows, 
-For two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the route between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
+For two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the routing path between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
 We install tunnel termination rules in each network switch to de-capsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
 
-Beacon packets use one-sided RDMA write to update per-input-link barriers on representative host. A thread on the host iteratively computes minimum barrier and broadcasts new beacons to representatives of downstream switches.
-The average delay overhead is ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew). Because end hosts support RDMA and its CPUs are more powerful than switch's, the overall reordering delay may be shorter than using switch CPU.
+Beacon packets use one-sided RDMA write to update per-input-link barriers on representative host. A thread on the host periodically computes the minimum of barriers and broadcasts new beacons to representatives of downstream switches.
+The average delay overhead is ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew). Because CPUs on end hosts are more powerful than switch, the overall reordering delay may be shorter than using switch CPU.

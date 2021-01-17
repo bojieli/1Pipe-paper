@@ -180,11 +180,11 @@ When conflicts are few, OCC is better; with more conflicts, 2PL is better~\cite{
 
 Figure~\ref{fig:tpcc-loss} shows TXN throughput under different simulated packet loss rates.
 We fix process number to be 64.
-With \sys{}, although packet loss affects TXN latency (not measured in TPC-C benchmark, but should be similar to Figure~\ref{fig:reorder-loss}), the impact on throughput is insignificant. %because the network is fully utilized to transmit new TXNs during retransmission.
+With \sys{}, although packet loss affects TXN latency (not measured in TPC-C, but should be similar to Figure~\ref{fig:reorder-loss}), the impact on throughput is insignificant. %because the network is fully utilized to transmit new TXNs during retransmission.
 However, in 2PL and OCC commit, a locked object cannot be released until the TXN completes, so, TXN throughput under contention is inversely proportional to TXN latency.
 TXN latency increases with packet loss rate because replicas wait for the last retransmitted packet to maintain sequential log ordering.
 
-Finally, we evaluate failure recovery of replicas by disconnecting the physical link of host. \sys{} detects failure and removes the replica in $181 \pm 21 \mu$s. The affected TXNs are aborted and retried, with an average delay of $308 \pm 122 \mu$s. It is much faster than using application heartbeats to detect failures, which typically takes milliseconds. After the link reconnects, replica synchronizes log from other replicas in 25 ms.
+Finally, we evaluate failure recovery of replicas by disconnecting the physical link of a host. \sys{} detects failure and removes the replica in $181 \pm 21 \mu$s. The affected TXNs are aborted and retried, with an average delay of $308 \pm 122 \mu$s. It is much faster than using application heartbeats to detect failures, which takes milliseconds. After the link reconnects, the replica synchronizes log from other replicas in 25 ms.
 
 \subsubsection{Remote Data Structures}
 \label{subsec:data-structure}
@@ -206,7 +206,7 @@ In contrast, with leader-follower replication, to maintain serializability of re
 \subsubsection{Replication in Distributed Storage}
 \label{subsec:ceph}
 
-We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written in order. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 62 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
+We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written sequentially. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 62 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
 
 
 %\subsection{Multiple Round-Trip Transactions}

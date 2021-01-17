@@ -4,8 +4,6 @@
 \subsection{Abstractions of 1Pipe}
 \label{subsec:abstration}
 
-\RED{Explain the magic sauce of \sys{}.}
-
 \sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destinations, all packets of the messages are labeled with a same timestamp of the sender host. The total order property is: \emph{each process receives messages from different hosts in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
@@ -57,7 +55,7 @@ Reliable \sys{} also provides \emph{restricted failure atomicity}, which means a
 Specifically, atomicity is guaranteed on sender failure.
 If receivers recover from failure, they deliver or discard messages consistently with correct receivers.
 In fact, full failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
-Applications may solve permanent failures with replication and traditional consensus algorithms~\cite{lamport1998part,raft}.
+\sys{} provides a fast path and applications may solve permanent failures with replication and traditional consensus~\cite{lamport1998part,raft}.
 %As we will show in Sec.~\ref{sec:reliable}, compared to best effort \sys{}, reliable \sys{} adds one RTT to message delivery.
 
 \iffalse
@@ -139,7 +137,7 @@ The ability to totally order communication events is the root power of removing 
 This power is also a perfect match with \textit{total store ordering} (TSO) memory model~\cite{sewell2010x86} in a distributed shared memory (DSM) system. In TSO, each processor observes a consistent ordering of writes from all other cores. In other words, processors must not observe WAW and IRIW hazards.
 Compared to weaker memory models, TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}, thereby simplifying programming and reducing fence overheads.
 
-\subsubsection{Replication}
+\subsubsection{1-RTT Replication}
 
 %The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
 

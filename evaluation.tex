@@ -24,7 +24,7 @@ We summarize the key findings as follows:
 \subsection{Methodology}
 \label{sec:testbed}
 
-Our testbed has 32 servers and 10 Arista 7060CX 100G switches~\cite{arista}, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
+Our testbed has 10 Arista 7060CX 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
 Each server has 2 Xeon E5 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
 We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch, so beacon packets do not need encapsulation.
 Because we only have one switch with Barefoot Tofino~\cite{tofino} reconfigurable chip, we only use it for microbenchmarks.
@@ -116,18 +116,18 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \subsection{Microbenchmarks}
 
 \parab{Scalability.}
-Figure~\ref{fig:total-order} compares the scalability of \sys{} with other total order multicast algorithms using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at programmable switch~\cite{eris} or host NIC~\cite{kaminsky2016design}.
+Figure~\ref{fig:total-order-tput} compares the scalability of \sys{} with other total order multicast algorithms using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at programmable switch~\cite{eris} or host NIC~\cite{kaminsky2016design}.
 Each process broadcasts messages to all processes.
-\sys{} scales linearly to 512 processes, achieving 5M messages per second per process.
+\sys{} scales linearly to 512 processes, achieving 5M messages per second per process and 80M msg/s per host.
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
 Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead.%\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
-Reconfigurable chip and host representative deliver the same high throughput (not shown) because we decouple message forwarding from barrier propagation.
+Reconfigurable chip and host representative (not shown) deliver the same high throughput because we decouple message forwarding from barrier propagation.
 
 %\RED{Compare with optimized Lamport timestamp where received timestamps are exchanged per interval. Optimized Lamport timestamp has a trade-off between latency and throughput. e.g. use 50\% throughput for timestamp exchange: 2.5M msg/s, 512 processes, 5K msg/s, interval = 1/5K = 200 us.}
 
-In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets.
+In contrast, the sequencer is a central bottleneck and introduces extra network delays to detour packets (Figure~\ref{fig:total-order-lat}).
 The latency soars when throughput of sequencer saturates and congestion appears.
-Token shows consistent low throughput because only one process may send at any time.
+Token has low throughput because only one process may send at any time.
 We apply a common optimization to Lamport timestamp~\cite{lamport1978time} which exchanges received timestamps per interval rather than per message.
 It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200$\mu$s.
 
@@ -136,16 +136,16 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 
 \parab{Message delivery latency.}
-Figure~\ref{fig:reorder-testbed} shows the average message delivery latency of best effort (BE) and reliable (R) \sys{}.
+Figure~\ref{fig:total-order-lat} and \ref{fig:reorder-testbed} shows the average message delivery latency of best effort (BE) and reliable (R) \sys{}.
 Best effort \sys{} with reconfigurable chip delivers the smallest latency overhead than unordered delivery. The overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus clock skew. In contrast, end host representatives introduce extra forwarding delay from the switch to the end host. In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
-Reliable \sys{} adds an RTT to best effort \sys{} due to Prepare phase in 2PC.
+R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.
 The RTT and host forwarding delay are proportional to network hop count.
 
 As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, but faulty links may have loss rates above $10^{-6}$.
 We simulate random message drop in \textit{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
 As Figure~\ref{fig:reorder-loss} shows, when loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
-Packet loss has almost no impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
-Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} latency are 30~$\mu$s and 50~$\mu$s, respectively.
+Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
+Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
 

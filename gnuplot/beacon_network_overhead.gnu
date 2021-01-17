@@ -1,6 +1,6 @@
 fn = "beacon_network_overhead"
 xlbl = "Beacon Interval (us)"
-ylbl = "Portion of Overhead Traffic"
+ylbl = "Percentage of Overhead Traffic"
 load "lp.gnu"
 #set yrange [0.0625:64]
 set logscale y 10
