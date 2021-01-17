@@ -5,7 +5,7 @@
 %This paper proposes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in linearizable and serializable order via data center networks. \sys is linearizable as the message delivery order of each host is identical to the wall clock order when the messages are sent.\sys is seralizable as messages in a scattering group are delivered if and only if none of its participants fails.\sys guarantees correctness and liveness under packet losses, Byzantine failures of hosts and crash failures of network switches.\sys is scalable as it distributes work to each switch and end host. At its core, \sys achieves synchrony by separating the bookkeeping of order information from message forwarding.Network switches aggregate order information and detect packet losses, while end hosts reorder and retransmit messages.\sys achieves consensus by leveraging switches to detect and notify host failures.
 
 
-This paper proposes \sys{}, a communication abstraction that enables different receivers to process messages from senders in a consistent total order.
+This paper proposes \sys{}, a novel communication abstraction that enables different receivers to process messages from senders in a consistent total order.
 \sys{} provides both unicast and multicast-like scattering in a causally and totally ordered manner.
 \sys{} can simplify and accelerate many distributed applications, \emph{e.g.}, transactional key-value stores, log replication, and distributed data structures.
 
