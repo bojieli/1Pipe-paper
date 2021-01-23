@@ -4,7 +4,7 @@
 \subsection{Abstractions of 1Pipe}
 \label{subsec:abstration}
 
-\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each process has two roles: sender and receiver. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destination processes, all packets of the messages are labeled with a same timestamp of the sender host. The total order property is: \emph{each process receives messages from different processes in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, the timestamp of the host must be higher than T}.
+\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each process has two roles: sender and receiver. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destination processes, all packets of the messages are labeled with a same timestamp of the sender host. Unlike multicast, the list of destinations does not need pre-registration. The total order property is: \emph{each process receives messages from different processes in non-decreasing timestamp order}. The causality property is: \emph{when a process receives a message with timestamp T, the timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
 \centering
@@ -35,13 +35,13 @@
 \label{tab:abstraction}
 \end{table}
 
-As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible. \sys{} guarantees causal and total order properties by buffering messages at the receiver and delivering them when it receives barrier timestamps aggregated from the network. So, best effort \sys{} delivers message in 0.5 RTT plus barrier wait time. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_send/recv} is a \emph{best effort} service where packet loss is possible. \sys{} guarantees causal and total order properties by buffering messages at the receiver and delivering them when it receives barrier timestamps aggregated from the network. So, best effort \sys{} delivers message in 0.5 RTT plus barrier wait time. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
 Best effort \sys{} detects lost packets via end-to-end ACK, but does not retransmit them.
-Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
+Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
-So, the application can assume that best effort \sys{} is almost reliable, but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process.
+So, applications can assume that best effort \sys{} is almost reliable but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process.
 
-Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender, receiver processes and the network do not fail}.
+Second, \textit{onepipe\_reliable\_send/recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender, receiver processes and the network do not fail}.
 It retransmits packets in the case of packet loss.
 In this paper, we only consider crash failures.
 When a process or network fails, message delivery stalls.
@@ -143,8 +143,8 @@ Replication is essential for fault tolerance.
 Traditional multi-client replication requires 2 RTTs because client requests must be serialized (\textit{e.g.}, sent to a primary) before sending to replicas~\cite{park2019exploiting}.
 With \sys{}, we can achieve 1-RTT replication without making assumptions on log content, because the network serializes messages.
 A client can directly send a log message to all replicas with a scattering, and each replica orders logs according to timestamp (ties are broken by the ID of client).
-Because reliable \sys{} requires 2 RTTs, we use unreliable \sys{} and handle packet loss in more clever way.
-To detect inconsistent logs due to packet loss, each replica maintains a checksum of all log messages. When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. If a client sees all checksums equal, the logs of replicas are consistent at least until the client's log message, and the replication succeeds. Otherwise, there must be lost messages in some replica, and the client notifies the primary replica to initiate a failure recovery protocol, which uses a traditional consensus protocol (\textit{e.g.}, Raft~\cite{raft}) to remove inconsistent log entries and make checksums match. This 1-RTT replication protocol works well when packet loss and host failure are rare. Because \sys{} leverages the DCN to detect failures, it is typically faster than application heartbeat timeout.
+Because reliable \sys{} has an extra RTT, we use unreliable \sys{} and handle packet loss in more clever way.
+To detect inconsistent logs due to packet loss, each replica maintains a checksum of all log messages. When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. The return message does not need \sys{}. If a client sees all checksums equal, the logs of replicas are consistent at least until the client's log message, and the replication succeeds. Otherwise, there must be lost messages in some replica, and the client notifies the primary replica to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match. This 1-RTT replication protocol works well when packet loss and host failure are rare. Because \sys{} leverages the DCN to detect failures, it is typically faster than application heartbeat timeout.
 
 %\RED{1 rtt replication -- unreliable \sys{}, add timestamps together (or use a stronger hash function to avoid coincidental conflict), blockchain like approach. When clients see unequal responses, there must be lost messages, and the failure recovery protocol is triggered.}
 
@@ -175,7 +175,7 @@ If a recipient or the network permanently fails, atomicity violation is not obse
 %Reliable \sys{} can handle packet loss and failures.
 %If the sender or a receiver fails, none of the messages in a batch are delivered. If both sender and all receivers are correct, all messages are delivered in total order.
 
-If we do not need strict wall-clock ordering of read-only DAOs, as an optimization, we can use unreliable \sys{} for read-only DAOs and reliable \sys{} for other DAOs. If a read-only DAO fails due to packet loss, it can be retried.
+As an optimization, we can use unreliable \sys{} for read-only DAOs because if it fails due to packet loss, the initiator can retry it.
 In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \sys{} provides 1-RTT read-only DAOs with strict serializability, no storage overhead and close-to-optimal throughput, but at the expense of blocking operations until the network barrier message.
 
 %There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff.
@@ -197,8 +197,8 @@ Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the met
 In general transactions with Opacity~\cite{shamis2019fast}, to obtain read and write timestamps, a transaction needs to query a centralized sequencer (\textit{e.g.}, Spanner~\cite{corbett2013spanner}) or wait for clock uncertainty (\textit{e.g.}, FaRMv2~\cite{shamis2019fast} waits about $20 \mu$s). Using \sys{}, local timestamp can be directly used as transaction timestamp because messages of previous transactions must be delivered before the current one.
 
 \sys{} timestamp provides a global synchronization point.
-For example, to take a distributed snapshot~\cite{chandy1985distributed}, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state upon reception. Each process also records in-flight sent messages with a higher timestamp than $T$.
-This is a consistent snapshot algorithm, because no message with timestamp higher than $T$ has been received by any process in the snapshot.
+For example, to take a consistent distributed snapshot~\cite{chandy1985distributed}, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state upon reception. Each process also records in-flight sent messages with a higher timestamp than $T$.
+%This is a consistent snapshot algorithm, because no message with timestamp higher than $T$ has been received by any process in the snapshot.
 
 %\RED{General transactions with Opacity (cite FaRMv2): can remove waiting for clock uncertainty in read and write timestamps. Because \sys{} ensures locks of previous transaction are visible to new read or commit transactions. FaRMv2~\cite{shamis2019fast} leverage accurate global time for fast distributed transactions.}
 

@@ -35,7 +35,7 @@ As another example, multiple shards of a distributed database generate logs to m
 
 
 
-In this work, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receiver processes to deliver messages from sender processes in a consistent order.
+As a reaction to this complexity, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receiver processes to deliver messages from sender processes in a consistent order.
 More precisely, \sys{} resembles Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers; (2) messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. In addition to unicast, \sys{} also supports \emph{scattering}, which groups multiple messages to different receivers at the same position of the total order. Different from traditional multicast, each message in a scattering has distinct content and destination. Users do not need to define multicast channels or groups because the network is a big CATOCS channel.
 
 

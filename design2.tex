@@ -6,7 +6,7 @@ When a receiver delivers a message with timestamp $T$, it must make sure that al
 So, if a receiver is unaware of packet loss, it cannot reliably deliver messages according to the barrier timestamp.
 In-network packet loss detection still does not solve the problem, because \emph{host failure and packet loss may happen together}.
 Consider an example where host $A$ sends to $B$, and then sends to $C$ via a different network path. The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes. The packet $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered. Failure to deliver $A \rightarrow B$ and delivery of $A \rightarrow C$ violates reliable ordering property.
-Although the probability of simultaneous packet loss and host failure is very low, a reliable service still needs to take this into account.
+Although the probability of simultaneous packet loss and host failure is very low, reliable \sys{} still needs to take this into account.
 
 
 \begin{figure}[t]
@@ -16,7 +16,7 @@ Although the probability of simultaneous packet loss and host failure is very lo
 	\label{fig:2PC}
 \end{figure}
 
-The key idea of reliable \sys{} is a \emph{Two Phase Commit (2PC)} approach, as Figure~\ref{fig:2PC} shows:
+Our key idea is \emph{Two Phase Commit (2PC)}, as Figure~\ref{fig:2PC} shows:
 
 \begin{ecompact}
 \item \textbf{Prepare phase}: Sender puts messages into send buffer, and transmits them with timestamps. Network switches do NOT need to aggregate timestamp barriers. Receivers store the messages in receive buffer, and respond with ACKs. Senders wait for ACKs to detect packet loss, and retransmit messages if packets are lost in-flight.

@@ -77,10 +77,10 @@ Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} me
 This means that when some destinations or network paths of a scattering are congested, it is held back in the send buffer rather than slowing down the entire network.
 Beacon packets are sent to the ToR switch, and they are not blocked by flow control.
 
-A UD packet in \sys{} adds 24 bytes of headers: 3 timestamps including message, best-effort barrier, and commit barrier\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}, PSN, plus an opcode and a flag that marks end of message.
+A UD packet in \sys{} adds 24 bytes of headers: 3 timestamps including message, best-effort barrier, and commit barrier; PSN; an opcode and a flag that marks end of message.
 A timestamp is a 48-bit integer, indicating the number of nanoseconds passed on the host. %Since the timestamps wrap around in 4 seconds, 
 We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
-
+%\footnote{Barriers for best effort and reliable \sys{} are independent. If a cluster only needs one service, only one barrier is needed.}
 
 %\sys{} uses PFC~\cite{pfc} to avoid congestion loss. We leave congestion control to future work.
 
@@ -183,7 +183,7 @@ Because data and beacon packets are FIFO in switch queues and on network links, 
 		\subfloat[Latency.\label{fig:total-order-lat}]{
 			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
 		}
-		\caption{Scalability comparison of total order multicast algorithms.}
+		\caption{Scalability comparison of total order broadcast algorithms.}
 		\label{fig:total-order}
 	\end{minipage}
 	\hspace{0.01\textwidth}

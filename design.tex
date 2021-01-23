@@ -59,9 +59,9 @@ We aim to preserve message routing topology and achieve scalable ordering in a d
 \parab{Message timestamp.}
 \sys sender assigns a non-decreasing timestamp for each message. Messages in a batch have a same timestamp.
 %A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps.
-Given recent efforts on sub-$\mu$s accurate clock synchronization in data centers~\cite{correll2005design,lee2016globally,geng2018exploiting}, we synchronize monotonic time of hosts, and use the local clock time as message timestamps.
+Given recent efforts on $\mu$s accurate clock synchronization in data centers~\cite{correll2005design,lee2016globally,geng2018exploiting}, we synchronize monotonic time of hosts, and use the local clock time as message timestamps.
 Message timestamp determines the delivery order at receiver.
-The receivers should deliver arrival messages in ascending order of their timestamps (ties are broken through sender ID).
+The receivers deliver arrival messages in ascending order of their timestamps (ties are broken through sender ID).
 
 \parab{Barrier timestamp.}
 When a receiver delivers a message with timestamp $T$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $T$.
@@ -164,8 +164,9 @@ When a host or link fails, the barrier timestamp of its neighbors stop to increa
 In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a timeout, \textit{e.g.}, 10 beacon intervals, the input link is considered to be dead and removed from the input link list.
 After removal of the failed link, the barrier timestamp resumes increasing.
 
-\parab{Addition of new nodes.}
-The timestamp of the new node is synchronized with the maximum timestamp of its neighbors. We have to periodically synchronize to the fastest clock because timestamps are monotonic. After the new node syncs clock, each neighbor adds it to the list of input links.
+\parab{Addition of new hosts and links.}
+For a new host, its timestamp is synchronized to the maximum timestamp of its neighbors. After a link is added, because a packet on the new link may have a smaller barrier timestamp $R_i$ than the barrier $B_{new}$ of destination switch, the switch updates $B_{new}$ only if $R_i$ is larger than the original $B_{new}$.
+
 
 %The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.
 %The reordering delay may increase by at most $T_{beacon}$ because the receiver of an idle link can only increase its barrier timestamp every time it receives a beacon.
