@@ -146,9 +146,10 @@ We implement the in-network processing using P4~\cite{bosshart2014p4} and compil
 \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively.
 \sys{} also needs 2 state registers per switch to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
-For each packet, barrier of the input link is first updated.
-Because each pipeline stage in the switch can only compute the minimum of two barriers, the switch uses a hierarchy of registers with $O(\log N)$ stages to compute the minimum link barrier.
-Finally, the barrier in packet is updated to the switch barrier. The control plane software routinely checks link barriers, and report failure if a barrier significantly lags behind.
+For each packet, barrier register of the input link is first updated in the first stateful pipeline stage of the switch.
+Because each stage can only compute the minimum of two barriers, the switch uses a hierarchy of registers with $O(\log N)$ stages to compute the minimum link barrier.
+At the final pipeline stage, the barrier in packet is updated to the switch barrier.
+The control plane software routinely checks link barriers and reports failure if a link barrier significantly lags behind.
 
 
 %We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, loss-free barrier and delivery barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
@@ -165,9 +166,11 @@ For a switch without a reconfigurable router chip, \textit{e.g.,} Arista 7060CX,
 %Data-plane programmable switches are currently not widely available in data centers.
 Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
-
 Because the switch CPU cannot process every packet, data packets are forwarded by the switching chip directly. %, as Figure~\ref{fig:commodity} shows.
-The switch CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
+The CPU sends beacons periodically on each output link, regardless of whether the link is idle or busy.
+Received barriers in beacons are stored in registers per input link.
+A thread on the CPU periodically computes the minimum of link barriers and broadcasts new beacons to all output links.
+Computing the minimum barrier takes hundreds of cycles, which is not a bottleneck compared to the cost of broadcast.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 
 %Compared with the reconfigurable switching chip, this approach slacks the barriers in two aspects.
@@ -227,5 +230,6 @@ If the switch vendor does not expose access interfaces to switch CPUs, we can of
 For two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the routing path between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
 We install tunnel termination rules in each network switch to de-capsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
 
-Beacon packets use one-sided RDMA write to update per-input-link barriers on representative host. A thread on the host periodically computes the minimum of barriers and broadcasts new beacons to representatives of downstream switches.
+Beacon packets use one-sided RDMA write to update barriers on representative host.
+Similar to Sec.\ref{sec:commodity}, minimum barriers are periodically computed and broadcast to downstream representatives.
 The average delay overhead is ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew). Because CPUs on end hosts are more powerful than switch, the overall reordering delay may be shorter than using switch CPU.
