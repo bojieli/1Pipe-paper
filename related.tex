@@ -20,9 +20,9 @@ Although \sys is not a panacea for ordering problems, it shows effectiveness in 
 \parab{Network and system co-design.}
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
 Mostly Ordered Multicast~\cite{ports2015designing} and NO-Paxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve totally ordered broadcast.
-Different from broadcast, \sys{} provides a scattering primitive, and a scalable implementation.
+Different from broadcast, \sys{} provides a scattering primitive and a scalable implementation.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
-NetChain~\cite{jin2018netchain} uses a chain of switches for scale-free sub-RTT coordination.
+NetChain~\cite{jin2018netchain}, NetLock~\cite{yu2020netlock}, NetPaxos~\cite{dang2015netpaxos}, and Daiet~\cite{sapio2017network} offloads important distributed middlewares to programmable switches.
 Omnisequencing~\cite{michael2018towards} finds out that DCN topology can provide causal message delivery.
 %\sys{} is inspired by Lamport's idea that the absence of a message can carry information in a synchronous network~\cite{lamport1984using}. %We achieve synchrony via timestamp barriers.
 
