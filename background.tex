@@ -70,7 +70,7 @@ One key property of the switch is that the queuing model ensures \emph{FIFO} pro
 The switch can provide good programmability. First, the CPU can be used to process (a small amount of) packets~\cite{lu2011serverswitch}.
 Second, the switching chip is increasingly reconfigurable in recent years. For example, Tofino chip from Barefoot networks~\cite{tofino} 
 %uses RMT architecture~\cite{bosshart2013forwarding} with 
-supports flexible packet parsers, reconfigurable pipelines and stateful memory. Users can program Tofino using P4~\cite{bosshart2014p4} to achieve \textit{customized per-packet processing}.
+supports flexible packet parsers and stateful registers. Users can program Tofino using P4~\cite{bosshart2014p4} to achieve \textit{customized stateful per-packet processing}.
 
 Despite good programmability, the switch typically has limited buffer resource.
 The average per-port on-chip buffer is typically hundreds of kilobytes~\cite{bai2017congestion} in size.
