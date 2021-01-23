@@ -35,28 +35,26 @@
 \label{tab:abstraction}
 \end{table}
 
-As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible, and \sys{} guarantees that delivered messages satisfy causal and total order properties. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_recv} is a \emph{best effort} service where packet loss is possible. \sys{} guarantees causal and total order properties by buffering messages at the receiver and delivering them when it receives barrier timestamps aggregated from the network. So, best effort \sys{} delivers message in 0.5 RTT plus barrier wait time. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
+Best effort \sys{} detects lost packets via end-to-end ACK, but does not retransmit them.
 Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,perry2015fastpass,gao2015phost} have very low packet loss rates, because congestion loss has been almost eliminated, and packet losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
-So, the application can assume that best effort \sys{} is almost reliable, but should guard against the failure cases.
-Best effort \sys{} does not retransmit packets.
-The application should use \textit{onepipe\_send\_fail\_callback} to detect lost packets and possible remote process failure.
+So, the application can assume that best effort \sys{} is almost reliable, but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process.
 
-Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender and receiver processes do not fail}.
-The reliable service retransmits packets in the case of packet loss.
+Second, \textit{onepipe\_reliable\_recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if both sender, receiver processes and the network do not fail}.
+It retransmits packets in the case of packet loss.
 In this paper, we only consider crash failures.
 When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
-If a message cannot be delivered, the send failure callback is invoked.
+If a message cannot be delivered, the send failure callback is invoked on the sender.
 In addition, each process may register a callback function via \textit{onepipe\_proc\_fail\_callback} to get notified of failed processes.
 Message delivery is resumed after all correct processes finish their callback functions.
 
-Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a batch of messages} with the exception that if a receiver fails \emph{permanently} or network partitions after the decision to deliver is made, the receiver can never deliver it.
-Specifically, atomicity is guaranteed on sender failure.
-If receivers recover from failure, they deliver or discard messages consistently with correct receivers.
+Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a scattering of messages} with the exception that if a receiver fails permanently or network partitions after the decision to deliver is made, the receiver can never deliver it.
+If a receiver recovers from failure, it can deliver or discard messages consistently with other receivers of a same scattering.
 In fact, full failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
 \sys{} provides a fast path in normal case and applications may solve failures with replication and traditional consensus~\cite{lamport1998part,raft}.
-%As we will show in Sec.~\ref{sec:reliable}, compared to best effort \sys{}, reliable \sys{} adds one RTT to message delivery.
+Reliable \sys{} achieves atomicity via two-phase commit, so messages delivery needs 1.5 RTTs plus barrier wait time.
 
 \iffalse
 \textcolor{red}{Outline:\\
@@ -188,11 +186,11 @@ In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \
 
 
 
-DAO can be used in two important classes of distributed transactions: snapshot transactions~\cite{corbett2013spanner} that are read-only, and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on output of other hosts.
+DAO can be used in two important classes of distributed transactions: snapshot transactions~\cite{corbett2013spanner} that are read-only, and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on the output of other hosts.
 The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
-Similar to DAO, snapshot reads and independent transactions can be implemented as a batch of messages to multiple hosts in \sys{}.
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
-Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one batch of messages.
+Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one scattering.
+
 
 \subsubsection{Other Scenarios}
 
