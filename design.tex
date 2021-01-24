@@ -57,7 +57,7 @@ We aim to preserve message routing topology and achieve scalable ordering in a d
 \label{sec:loss-free}
 
 \parab{Message timestamp.}
-\sys sender assigns a non-decreasing timestamp for each message. Messages in a batch have a same timestamp.
+\sys sender assigns a non-decreasing timestamp for each message. Messages in a scattering have a same timestamp.
 %A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps.
 Given recent efforts on $\mu$s accurate clock synchronization in data centers~\cite{correll2005design,lee2016globally,geng2018exploiting}, we synchronize monotonic time of hosts, and use the local clock time as message timestamps.
 Clock skew slows down delivery but does not violate correctness.
