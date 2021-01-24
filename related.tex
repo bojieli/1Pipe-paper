@@ -41,7 +41,7 @@ At each non-leaf node, multiple ordered streams of packets are merged into one o
 However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
 In addition, it is not practical to implement deterministic merge in commodity network switches.
 First, switches in data centers have small per-port buffer size~\cite{bai2017congestion}.
-Second, commodity switches do not support scheduling queues according to per-packet metadata~\cite{sivaraman2016programmable,jin2018netchain}.
+Second, commodity switches cannot reorder packets in priority queues according to per-packet metadata~\cite{sivaraman2016programmable,jin2018netchain}.
 
 
 %\parab{Transaction commitment protocols.} 2PC, 3PC, Paxos.
