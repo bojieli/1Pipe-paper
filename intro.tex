@@ -136,7 +136,7 @@ The key challenge is to let a receiver know that all packets below a certain tim
 To this end, we introduce a \emph{barrier} timestamp on each link and switch, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
 Each switch aggregates barrier information of all ingress links to derive the barrier for all egress links.
 In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
-If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
+If some hosts or links are temporarily idle, we periodically generate hop-by-hop \emph{beacon} packets carrying barrier information.
 
 Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and all receivers in the scattering do not fail.
 In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.
