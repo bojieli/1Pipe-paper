@@ -35,7 +35,7 @@ As another example, multiple shards of a distributed database generate logs to m
 
 
 
-As a reaction to this complexity, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in batches and serialized in a virtual pipe, which enables different receiver processes to deliver messages from sender processes in a consistent order.
+As a reaction to this complexity, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in groups and serialized in a virtual pipe, which enables different receiver processes to deliver messages from sender processes in a consistent order.
 More precisely, \sys{} resembles Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers; (2) messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. In addition to unicast, \sys{} also supports \emph{scattering}, which groups multiple messages to different receivers at the same position of the total order. Different from traditional multicast, each message in a scattering has distinct content and destination. Users do not need to define multicast channels or groups because the network is a big CATOCS channel.
 
 
@@ -138,7 +138,7 @@ Each switch aggregates barrier information of all ingress links to derive the ba
 In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate \emph{beacons} carrying barrier information.
 
-Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which each message is delivered at most once; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and all receivers in the scattering do not fail.
+Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and all receivers in the scattering do not fail.
 In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.
 Reliable \sys{} uses a two-phase commit (2PC) approach, where the first phase is end-to-end packet loss recovery, and the second phase aggregates \emph{commit barriers} through the network.
 It relies on a highly available network controller to coordinate failure handling.

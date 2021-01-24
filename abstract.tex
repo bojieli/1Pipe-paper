@@ -6,12 +6,11 @@
 
 
 This paper proposes \sys{}, a novel communication abstraction that enables different receivers to process messages from senders in a consistent total order.
-\sys{} provides both unicast and multicast-like scattering in a causally and totally ordered manner.
+More precisely, \sys{} provides both unicast and \emph{scattering} (\textit{i.e.}, a group of messages to different destinations) in a causally and totally ordered manner.
+\sys{} provides a best effort service that delivers each message at most once in $\sim$0.5 RTT, and a reliable service that provides restricted atomic delivery for each scattering in $\sim$1.5 RTTs.
 \sys{} can simplify and accelerate many distributed applications, \emph{e.g.}, transactional key-value stores, log replication, and distributed data structures.
 
 We propose a scalable and efficient method to implement \sys{} inside data centers. To achieve total order delivery in a scalable manner, \sys separates the bookkeeping of order information from message forwarding, and distributes the work to each switch and host. \sys aggregates order information using in-network computation at switches. This forms the ``control plane'' of the system. On the ``data plane'', \sys forwards messages in the network as usual and reorders them at the receiver based on the order information.
-
-\sys{} provides a best effort service that delivers each message at most once, and a reliable service that guarantees delivery in the absence of failure. Reliable \sys{} also provides restricted atomic delivery for a group of messages. %which uses a two-phase commit approach.
 
 Evaluation on a 32-server testbed shows that \sys achieves scalable throughput (80M msg/s per host) and low latency (10$\mu$s) with little CPU and network overhead.
 \sys{} achieves linearly scalable throughput and consistent low latency in transactional key-value store, TPC-C, and remote data structures that outperforms traditional designs by 2-20x.
