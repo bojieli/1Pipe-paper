@@ -185,6 +185,7 @@ Because data and beacon packets are FIFO in switch queues and on network links, 
 			\includegraphics[width=\textwidth]{gnuplot/total_order.eps}
 		}
 		\newline
+		\vspace{-5pt}
 		\subfloat[Latency.\label{fig:total-order-lat}]{
 			\includegraphics[width=\textwidth]{gnuplot/total_order_lat.eps}
 		}
@@ -194,17 +195,18 @@ Because data and beacon packets are FIFO in switch queues and on network links, 
 	\hspace{0.01\textwidth}
 	\begin{minipage}[]{.32\textwidth}
 		\centering
-		\subfloat[Scalability on testbed.\label{fig:reorder-testbed}]{
+		\subfloat[Scalability on testbed. Error bars show $5^{th}$ and $95^{th}$ percentile.\label{fig:reorder-testbed}]{
 			\includegraphics[width=\textwidth]{gnuplot/reorder_testbed.eps}
 		}
 		\newline
+		\vspace{-15pt}
 		\subfloat[Simulation of varying packet loss rates.\label{fig:reorder-loss}]{
 			\includegraphics[width=\textwidth]{gnuplot/loss_latency.eps}
 		}
 		%\subfloat[Simulation with different end-host delays.
 		%T-R\textit{i} shows minimax clock synchronization, P-R\textit{i} shows physical clock synchronization.\label{fig:reorder-simulation}]
 		%{\includegraphics[width=\textwidth]{gnuplot/reorder_simulation.eps}}
-		\caption{Average message delivery latency of \sys{} variants.}
+		\caption{Message delivery latency of \sys{} variants.}
 	\end{minipage}
 	\hspace{0.01\textwidth}
 	\begin{minipage}[]{.32\textwidth}

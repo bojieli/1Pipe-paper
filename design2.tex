@@ -16,11 +16,11 @@ Although the probability of simultaneous packet loss and host failure is very lo
 	\label{fig:2PC}
 \end{figure}
 
-Our key idea is \emph{Two Phase Commit (2PC)}, as Figure~\ref{fig:2PC} shows:
+Our key idea is a \emph{Two Phase Commit (2PC)} approach:
 
 \begin{ecompact}
 \item \textbf{Prepare phase}: Sender puts messages into send buffer, and transmits them with timestamps. Network switches do NOT need to aggregate timestamp barriers. Receivers store the messages in receive buffer, and respond with ACKs. Senders wait for ACKs to detect packet loss, and retransmit messages if packets are lost in-flight.
-\item \textbf{Commit phase}: When a sender collects all ACKs below or equal to $T$, it sends a \emph{commit message} that carries timestamp $T$ and \emph{commit barrier} $T$. Each network switch aggregates minimum commit barriers on input links, and produce commit barriers to propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.~\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.
+\item \textbf{Commit phase}: When a sender collects all ACKs below or equal to $T$, it sends a \emph{commit message} that carries \emph{commit barrier} $T$. The commit message is sent to the neighbor switch rather than the receivers, as the red arrow in Figure~\ref{fig:2PC} shows. Each switch aggregates minimum commit barriers on input links, and produce commit barriers that propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.
 \end{ecompact}
 
 

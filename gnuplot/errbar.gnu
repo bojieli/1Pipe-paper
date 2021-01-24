@@ -14,7 +14,7 @@ set style histogram cluster gap 1 errorbars linewidth 4
 set style fill pattern border -1
 set bars front
 set auto x
-pat = "0 1 4 5"
+pat = "0 1 4 5 2"
 set style line 1 lc rgb "#e41a1c" lw 3 ps 4
 set style line 2 lc rgb "#377eb8" lw 3 ps 3
 set style line 3 lc rgb "#4daf4a" lw 3 ps 3.5

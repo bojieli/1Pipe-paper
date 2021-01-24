@@ -7,7 +7,7 @@
 	\subfloat[Scalability.\label{fig:kv_scalability}]
 	{\includegraphics[width=.32\textwidth]{gnuplot/kv_scalability.eps}}
 	\hspace{0.01\textwidth}
-	\subfloat[Latency of YCSB workload.\label{fig:kv_latency_ycsb}]
+	\subfloat[Average latency of YCSB workload.\label{fig:kv_latency_ycsb}]
 	{\includegraphics[width=.32\textwidth]{gnuplot/kv_latency_ycsb.eps}}
 	\hspace{0.01\textwidth}
 	\subfloat[Different transaction sizes.\label{fig:kv_multikey}]
@@ -52,7 +52,7 @@ However, with high write percentage, FaRM latency skyrockets due to lock content
 In Figure~\ref{fig:kv_multikey}, we alter the number of keys per TXN, and measure total KV op/s with 512 processes.
 95\% of TXNs are read-only.
 \sys{} and NonTX are agnostic of TXN size because their throughputs are only bounded by CPU processing and network messaging rate.
-With a low write percentage (5\%), FaRM/YCSB delivers 40\% throughput of \sys{} with 2 KV ops per TXN, but the performance plummets with larger TXN size, because TXN abort rate is roughly proportional with the number of keys in a TXN.
+With a low write percentage (5\%), FaRM/YCSB delivers 40\% throughput of \sys{} with 2 KV ops per TXN, but the performance plummets with larger TXN size, because TXN abort rate increases with the number of keys in a TXN.
 
 %\textbf{Write percentage - RO / WO / WR Latency - Uniform.}
 
@@ -175,8 +175,9 @@ We use 4 warehouses which are stored in-memory with 3 replicas.
 Concurrency control and replication are implemented with a batch of commands sent to all shards and replicas, similar to Eris~\cite{eris} but replaces its central sequencer with timestamps.
 We assume TXNs never abort.
 As shown in Figure~\ref{fig:tpcc-combined}, two-phase locking (2PL) and OCC do not scale, because each Payment TXN updates its corresponding warehouse entry and each New-Order reads it~\cite{yu2014staring}, leading to 4 hot entries.
-When conflicts are few, OCC is better; with more conflicts, 2PL is better~\cite{mu2014extracting}.
-\sys{} scales linearly with number of processes. With 512 processes, \sys achieves 10.35M TXNs per second, which is 71\% of a non-transactional baseline system, 10x of lock (256 processes), and 17x of OCC (64 processes). With more processes, \sys{} would be bounded by CPU processing capacity of contended entries.
+The throughput of OCC and 2PL reaches peak at 256 and 64 processes, respectively. With more processes, the throughput becomes lower~\cite{mu2014extracting}.
+%When conflicts are few, OCC is better; with more conflicts, 2PL is better~\cite{mu2014extracting}.
+In contrast, \sys{} scales linearly with number of processes. With 512 processes, \sys achieves 10.35M TXNs per second, which is 71\% of a non-transactional baseline system, 10x of lock and 17x of OCC. %With more processes, \sys{} would be bounded by CPU processing capacity of contended entries.
 
 Figure~\ref{fig:tpcc-loss} shows TXN throughput under different simulated packet loss rates.
 We fix process number to be 64.
@@ -206,7 +207,7 @@ In contrast, with leader-follower replication, to maintain serializability of re
 \subsubsection{Replication in Distributed Storage}
 \label{subsec:ceph}
 
-We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written sequentially. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 62 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
+We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written sequentially. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. With reliable \sys{}, the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 41 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
 
 
 %\subsection{Multiple Round-Trip Transactions}

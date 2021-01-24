@@ -1,6 +1,6 @@
 fn = "loss_latency"
 xlbl = "Packet Loss Probability"
-ylbl = "Latency (us)"
+ylbl = "Average Latency (us)"
 load "lp.gnu"
 #set yrange [0.0625:64]
 #set logscale y 2 

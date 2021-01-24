@@ -26,8 +26,8 @@ We summarize the key findings as follows:
 
 Our testbed has 10 Arista 7060CX 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
 Each server has 2 Xeon E5 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
-We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch, so beacon packets do not need encapsulation.
-Because we only have one switch with Barefoot Tofino~\cite{tofino} reconfigurable chip, we only use it for microbenchmarks.
+We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch. %, so beacon packets do not need encapsulation.
+For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cite{tofino} switches in place of Arista switches.
 %We use the second testbed in most benchmarks because it has larger scale.
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}.
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
@@ -114,6 +114,7 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \fi
 
 \subsection{Microbenchmarks}
+\label{sec:microbenchmark}
 
 \parab{Scalability.}
 \sys{} can achieve total order broadcast.
