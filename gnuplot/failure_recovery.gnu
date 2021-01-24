@@ -4,7 +4,9 @@ ylbl = "Recovery Time (us)"
 load "errbar.gnu"
 #set yrange [0:50]
 set xlabel offset 0, graph -0.07
-set ylabel offset -3
+set ylabel offset -5
+set lmargin 14
+set key width -2
 #set tmargin 8
 #lh = 0.82
 #set label "415" at graph 0.17, screen lh font "Arial, 30" front
