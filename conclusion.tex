@@ -3,9 +3,9 @@
 
 %The ordering of events and messages is fundamental to many distributed systems.
 We propose a causal and total order communication abstraction, \sys{}, that delivers messages in sender's clock time order and provides restricted failure atomicity. 
-\sys{} achieves scalability and efficiency by utilizing programmable data center networks to separate the bookkeeping of order information from the forwarding of data packets.
+\sys{} achieves scalability and efficiency by utilizing programmable data center networks to separate bookkeeping order information from forwarding data packets.
 \sys{} can simplify and accelerate many applications, and we expect future work to explore more. %transactional key-value stores, independent transactions, distributed data structures, and log replication.
-One limitation of \sys{} is that failed or slow nodes throttle the entire system, so, a separate \sys{} instance can be deployed for each cluster or service.
+One limitation of \sys{} is that  slow links or bad clocks throttle the whole system, so, a separate \sys{} instance can be deployed for each cluster or service.
 %We expect more applications to exploit total ordering of events and messages.
 %We design and implement \sys to achieve linearizable and serializable message scattering with scalability, efficiency and fault tolerance.
 %Programmable data center networks make modern data centers resemble a warehouse-scale computer more than a traditional distributed system.
