@@ -146,11 +146,11 @@ We implement in-network processing at three types of network switches with diffe
 
 We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. Because a Tofino switch has 4 pipelines, it is regarded as 4 ingress and 4 egress switches connected via 16 all-to-all links. Each of the 8 ``switches'' derives barriers independently.
 \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively.
-\sys{} also needs 2 state registers per switch to store the minimum of per-link barriers.
+%\sys{} also needs 2 state registers per switch to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
-For each packet, barrier register of the input link is first updated in the first stateful pipeline stage of the switch.
-Because each stage can only compute the minimum of two barriers, the switch uses a hierarchy of registers with $O(\log N)$ stages to compute the minimum link barrier.
-At the final pipeline stage, the barrier in packet is updated to the switch barrier.
+For each packet, barrier register of the input link is updated in the first stateful pipeline stage of the switch.
+Because each stage can only compute the minimum of two barriers, the switch uses a binary tree of registers with $O(\log N)$ pipeline stages to compute the minimum link barrier $B_{new}$, where $N$ is the number of input links.
+At the final pipeline stage, the barrier field in packet is updated to $B_{new}$.
 The control plane software routinely checks link barriers and reports failure if a link barrier significantly lags behind.
 
 
@@ -174,8 +174,7 @@ Received barriers in beacons are stored in registers per input link.
 A thread on the CPU periodically computes the minimum of link barriers and broadcasts new beacons to all output links.
 Computing the minimum barrier takes hundreds of cycles, which is not a bottleneck compared to the cost of broadcast.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
-
-%Compared with the reconfigurable switching chip, this approach slacks the barriers in two aspects.
+Compared with the reconfigurable chip, switch CPU slacks the barriers because 1) CPU processing has delay and 2) the barriers are updated by periodical beacons instead of by every packet.
 %First, the barriers are updated by periodical beacons instead of by every packet.
 %Second, compared to switching chip, switch CPU introduces higher processing delay.
 %So, the average delay overhead is (switch processing delay $\times$ number of hops + beacon interval/2 + clock skew).
