@@ -13,8 +13,8 @@ We propose a scalable and efficient method to implement \sys{} inside data cente
 
 \sys{} provides a best effort service that delivers each message at most once, and a reliable service that guarantees delivery in the absence of failure. Reliable \sys{} also provides restricted atomic delivery for a group of messages. %which uses a two-phase commit approach.
 
-Evaluation on a 32-server testbed shows that \sys achieves scalable throughput and low latency with little CPU and network overhead.
-\sys{} achieves linearly scalable throughput and consistent low latency in transactional key-value store and TPC-C that outperforms traditional design by 2-20x, as well accelerating remote data structures.
+Evaluation on a 32-server testbed shows that \sys achieves scalable throughput (80M msg/s per host) and low latency (10$\mu$s) with little CPU and network overhead.
+\sys{} achieves linearly scalable throughput and consistent low latency in transactional key-value store, TPC-C, and remote data structures that outperforms traditional designs by 2-20x.
 
 %In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
 
