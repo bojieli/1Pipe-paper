@@ -40,7 +40,7 @@ The procedure to handle failure is as follows: (see Appendix for correctness ana
 %For example, if a host or the only network link from a host fails, all processes on it are disconnected from the data center network, so they are considered to fail simultaneously.
 %If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.
 Failure timestamp of a process $P$ is a commit timestamp sent by $P$ but not propagated to any receiver, which is computed as the maximum last commit timestamp reported by all neighbors of $P$ (formally, a cut in routing graph that separates $P$ and all receivers).
-If severe network partition occurs and controller cannot access such a cut, controller may either wait for recovery or sacrifice atomicity between isolated partitions.
+If severe network partition occurs and controller cannot access such a cut, the controller may sacrifice atomicity between isolated partitions.
 %If a Leaf, Spine, or Core switch fails, and the connectivity among hosts is not interrupted, no process is considered to fail.
 %If network partition occurs, only one partition may connect to controller, and controller will announce failure of all processes in other network partitions.
 \item \textbf{Broadcast}: Controller broadcasts the failed processes $P$ and its failure timestamp $T$ to all correct processes.
@@ -52,7 +52,7 @@ If severe network partition occurs and controller cannot access such a cut, cont
 %Before this step, commit barrier $T$ from $P$ is never delivered.
 \end{ecompact}
 
-\parab{Liveness Mechanism.} If a network failure affects connectivity between $S$ and $R$, the Commit phase in 2PC and the Recall step in failure handling may stall. %$S$ repeatedly retransmits a message but cannot receive ACK from $R$.
+\parab{Controller Forwarding.} If a network failure affects connectivity between $S$ and $R$, the Commit phase in 2PC and the Recall step in failure handling may stall. %$S$ repeatedly retransmits a message but cannot receive ACK from $R$.
 In this case, $S$ asks controller to forward the message to $R$, and waits for ACK from controller. If controller also cannot deliver the message, $R$ will be announced as failed, and the undeliverable recall message is recorded. If controller receives ACK of a recall message but cannot forward it to $S$, $S$ will be announced as failed. In summary, if a process does not respond controller within timeout, it is considered as failed.
 
 \parab{Receiver Recovery.} If a process recovers from failure,  %(\emph{e.g.}, the network link or switch recovers), 
