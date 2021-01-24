@@ -191,10 +191,10 @@ Finally, we evaluate failure recovery of replicas by disconnecting the physical 
 \label{subsec:data-structure}
 
 \sys{} can remove ordering hazards in remote data structure access (Sec.\ref{subsec:order-hazards}).
-We implement a distributed concurrent hash table that uses a linked list to store key-value pairs (KVs) in a same hash bucket. The hash table is sharded on multiple servers.
+We implement a distributed concurrent hash table that uses a linked list to store key-value pairs (KVs) in a same hash bucket. The hash table is sharded on 16 servers.
 Different from Sec.\ref{subsec:eval-kvs} where servers process KV ops, in this section, clients access the remote hash table using RDMA \emph{one-sided} read, write, and CAS.
 The baseline system uses leader-follower replication.
-16 clients lookup or insert uniformly random keys in parallel.
+The workload has 16 parallel clients and uniform keys.
 
 As Figure~\ref{fig:remote-hashtable} shows, without replication, \sys{} improves per-client KV insertion throughput to 1.9x because \sys{} removes the \emph{fence} between writing KV pair and updating the pointer in hash bucket.
 KV lookup throughput reduces by 10\%, due to additional reordering delay.

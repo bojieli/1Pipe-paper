@@ -93,7 +93,7 @@ With different delays of network paths, several categories of ordering hazards~\
 
 \parab{Write after write (WAW).}
 Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered as a write operation.
-When $B$ receives the notification, it issues a read command to $O$, but may not get the data due to message delays.
+When $B$ receives the notification, it issues a read to $O$, but may not get the data.
 
 \parab{Independent read, independent write (IRIW).}
 Host $A$ first writes to data $O_1$ and then writes to metadata $O_2$. Concurrently, host $B$ reads metadata $O_2$ and then reads data $O_2$.
@@ -189,7 +189,7 @@ In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \
 DAO can be used in two important classes of distributed transactions: snapshot transactions~\cite{corbett2013spanner} that are read-only, and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on the output of other hosts.
 The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
-Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one scattering.
+Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one reliable scattering.
 
 
 \subsubsection{Other Scenarios}

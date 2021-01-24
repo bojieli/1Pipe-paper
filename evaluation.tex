@@ -131,21 +131,23 @@ In contrast, the sequencer is a central bottleneck and introduces extra network 
 The latency soars when throughput of sequencer saturates and congestion appears.
 Token has low throughput because only one process may send at any time.
 We apply a common optimization to Lamport timestamp~\cite{lamport1978time} which exchanges received timestamps per interval rather than per message.
-It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200$\mu$s.
+It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200 $\mu$s.
 
 
 
 
 
 \parab{Message delivery latency.}
-Figure~\ref{fig:total-order-lat} and \ref{fig:reorder-testbed} shows the average message delivery latency of best effort (BE) and reliable (R) \sys{}.
-Best effort \sys{} with reconfigurable chip delivers the smallest latency overhead than unordered delivery. The overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus clock skew. In contrast, end host representatives introduce extra forwarding delay from the switch to the end host. In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
+Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{}.
+BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus average clock skew. The tail latency overhead is roughly the beacon interval plus maximum clock skew.
+End host representatives introduce extra forwarding delay from the switch to the end host.
 R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.
+In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
 The RTT and host forwarding delay are proportional to network hop count.
 
 As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, but faulty links may have loss rates above $10^{-6}$.
-We simulate random message drop in \textit{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
-As Figure~\ref{fig:reorder-loss} shows, when loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
+In Figure~\ref{fig:reorder-loss}, we simulate random message drop in \textit{lib1pipe} sender and receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
+When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
 Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
 
@@ -190,7 +192,8 @@ Host, NIC, host link, and ToR switch failures cause processes to disconnect from
 
 \parab{CPU overhead.}
 The CPU overhead of \sys has two parts: reordering at receivers and beacon processing at switches.
-As Figure~\ref{fig:reorder-overhead} shows, the maximal buffer size required on the receiver increases linearly with beacon interval, but only takes a few megabytes. The message delivery throughput degrades slightly with more messages to reorder.
+The message delivery throughput degrades slightly with more messages to reorder.
+As Figure~\ref{fig:reorder-overhead} shows, the maximal send and receive buffer size increases linearly with latency, but only takes a few megabytes on a 100~Gbps link.
 
 Figure~\ref{fig:cpu-overhead} shows the number of cores required for beacon processing of a 32-port switch.
 A host CPU core can sustain 3~$\mu$s beacon interval of the switch, which is our testbed setting.
@@ -199,7 +202,7 @@ If we can bypass the kernel network stack and process packets efficiently at Ari
 
 
 \parab{Network overhead.}
-As Figure~\ref{fig:network-overhead} shows, with high link bandwidth and a reasonable beacon generation interval (\emph{e.g.} 3~$\mu$s), beacon traffic is a tiny portion (\emph{e.g.} 0.3\%) of link bandwidth. Because beacons are hop-by-hop, the overhead is only determined by the beacon interval and does not increase with system scale.
+As Figure~\ref{fig:network-overhead} shows, with high link bandwidth and a reasonable beacon interval (\emph{e.g.}, 3~$\mu$s), beacon traffic is a tiny portion (\emph{e.g.}, 0.3\%) of link bandwidth. Because beacons are hop-by-hop, the overhead is determined by beacon interval and does not increase with system scale.
 
 
 %Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
