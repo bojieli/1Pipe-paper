@@ -17,6 +17,14 @@ Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response
 \sys provides a scattering primitive with restricted atomicity, and achieves scalability with in-network computation that incurs little overhead, thus removing two criticisms (can't say together and efficiency).
 Although \sys is not a panacea for ordering problems, it shows effectiveness in applications in Sec.\ref{sec:application}.
 
+\parab{Tree-based total order.}
+Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}. %which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
+At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
+However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
+In addition, it is not practical to implement deterministic merge in commodity network switches.
+First, switches in data centers have small per-port buffer size~\cite{bai2017congestion}.
+Second, commodity switches cannot reorder packets in priority queues according to per-packet metadata~\cite{sivaraman2016programmable,jin2018netchain}.
+
 
 \parab{Network and system co-design.}
 Recent years witness a trend of co-designing distributed systems with programmable network switches.
@@ -35,13 +43,6 @@ Omnisequencing~\cite{michael2018towards} finds out that DCN topology can provide
 
 %\RED{NetChain. Section 4.3 of the paper shows that comparing sequence numbers for each item (network port) is implementable in network switches. Furthermore, the use of sequence number to validate serialization order implies that reordering packets buffered in a network switch is not possible. This agrees with the design principle of TOMS.}
 
-\parab{Tree-based total order.}
-Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}. %which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
-At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
-However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
-In addition, it is not practical to implement deterministic merge in commodity network switches.
-First, switches in data centers have small per-port buffer size~\cite{bai2017congestion}.
-Second, commodity switches cannot reorder packets in priority queues according to per-packet metadata~\cite{sivaraman2016programmable,jin2018netchain}.
 
 
 %\parab{Transaction commitment protocols.} 2PC, 3PC, Paxos.
