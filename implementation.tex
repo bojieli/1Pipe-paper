@@ -94,7 +94,7 @@ When \textit{lib1pipe} initializes, it registers to the controller and spawns a 
 \textit{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
 
 Processes within a host are exposed directly to the Top-of-Rack (ToR) switch(es), and the ToR aggregates timestamps of all processes in the rack.
-In future work, the software process of \textit{lib1pipe} may be offloaded to a programmable NIC~\cite{kaufmann2016high,firestone2018azure}, where the NIC assigns timestamps to messages on egress pipeline.
+In future work, the software process of \textit{lib1pipe} may be offloaded to a programmable NIC~\cite{kaufmann2016high,firestone2018azure}, which assigns timestamps to messages on egress pipeline.
 
 The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
 

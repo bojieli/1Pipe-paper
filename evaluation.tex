@@ -25,7 +25,7 @@ We summarize the key findings as follows:
 \label{sec:testbed}
 
 Our testbed has 10 Arista 7060CX 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
-Each server has 2 Xeon E5 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
+Each server has 2 Xeon E5-2650 v2 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
 We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch. %, so beacon packets do not need encapsulation.
 For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cite{tofino} switches in place of Arista switches.
 %We use the second testbed in most benchmarks because it has larger scale.
@@ -35,7 +35,7 @@ For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cit
 In small-scale experiments (1$\sim$32 processes), each process runs on a distinct server. Each process uses a pair of threads for sending and receiving, respectively.
 For experiments with 64$\sim$512 processes, each server hosts the same number of processes.
 %With 16 processes per NIC, the throughput of NICs is saturated.
-Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 99\% percentile), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
+Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 95\% percentile), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
 We choose beacon interval to be 3~$\mu$s.
 
 
@@ -131,7 +131,7 @@ In contrast, the sequencer is a central bottleneck and introduces extra network 
 The latency soars when throughput of sequencer saturates and congestion appears.
 Token has low throughput because only one process may send at any time.
 We apply a common optimization to Lamport timestamp~\cite{lamport1978time} which exchanges received timestamps per interval rather than per message.
-It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200 $\mu$s.
+It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200 $\mu$s due to broadcast.
 
 
 
@@ -150,7 +150,8 @@ In Figure~\ref{fig:reorder-loss}, we simulate random message drop in \textit{lib
 When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
 Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
-With a larger system scale, the packet loss rate in an RTT will proportionally increase. For 32K hosts, if all links are healthy (with loss rate $10^{-8}$), latency increases by $0\sim 3\mu$s compared to loss-free; if all links are sub-healthy (with loss rate $10^{-6}$), latency increases by $3\sim 17\mu$s.
+
+With a larger system scale, in theory, the packet loss rate in an RTT would increase proportionally. For 32K hosts, if all links are healthy (with loss rate $10^{-8}$), latency increases by $0\sim 3\mu$s compared to loss-free; if all links are sub-healthy (with loss rate $10^{-6}$), latency increases by $3\sim 17\mu$s.
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
 

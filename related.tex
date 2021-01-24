@@ -1,7 +1,7 @@
 \section{Related Work}
 \label{sec:related}
 
-\parab{Total order communication.}
+\parab{Ordered communication.}
 %Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
 There has been extensive research on total order multicast and broadcast.
 One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
@@ -11,6 +11,7 @@ This causes extra delay and network bandwidth overhead.
 A third line of work assumes a synchronous network~\cite{lamport1984using}. %, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
 However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
 
+Causal communication can be efficiently implemented via cbcast~\cite{birman1987exploiting,birman1987reliable,birman1991lightweight,birman1984overview,birman1993process}, but it is insufficient for replication and transactional KVS because they need total order.
 
 Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive. 
 \sys provides a scattering primitive with restricted atomicity, and achieves scalability with in-network computation that incurs little overhead, thus removing two criticisms (can't say together and efficiency).

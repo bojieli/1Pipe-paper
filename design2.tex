@@ -45,10 +45,10 @@ If severe network partition occurs and controller cannot access such a cut, cont
 %If network partition occurs, only one partition may connect to controller, and controller will announce failure of all processes in other network partitions.
 \item \textbf{Broadcast}: Controller broadcasts the failed processes $P$ and its failure timestamp $T$ to all correct processes.
 \item \textbf{Discard}: Each correct process discards messages sent from $P$ with timestamp higher than $T$ in receive buffer.
-\item \textbf{Recall}: Each correct process discards messages sent to $P$ in send buffer, which are waiting for ACK from $P$. If a discarded message is in a scattering, according to failure atomicity, the scattering needs to be aborted, \emph{i.e.}, messages to other receivers \emph{in the same scattering} need to be recalled. The sender sends a \emph{recall} message to such receivers, then each of the receivers discards the messages in receive buffer, and responds ACK to the sender. The sender completes Recall after collecting the ACKs.
+\item \textbf{Recall}: Each correct process discards messages sent to $P$ in send buffer, which are waiting for ACK from $P$. If a discarded message is in a scattering, according to failure atomicity, the scattering needs to be aborted, \emph{i.e.}, messages to other receivers \emph{in the same scattering} need to be recalled. The sender sends a \emph{recall} message to such receivers, then each of the receivers discards the messages in receive buffer and responds ACK to the sender. The sender completes Recall after collecting the ACKs.
 \item \textbf{Callback}: Each correct process executes the process failure callback registered in Table~\ref{tab:abstraction}, which enables applications to customize failure handling. Then, it responds controller with a completion message.
-\item \textbf{Resume}: Controller collects completions from all correct processes.
-After all failed processes have been handled by all correct processes, controller notifies network components to remove input link from the failed component, thereby resuming barrier propagation.
+\item \textbf{Resume}: Controller collects completions from all correct processes, and then notifies network components to remove input link from the failed component, thereby resuming barrier propagation.
+%After all failed processes have been handled by all correct processes,
 %Before this step, commit barrier $T$ from $P$ is never delivered.
 \end{ecompact}
 

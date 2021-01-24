@@ -48,7 +48,7 @@ When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
 If a message cannot be delivered, the send failure callback is invoked on the sender.
 In addition, each process may register a callback function via \textit{onepipe\_proc\_fail\_callback} to get notified of failed processes.
-Message delivery is resumed after all correct processes finish their callback functions.
+Message delivery is resumed after all non-fail processes finish their callback functions.
 
 Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a scattering of messages} with the exception that if a receiver fails permanently or network partitions after the decision to deliver is made, the receiver can never deliver it.
 If a receiver recovers from failure, it can deliver or discard messages consistently with other receivers of a same scattering.
