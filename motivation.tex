@@ -121,7 +121,7 @@ By removing the fence between $A \rightarrow O$ and $A \rightarrow B$, the end-t
 
 %\RED{Why not let the application provide dependency among messages? Can remove false dependency in \sys{}. isis labeling psync, but cannot improve performance by much (cite ken birman response to understanding the limits)}
 
-If an application needs to process a lot of WAW communication tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. Using \sys{}, the application can send messages in pipeline, so, the throughput is only limited by computation speed and network bandwidth.
+If an application needs to process a lot of WAW communication tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. In contrast, using \sys{}, the application can send dependent messages in pipeline. %so, the throughput is only limited by computation speed and network bandwidth.
 
 The argument above neglects possible packet loss.
 In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so $B$ still needs to check the version of $O$ after reading. If it does not match $A$, then $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
@@ -136,6 +136,7 @@ This power is also a perfect match with \textit{total store ordering} (TSO) memo
 Compared to weaker memory models, TSO reduces synchronization in concurrent programming~\cite{morrison2013fast,tassarotti2015verifying}, thereby simplifying programming and reducing fence overheads.
 
 \subsubsection{1-RTT Replication}
+\label{sec:replication}
 
 %The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
 
