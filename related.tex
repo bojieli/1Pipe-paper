@@ -1,25 +1,22 @@
 \section{Related Work}
 \label{sec:related}
 
-\parab{Ordered communication.}
-%Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
-There has been extensive research on total order multicast and broadcast.
-One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
-As a result, it is challenging to scale the system.
-Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time}, or aggregate history during message delivery~\cite{chandra1996unreliable}.
-This causes extra delay and network bandwidth overhead.
-A third line of work assumes a synchronous network~\cite{lamport1984using}. %, \textit{e.g.}, the block generation interval in Bitcoin~\cite{nakamoto2008bitcoin} is designed to be higher than the maximum delay among hosts.
-However, in data center systems, waiting for worst-case delay leads to unacceptable latency.
-
-Causal communication can be efficiently implemented via cbcast~\cite{birman1987exploiting,birman1987reliable,birman1991lightweight,birman1984overview,birman1993process}, but it is insufficient for replication and transactional KVS because they need total order.
-
-Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of causal and totally ordered communication (CATOCS) have long discussed the pros and cons of such a primitive. 
+\parab{Causal and totally ordered communication (CATOCS).}
+Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of CATOCS have long discussed the pros and cons of such a primitive.
 \sys provides a scattering primitive with restricted atomicity, and achieves scalability with in-network computation that incurs little overhead, thus removing two criticisms (can't say together and efficiency).
+Scattering also enables atomic access to a portion (rather than all) of shards.
 Although \sys is not a panacea for ordering problems, it shows effectiveness in applications in Sec.\ref{sec:application}.
 
-\parab{Tree-based total order.}
-Tree-based algorithms for total order communication address the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}. %which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
-At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular, aguilera2000efficient}.
+%Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
+There has been extensive research on total order broadcast~\cite{defago2004total}.
+One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{birman1991lightweight,kaashoek1996evaluation,eris} or a token passed among senders or receivers~\cite{rajagopalan1989token,moser1996totem,kim1997total,ekwall2004token}.
+As a result, it is challenging to scale the system.
+Another line of work buffers messages at receivers and builds a causality graph at receivers~\cite{lamport1978time,peterson1989preserving}, merges streams deterministically or achieves agreement among receivers \cite{birman1987exploiting,chandra1996unreliable,pedone1998optimistic,junqueira2011zab}.
+This causes extra delay and network bandwidth overhead.
+A third line of work assumes a synchronous network~\cite{lamport1984using}, but lossy links and bad clocks with high skew violate correctness. In \sys{}, such components will slow down the whole system but correctness is preserved. In \sys{}, such components should be detected, and affected hosts can use healthy nodes as proxy, where timestamps are assigned at the proxy.
+
+A fourth line of work, tree-based algorithms, addresses the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}. %which is used in multi-core processors~\cite{kaestle2016machine} and sensor networks~\cite{chakraborty2011reliable}.
+At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular,aguilera2000efficient}.
 However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
 In addition, it is not practical to implement deterministic merge in commodity network switches.
 First, switches in data centers have small per-port buffer size~\cite{bai2017congestion}.
@@ -31,8 +28,8 @@ Recent years witness a trend of co-designing distributed systems with programmab
 Mostly Ordered Multicast~\cite{ports2015designing} and NO-Paxos~\cite{li2016just} use a switch as a centralized sequencer or serialization point to achieve totally ordered broadcast.
 Different from broadcast, \sys{} provides a scattering primitive and a scalable implementation.
 Eris~\cite{eris} proposes in-network concurrency control using switch as a centralized sequencer.
-NetChain~\cite{jin2018netchain}, NetLock~\cite{yu2020netlock}, NetPaxos~\cite{dang2015netpaxos}, and Daiet~\cite{sapio2017network} offloads important distributed middlewares to programmable switches.
-Omnisequencing~\cite{michael2018towards} finds out that DCN topology can provide causal message delivery.
+NetChain~\cite{jin2018netchain}, NetLock~\cite{yu2020netlock}, NetPaxos~\cite{dang2015netpaxos}, and Daiet~\cite{sapio2017network} offload important distributed middlewares to programmable switches.
+Omnisequencing~\cite{michael2018towards} finds out that DCN topology can provide causal (but not total order) message delivery.
 %\sys{} is inspired by Lamport's idea that the absence of a message can carry information in a synchronous network~\cite{lamport1984using}. %We achieve synchrony via timestamp barriers.
 
 %Using Time instead of Timeout for fault-tolerant distributed systems.

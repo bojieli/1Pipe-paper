@@ -212,15 +212,15 @@ We implement three incarnations of \sys on network devices with different progra
 
 We evaluate \sys in a 32-server cluster with 10 switches and 3-layer fat-tree topology.
 \sys{} achieves linearly scalable throughput with 512 processes, achieving 5M messages per second per process (80M msg/s per host).
-Best effort \sys{} adds up to $10 \mu$s delay to message delivery, while reliable \sys{} adds up to $21 \mu$s.
-\sys{} has robust performance under packet loss, and can recover from failures in $50 \sim 500 \mu$s.
+Best effort \sys{} adds up to 10 $\mu$s delay to message delivery, while reliable \sys{} adds up to 21 $\mu$s.
+\sys{} has robust performance under packet loss, and can recover from failures in 50$\sim$500 $\mu$s.
 \sys{} only needs 0.3\% network bandwidth overhead and a CPU core per switch for periodic beacons.
 
 %As a case study, \sys can execute externally consistent~\cite{corbett2013spanner} independent transactions in one round-trip, the same as a non-transactional and non-replicated system.
 As case studies, first, \sys{} scales linearly for a transactional key-value store (KVS) in both uniform and YCSB~\cite{cooper2010benchmarking} workload, whose throughput is 90\% of a non-transactional system (hardware limit) and outperforms FaRM~\cite{dragojevic2014farm} by 2$\sim$20x especially under high contention.
 The latency of \sys{} is consistently low.
 Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms Lock and OCC by 10x. \sys{}'s performance is resilient to packet loss.
-Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance by 2$\sim$4x.
+Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance to 2$\sim$4x.
 Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
 
 In summary, the contributions of this paper are: (1) a novel abstraction \sys{} that provides causally and totally ordered unicast and scattering with best-effort and reliable semantics; (2) design and implementation of scalable and efficient \sys{} in DCNs; (3) design and evaluation of \sys{} applications: transactional KVS, remote data structure, and replication.

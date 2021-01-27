@@ -145,7 +145,7 @@ Traditional multi-client replication requires 2 RTTs because client requests mus
 With \sys{}, we can achieve 1-RTT replication without making assumptions on log content, because the network serializes messages.
 A client can directly send a log message to all replicas with a scattering, and each replica orders logs according to timestamp (ties are broken by the ID of client).
 Because reliable \sys{} has an extra RTT, we use unreliable \sys{} and handle packet loss in more clever way.
-To detect inconsistent logs due to packet loss, each replica maintains a checksum of all log messages. When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. The return message does not need \sys{}. If a client sees all checksums equal, the logs of replicas are consistent at least until the client's log message, and the replication succeeds. Otherwise, there must be lost messages in some replica, and the client notifies the primary replica to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match. This 1-RTT replication protocol works well when packet loss and host failure are rare. Because \sys{} leverages the DCN to detect failures, it is typically faster than application heartbeat timeout.
+To detect inconsistent logs due to packet loss, each replica maintains a checksum of all log messages. When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. The return message does not need to be ordered by \sys{}. If a client sees all checksums equal, the logs of replicas are consistent at least until the client's log message, and the replication succeeds. Otherwise, there must be lost messages in some replica, and the client notifies the primary replica to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match. This replication protocol needs only 1 RTT when packet loss and host failure are rare. Because \sys{} leverages the DCN to detect failures, it is typically faster than application heartbeat timeout.
 
 %\RED{1 rtt replication -- unreliable \sys{}, add timestamps together (or use a stronger hash function to avoid coincidental conflict), blockchain like approach. When clients see unequal responses, there must be lost messages, and the failure recovery protocol is triggered.}
 
@@ -177,7 +177,7 @@ If a recipient or the network permanently fails, atomicity violation is not obse
 %If the sender or a receiver fails, none of the messages in a batch are delivered. If both sender and all receivers are correct, all messages are delivered in total order.
 
 As an optimization, we can use unreliable \sys{} for read-only DAOs because if it fails due to packet loss, the initiator can retry it.
-In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \sys{} provides 1-RTT read-only DAOs with strict serializability, no storage overhead and close-to-optimal throughput, but at the expense of blocking operations until the network barrier message.
+In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \sys{} provides 1-RTT read-only DAOs with strict serializability, no storage overhead and close-to-optimal throughput, but at the expense of blocking operations until receiving the barrier timestamp.
 
 %There is an alternative approach that only uses best effort \sys{}, which provides a fast path for read-only DAOs, similar to FaRM~\cite{dragojevic2014farm}. Each object should have a \emph{locked} flag. Non read-only DAOs keep using the traditional way of locking. Read-only DAOs can use \sys{} directly. The initiator checks the lock after reading. If any of the objects is locked, the read fails and needs retry after a randomized backoff.
 %Compared to traditional locking, the latency of read-only DAOs is reduced from 2 RTTs to 1 RTT. In addition,
@@ -195,10 +195,10 @@ Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the met
 
 \subsubsection{Other Scenarios}
 
-In general transactions with Opacity~\cite{shamis2019fast}, to obtain read and write timestamps, a transaction needs to query a centralized sequencer (\textit{e.g.}, Spanner~\cite{corbett2013spanner}) or wait for clock uncertainty (\textit{e.g.}, FaRMv2~\cite{shamis2019fast} waits about $20 \mu$s). Using \sys{}, local timestamp can be directly used as transaction timestamp because messages of previous transactions must be delivered before the current one.
+In general transactions with Opacity~\cite{shamis2019fast}, to obtain read and write timestamps, a transaction needs to query a non-scalable centralized sequencer~\cite{dragojevic2015no,kaminsky2016design} or wait for clock uncertainty (\textit{e.g.}, Spanner~\cite{corbett2013spanner} waits $\sim$10ms and FaRMv2~\cite{shamis2019fast} waits $\sim$20$\mu$s). \sys{} can use local time as transaction timestamps directly without waiting because lock messages of previous transactions must be delivered to shards before data accesses of the current transaction.
 
-\sys{} timestamp provides a global synchronization point.
-For example, to take a consistent distributed snapshot~\cite{chandy1985distributed}, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state upon reception. Each process also records in-flight sent messages with a higher timestamp than $T$.
+\sys{} timestamp is also a global synchronization point.
+For example, to take a consistent distributed snapshot~\cite{chandy1985distributed}, the initiator broadcasts a message with timestamp $T$ to all processes, which directs all processes to record its local state and in-flight sent messages with a higher timestamp than $T$.
 %This is a consistent snapshot algorithm, because no message with timestamp higher than $T$ has been received by any process in the snapshot.
 
 %\RED{General transactions with Opacity (cite FaRMv2): can remove waiting for clock uncertainty in read and write timestamps. Because \sys{} ensures locks of previous transaction are visible to new read or commit transactions. FaRMv2~\cite{shamis2019fast} leverage accurate global time for fast distributed transactions.}
