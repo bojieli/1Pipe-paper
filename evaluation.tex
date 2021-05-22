@@ -139,7 +139,7 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 \parab{Message delivery latency.}
 Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{}.
-BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus average clock skew. The tail latency overhead is roughly the beacon interval plus maximum clock skew.
+BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus average clock skew. The tail latency overhead (1.7$\sim$3.3$\mu$s) is roughly the beacon interval plus maximum clock skew.
 End host representatives introduce extra forwarding delay from the switch to the end host.
 R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.

@@ -1,4 +1,4 @@
-\documentclass[sigconf]{acmart}
+\documentclass[sigconf,9pt]{acmart}
 
 \usepackage[skip=0pt]{caption}
 \usepackage{epsfig}
@@ -72,9 +72,9 @@
 
 \begin{document}
 
-\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference info
-\setcopyright{none}
-%\setcopyright{acmcopyright}
+%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference info
+%\setcopyright{none}
+\setcopyright{acmcopyright}
 %\setcopyright{acmlicensed}
 %\setcopyright{rightsretained}
 %\setcopyright{usgov}
@@ -93,29 +93,29 @@
 %Conference
 \acmConference[Submitted for review to SIGCOMM]{}
 \acmYear{2021}
-\copyrightyear{}
+\copyrightyear{2021}
 
 %% {} with no args suppresses printing of the price
-\acmPrice{}
+%\acmPrice{}
 
 %don't want date printed
-\date{}
+%\date{}
 
 \title{1Pipe: Scalable Total Order Communication \\in Data Center Networks}
 
-%for single author (just remove % characters)
-%\author{
-%{\rm Your N.\ Here}\\
-%Your Institution
-%\and
-%{\rm Second Name}\\
-%Second Institution
-% copy the following lines to add more authors
-% \and
-% {\rm Name}\\
-%Name Institution
-%} % end author
-\author{Paper \#208, 12 pages body, 15 pages total}
+\author{
+{\rm Bojie Li}\\
+Huawei Technologies
+\and
+{\rm Gefei Zuo}\\
+University of Michigan
+\and
+{\rm Wei Bai}\\
+Microsoft Research
+\and
+{\rm Lintao Zhang}\\
+BaseBit Technologies
+} % end author
 
 \renewcommand{\shorttitle}{1Pipe: Scalable Total Order Communication in Data Center Networks}
 \renewcommand{\shortauthors}{X.et al.}
