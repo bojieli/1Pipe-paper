@@ -122,7 +122,7 @@ More precisely, \sys{} resembles Causally and Totally Ordered Communication Supp
 In this work, we propose a scalable and efficient implementation of \sys{} in a DCN, where the topology is regular~\cite{leiserson1985fat,greenberg2009vl2}, and switches have generally good programmability.
 Our principle is to co-design end hosts with the underlying DCN.
 We synchronize the clocks on hosts and ensure they are non-decreasing.
-The sender attaches a same timestamp to each packet in a unicast message or scattering.
+The sender attaches the same timestamp to each packet in a unicast message or scattering.
 %The timestamps satisfy two reqirements.
 %First, for a given host the timestamps are non-decreasing.
 %Messages sent by a host with the same timestamp are considered to form a scattering.
@@ -132,14 +132,13 @@ Each receiver delivers messages in non-decreasing timestamp order.
 
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys forwards timestamped packets as usual in the network, and buffers them at the receiver side.
-The key challenge is to let a receiver know that all packets below a certain timestamp has arrived.
-To this end, we introduce a \emph{barrier} timestamp on each link and switch, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
-Each switch aggregates barrier information of all ingress links to derive the barrier for all egress links.
-In this way, barriers propagate in the DAG network, and the receiver can deliver the messages with timestamps below the barrier in order.
+The key challenge is to let a receiver know that all the packets below a certain timestamp have arrived.
+To this end, we introduce a \emph{barrier} timestamp on each link and switch~\wei{'each link' should be enough here.}, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
+Each switch aggregates barrier information of all the ingress links to derive the barrier for all the egress links. In this way, barriers propagate in the DAG\wei{give full name of DAG here} network along with packet forwarding, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate hop-by-hop \emph{beacon} packets carrying barrier information.
 
-Regarding packet loss and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered if both sender and all receivers in the scattering do not fail.
-In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.
+Regarding packet losses and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered only if both sender and all receivers\wei{all the hosts?} in the scattering do not fail.
+In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.~\wei{What are the relationships between this sentence and previous sentence.}
 Reliable \sys{} uses a two-phase commit (2PC) approach, where the first phase is end-to-end packet loss recovery, and the second phase aggregates \emph{commit barriers} through the network.
 It relies on a highly available network controller to coordinate failure handling.
 Reliable \sys{} adds one round-trip time (RTT) compared to best effort \sys{}.
@@ -205,7 +204,7 @@ To ensure liveness, we rely on the centralized SDN controller to resume operatio
 %Physical clock synchronization does not account for the difference in delays incured by OS network stacks and network links.
 %In Sec.\ref{sec:sync}, we propose \textit{minimax clock synchronization} to synchronize logical clocks on each node and assign timestamps to events according to the logical clocks, so that messages originated from distant nodes with adjacent timestamps arrive at receivers as simultaneously as possible.
 
-We implement three incarnations of \sys on network devices with different programming capabilities: reconfigurable switching chips~\cite{tofino,cavium} that can support flexible stateful per-packet processing, switch CPUs, and host CPUs in case that switch vendors do not expose accesses to switch CPUs.
+We implement three incarnations of \sys on network devices with different programming capabilities: \revise{programmable} switching chips~\cite{tofino,cavium} that can support flexible stateful per-packet processing, switch CPUs, and host CPUs in case that switch vendors do not expose accesses to switch CPUs.
 
 %Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
