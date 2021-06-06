@@ -1,4 +1,4 @@
-\subsection*{Abstract}
+\begin{abstract}
 
 %Existing approaches either employ centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which incurs high overhead in bandwidth and delay, as well being faulty with malicious hosts.
 
@@ -14,6 +14,8 @@ We propose a scalable and efficient method to implement \sys{} inside data cente
 
 Evaluation on a 32-server testbed shows that \sys achieves scalable throughput (80M msg/s per host) and low latency (10$\mu$s) with little CPU and network overhead.
 \sys{} achieves linearly scalable throughput and low latency in transactional key-value store, TPC-C, remote data structures, and replication that outperforms traditional designs by 2$\sim$20x.
+
+\end{abstract}
 
 %In order to reduce CPU and network overhead, and minimize message reordering latency, \sys employs multiple optimization techniques such as hierarchical barrier merging, idle network beaconing, minimax clock synchronization and in-network loss detection.
 

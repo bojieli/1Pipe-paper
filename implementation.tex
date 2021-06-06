@@ -75,10 +75,10 @@ So, we use RDMA UD instead.
 Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
 
 \sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the send API returns fail.
-Each destination maintains a send window, which is the minimum of the receive and congestion windows.
-When all messages of a scattering in send buffer are within the send window for the corresponding destination, they are attached with the current timestamp and sent out.
+\revise{Each destination maintains a send window, which is the minimum of the receive and congestion windows.
+When all messages of a scattering in send buffer are within the send window for the corresponding destination, they are attached with the current timestamp and sent out.}
 This means that when some destinations or network paths of a scattering are congested, it is held back in the send buffer rather than slowing down the entire network.
-To avoid live-locks, a scattering acquires ``credits'' from the send windows. If the send window for a destination is insufficient, the scattering is held in a wait queue without releasing credits. This makes sure that large scatterings can eventually be sent, at the cost of wasting credits that could be used to send other scatterings out-of-order.
+\revise{To avoid live-locks, a scattering acquires ``credits'' from the send windows. If the send window for a destination is insufficient, the scattering is held in a wait queue without releasing credits. This makes sure that large scatterings can eventually be sent, at the cost of wasting credits that could be used to send other scatterings out-of-order.}
 Beacon packets are sent to the ToR switch, and they are not blocked by flow control.
 
 A UD packet in \sys{} adds 24 bytes of headers: 3 timestamps including message, best-effort barrier, and commit barrier; PSN; an opcode and a flag that marks end of message.
@@ -100,7 +100,7 @@ Processes within a host are exposed directly to the Top-of-Rack (ToR) switch(es)
 In future work, the software process of \textit{lib1pipe} may be offloaded to a programmable NIC~\cite{kaufmann2016high,firestone2018azure}, which assigns timestamps to messages on egress pipeline.
 
 The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
-In a large network, the controller can be distributed to a cluster, each of which communicates with a portion of processes.
+\revise{In a large network, the controller can be distributed to a cluster, each of which communicates with a portion of processes.}
 
 %\RED{finding the minimum timestamp in a single (/small) clock cycle, where you have 256 ports, or the potential need to access a register in multiple places in the pipeline (the last point must have been addressed, else the evaluation would have failed).}
 

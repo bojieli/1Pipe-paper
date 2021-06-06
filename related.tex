@@ -17,7 +17,7 @@ A third line of work assumes a synchronous network~\cite{lamport1984using}, but 
 
 A fourth line of work, tree-based algorithms, addresses the trade-off between efficiency and scalability~\cite{rodrigues1998scalable}.
 At each non-leaf node, multiple ordered streams of packets are merged into one ordered stream, called \textit{deterministic merge}~\cite{hadzilacos1994modular,aguilera2000efficient}.
-This usage of timestamp and ordering is similar to \sys{} while applied to other fields such as network switches~\cite{network-switch-patent}, multi-core processors~\cite{kaestle2016machine}, and sensor networks~\cite{chakraborty2011reliable}.
+\revise{This usage of timestamp and ordering is similar to \sys{} while applied to other fields such as network switches~\cite{network-switch-patent}, multi-core processors~\cite{kaestle2016machine}, and sensor networks~\cite{chakraborty2011reliable}.}
 %However, centralized bottleneck still appears at the root of a broadcast tree, where all traffic between two sub-trees need to pass through.
 However, it is not practical to implement deterministic merge in commodity network switches.
 First, switches in data centers have small per-port buffer size~\cite{bai2017congestion}.

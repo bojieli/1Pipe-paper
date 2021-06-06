@@ -33,6 +33,7 @@ For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cit
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
 %Performance using data-plane programmable switches are expected to be better, but not evaluated because we do not have such a switch.
 In small-scale experiments (1$\sim$32 processes), each process runs on a distinct server. Each process uses a pair of threads for sending and receiving, respectively.
+\revise{With less or equal to 8 servers, they colocate in one rack. With 16 servers, they are in two racks in a row.}
 For experiments with 64$\sim$512 processes, each server hosts the same number of processes.
 %With 16 processes per NIC, the throughput of NICs is saturated.
 Clocks are synchronized via PTP~\cite{correll2005design} every 125 ms, achieving an average clock skew of 0.3~$\mu$s (1.0~$\mu$s at 95\% percentile), which agrees with Mellanox's whitepaper~\cite{mellanox-ptp}.
@@ -139,7 +140,7 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 \parab{Message delivery latency.}
 Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{}.
-BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus average clock skew. The tail latency overhead (1.7$\sim$3.3$\mu$s) is roughly the beacon interval plus maximum clock skew.
+BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, which is half of beacon interval plus average clock skew. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is roughly the beacon interval plus maximum clock skew.
 End host representatives introduce extra forwarding delay from the switch to the end host.
 R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
