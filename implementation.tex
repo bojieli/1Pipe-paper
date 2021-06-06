@@ -38,7 +38,7 @@
 
 \begin{figure*}[t!]
 	\centering
-	\subfloat[Reconfigurable switching chips.\label{fig:p4}]
+	\subfloat[\revise{Programmable} switching chips.\label{fig:p4}]
 	{\includegraphics[width=.30\textwidth]{images/p4_implementation.pdf}}
 	\hspace{0.04\textwidth}
 	\subfloat[Switch CPU.\label{fig:commodity}]
@@ -144,7 +144,7 @@ The client may simply report failures to user or implement logging to retry fail
 We implement in-network processing at three types of network switches with different programming capabilities.
 
 
-\subsubsection{Reconfigurable Switching Chip}
+\subsubsection{\revise{Programmable} Switching Chip}
 \label{sec:p4}
 %A reconfigurable switching chip can maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip.
 
@@ -168,7 +168,7 @@ The control plane software routinely checks link barriers and reports failure if
 \subsubsection{Switch CPU}
 \label{sec:commodity}
 
-For a switch without a reconfigurable router chip, \textit{e.g.,} Arista 7060CX, we implement in-network processing on the switch CPU.
+For a switch without a \revise{programmable} switching chip, \textit{e.g.,} Arista 7060 which uses Broadcom Tomahawk chip, we implement in-network processing on the switch CPU.
 %Data-plane programmable switches are currently not widely available in data centers.
 Although commodity switches cannot process packets in data plane, they have a CPU to process control-plane packets, analogous to directly connecting a server to a port of the switch.
 Compared to server CPUs and NICs, the switch CPU is typically less powerful (\textit{e.g.}, 4 cores at 1~GHz) and has lower bandwidth (\textit{e.g.}, 1 Gbps).
@@ -178,7 +178,7 @@ Received barriers in beacons are stored in registers per input link.
 A thread on the CPU periodically computes the minimum of link barriers and broadcasts new beacons to all output links.
 Computing the minimum barrier takes hundreds of cycles, which is not a bottleneck compared to the cost of broadcast.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
-Compared with the reconfigurable chip, switch CPU slacks the barriers because 1) CPU processing has delay and 2) the barriers are updated by periodical beacons instead of by every packet.
+Compared with the \revise{programmable} chip, switch CPU slacks the barriers because 1) CPU processing has delay and 2) the barriers are updated by periodical beacons instead of by every packet.
 %First, the barriers are updated by periodical beacons instead of by every packet.
 %Second, compared to switching chip, switch CPU introduces higher processing delay.
 %So, the average delay overhead is (switch processing delay $\times$ number of hops + beacon interval/2 + clock skew).

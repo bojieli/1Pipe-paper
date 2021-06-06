@@ -24,7 +24,7 @@ We summarize the key findings as follows:
 \subsection{Methodology}
 \label{sec:testbed}
 
-Our testbed has 10 Arista 7060CX 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
+Our testbed has 10 Arista 7060CX-32S 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
 Each server has 2 Xeon E5-2650 v2 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
 We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch. %, so beacon packets do not need encapsulation.
 For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cite{tofino} switches in place of Arista switches.
