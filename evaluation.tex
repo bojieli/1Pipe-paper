@@ -163,6 +163,7 @@ With a larger system scale, in theory, the packet loss rate in an RTT would incr
 
 
 \parab{Failure recovery.}
+\revise{Failure detection in \sys{} is typically faster than heartbeat timeout in most applications, because the beacon interval in \sys{} is very low.}
 Figure~\ref{fig:failure-recovery} depicts failure recovery time, which measures the average time of barrier timestamp stall for correct processes.
 In our testbed, a failure is detected if beacon is not received for 10 beacon intervals (30~$\mu$s).
 In addition to failure detection time, the recovery procedure in Sec.\ref{sec:reliable} requires 6 network diameters plus the time to transmit and process messages.

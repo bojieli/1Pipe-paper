@@ -172,7 +172,7 @@ In order to detect failures, each switch has a timeout timer per input link. If 
 After removal of the failed link, the barrier timestamp resumes increasing.
 
 \parab{Addition of new hosts and links.}
-For a new host, its timestamp is synchronized to the maximum timestamp of its neighbors~\wei{under the same rack}. After a link is added, because a packet on the new link may have a smaller barrier timestamp $R_i$ than the barrier $B_{new}$ of destination switch, the switch updates $B_{new}$ only if $R_i$ is larger than the original $B_{new}$.~\wei{I don't really understand above paragraph. It seems to me that new hosts just need to synchronize clocks with other hosts.}
+For a new host, its timestamp is synchronized to the maximum timestamp of its neighbors \revise{under the same rack}. After a link is added, because a packet on the new link may have a smaller barrier timestamp $R_i$ than the barrier $B_{new}$ of destination switch, the switch updates $B_{new}$ only if $R_i$ is larger than the original $B_{new}$.~\wei{I don't really understand above paragraph. It seems to me that new hosts just need to synchronize clocks with other hosts.}
 
 
 %The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.

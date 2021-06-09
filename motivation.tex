@@ -4,7 +4,7 @@
 \subsection{Abstractions of 1Pipe}
 \label{subsec:abstration}
 
-\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each process has two roles: sender and receiver. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destination processes, all packets of the messages are labeled with the same timestamp of the sender host. Unlike multicast, the list of destinations can be different for each scattering.\wei{I think we should highlight that in a scattering, messages to different receivers can have different content.} The total order property is: \emph{each process receives~\wei{receives->processes?} messages from different processes in non-decreasing timestamp order}. The causality property is: \emph{when a receiver processes a message with timestamp T, the timestamp of the host must be higher than T}.
+\sys{} provides a \emph{causally and totally ordered} communication abstraction in a distributed system with multiple hosts, where each host has multiple processes. Each process has two roles: sender and receiver. Each host maintains a monotonically increasing timestamp, which represents the wall clock and is synchronized among all hosts. A message consists of one or more packets. When a process sends a group of messages (\emph{i.e.}, a \emph{scattering}) to different destination processes, all packets of the messages are labeled with the same timestamp of the sender host. Unlike multicast, the list of destinations can be different for each scattering\revise{, in which messages to different receivers can have different content.} The total order property is: \emph{each process \revise{processes} messages from different processes in non-decreasing timestamp order}. The causality property is: \emph{when a receiver processes a message with timestamp T, the timestamp of the host must be higher than T}.
 
 \begin{table}[htbp]
 \centering
@@ -39,7 +39,7 @@ As Table~\ref{tab:abstraction} shows, \sys{} provides two services with differen
 Best effort \sys{} detects lost packets via end-to-end ACK, but does not retransmit them. \revise{Modern data centers typically have low network utilization and deploy advanced congestion control mechanisms~\cite{kumar2020swift,hu2020aeolus,mittal2015timely,zhu2015congestion,alizadeh2010data}. Hence, packet losses are rare~\wei{cite pingmesh paper to show a concrete number here} and most of losses are due to network failures and packet corruptions. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.}
 %Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,mittal2015timely,zhu2015congestion}~\wei{add DCTCP here} have very low packet loss rates, because congestion loss has been almost eliminated, and losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
-So, data center applications can assume that best effort \sys{} is almost reliable but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process.~\wei{then do loss recovery?}
+So, data center applications can assume that best effort \sys{} is almost reliable but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process. \revise{Loss recovery is up to the application.}
 
 Second, \textit{onepipe\_reliable\_send/recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if sender process, receiver process and the network do not fail}. It retransmits packets in the case of packet losses. In this paper, we only consider crash failures. When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
@@ -49,8 +49,13 @@ In addition, each process may register a callback function via \textit{onepipe\_
 Reliable \sys{} also provides \emph{restricted failure atomicity}, which means all-or-nothing delivery of \emph{a scattering of messages} with the exception that if a receiver fails permanently or network partitions after the decision to deliver is made, the receiver can never deliver it.
 If a receiver recovers from failures, it can deliver or discard messages consistently with the other receivers in the same scattering.
 In fact, full failure atomicity is impossible in a non-replicated fail-stop model, because a receiver or its network link may fail permanently before delivering $T$ almost simultaneously with another receiver delivering $T$~\cite{fischer1985impossibility}.
-\sys{} provides a fast path in normal case and applications may solve failures with replication and traditional consensus~\cite{lamport1998part,raft}.
 Reliable \sys{} achieves atomicity via two-phase commit and in-network barrier aggregation, so messages delivery needs 1.5 RTTs plus barrier wait time.
+
+\revise{In fault tolerant applications, \sys{} provides a fast path in normal cases, and falls back to the application for customized failure handling.
+More concretely, an application may use state machine replication to replicate its states, and register \textit{onepipe\_proc\_fail\_callback} which invokes a traditional consensus algorithm~\cite{lamport1998part,raft}.
+When failure occurs, message delivery is stalled, and \sys{} invokes the callbacks in all non-fail processes.
+Finally, after the replicas reach consensus on the states, message delivery is resumed.}
+
 
 \iffalse
 \textcolor{red}{Outline:\\
@@ -118,9 +123,10 @@ By removing the fence between $A \rightarrow O$ and $A \rightarrow B$, \revise{\
 If an application needs to process many WAW tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. In contrast, using \sys{}, the application can send dependent messages in pipeline. %so, the throughput is only limited by computation speed and network bandwidth.
 
 The argument above neglects possible packet losses.
-In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so $B$ still needs to check the version~\wei{what is version?} of $O$ after reading. If it does not match $A$, then $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
+In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so \revise{every object needs to maintain a version, and $B$ needs to check the version of $O$. If it does not match the version in the notification message from $A$}, then $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
 $A$ registers send failure callback and performs rollback recovery when $A$ is notified of a send failure.
-If we use reliable \sys{}, $O$ does not need to maintain a version, but it adds an RTT to each message delivery, so, the end-to-end latency increases from 2.5 to 3.5 RTTs. However, $A$ can still send messages in pipeline, and have much higher throughput than the traditional way.
+
+If we use reliable \sys{}, \revise{objects no longer need versioning, but the end-to-end latency increases from 2.5 to 3.5 RTTs}. However, $A$ can still send messages in pipeline, and have much higher throughput than the traditional way.
 In addition, reliable \sys can preserve causality in failure cases~\cite{birman1994response}: if $A$ fails to write to $O$, message $A \rightarrow B$ will not be delivered, similar to Isis~\cite{birman1984overview}.
 
 Similarly, \revise{\sys{} removes IRIW hazard and improves minimum end-to-end latency from 3 RTTs to 1 RTT by eliminating two fences.} The minimum latency is achieved when $A$ and $B$ initiate read and write simultaneously.
@@ -139,8 +145,15 @@ Replication is essential for fault tolerance.
 Traditional multi-client replication requires 2 RTTs because client requests must be serialized (\textit{e.g.}, sent to a primary) before sending to replicas~\cite{park2019exploiting}.
 With \sys{}, we can achieve 1-RTT replication without making assumptions on log content, because the network serializes messages.
 A client can directly send a log message to all replicas with a scattering, and each replica orders logs according to the timestamp (ties are broken by the ID of client).
-Because reliable \sys{} has an extra RTT, we use unreliable \sys{} and handle packet losses in a more clever way.~\wei{how about host failures?}
-To detect inconsistent logs due to packet losses, each replica maintains a checksum of all \revise{previous} log messages. When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. The return message does not need to be ordered by \sys{}. If a client sees all checksums equal, the logs of replicas are consistent at least until the client's log message, and the replication succeeds. Otherwise, there must be lost messages in some replica, and the client notifies the primary replica to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match. This replication protocol needs only 1 RTT when packet loss and host failure are rare. Because \sys{} leverages the DCN to detect failures, it is typically faster than application heartbeat timeout.~\wei{I don't understand above two sentences}
+Because reliable \sys{} has an extra RTT, we use unreliable \sys{}, and handle packet losses \revise{and failures} in a more clever way.
+\revise{First, to ensure ordered delivery of logs between each pair of client and replica, they maintain a sequence number. The replica rejects messages with non-consecutive sequence numbers.}
+Second, to detect inconsistent logs due to packet losses, each replica maintains a checksum of all \revise{previous log messages from all clients}.
+When a replica receives a message, it adds the message timestamp to the checksum, and returns the checksum to the client. The response message does not need to be ordered by \sys{}.
+If a client sees all checksums \revise{are equal from the responses}, the logs of replicas are consistent at least until the client's log message, and \revise{the client knows that the replication succeeds.}
+\revise{Otherwise, there must be lost messages to some replica or failure of a client or a replica.}
+\revise{In the case of packet loss, the client simply retransmits the messages since the first rejected one.}
+\revise{In the case of suspected replica failure, the client notifies all replicas (or a cluster manager)} to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match.
+\revise{When there is no packet loss and failure, replication only needs 1 RTT. When there is a packet loss (and it is not a tail loss), replication needs 2 RTTs for retransmission.}
 
 %\RED{1 rtt replication -- unreliable \sys{}, add timestamps together (or use a stronger hash function to avoid coincidental conflict), blockchain like approach. When clients see unequal responses, there must be lost messages, and the failure recovery protocol is triggered.}
 
@@ -181,10 +194,7 @@ In terms of SNOW~\cite{lu2016snow} and NOCS~\cite{lu2020performance} theorems, \
 
 
 
-DAO can be used in two important classes of distributed transactions: snapshot transactions~\cite{corbett2013spanner} that are read-only, and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on the output of other hosts.
-The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
-The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
-Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one reliable scattering.~\wei{we can remove above paragraph as it is not closely related to \sys{}}
+
 
 
 \subsubsection{Other Scenarios}
