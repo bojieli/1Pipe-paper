@@ -25,8 +25,9 @@ We summarize the key findings as follows:
 \label{sec:testbed}
 
 Our testbed has 10 Arista 7060CX-32S 100G switches~\cite{arista} and 32 servers, forming a 3-layer fat-tree topology (4 ToR, 4 Spine, and 2 Core) similar to Figure~\ref{fig:dcn}.
-Each server has 2 Xeon E5-2650 v2 CPUs and a Mellanox ConnectX-4 NIC. %running RoCEv2~\cite{infinibandrocev2}.
-We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch. %, so beacon packets do not need encapsulation.
+\revise{The network has no oversubscription.}
+Each server has 2 Xeon E5-2650 v2 CPUs and a Mellanox ConnectX-4 NIC \revise{running RoCEv2~\cite{infinibandrocev2}}.
+We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch\revise{, so beacon packets do not need to detour.}
 For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cite{tofino} switches in place of Arista switches.
 %We use the second testbed in most benchmarks because it has larger scale.
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}.
@@ -208,6 +209,8 @@ If we can bypass the kernel network stack and process packets efficiently at Ari
 \parab{Network overhead.}
 As Figure~\ref{fig:network-overhead} shows, with high link bandwidth and a reasonable beacon interval (\emph{e.g.}, 3~$\mu$s), beacon traffic is a tiny portion (\emph{e.g.}, 0.3\%) of link bandwidth. Because beacons are hop-by-hop, the overhead is determined by beacon interval and does not increase with system scale.
 
+\parab{\revise{Scalability to larger scale.}}
+\revise{The major scalability problem is failure handling. Failure of any component will stall the entire network. In best effort 1Pipe, failure handling is localized because the fault component is removed by the neighborhood in a 30~$\mu s$-like timeout, so the remaining parts of the network experience a delivery latency inflation. Although this inflated latency is fixed, the frequency of occurrence is proportional to network scale. In reliable 1Pipe, failure handling is coordinated by a centralized controller, which needs to contact all processes in the system, so, the failure recovery delay increases proportionally with system scale, which is 3--15~$\mu s$ per host. If the scale is very large, we can use a cluster of controllers, each of which communicates with a subset of processes.}
 
 %Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
 

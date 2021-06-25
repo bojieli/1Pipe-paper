@@ -53,8 +53,10 @@ Reliable \sys{} achieves atomicity via two-phase commit and in-network barrier a
 
 \revise{In fault tolerant applications, \sys{} provides a fast path in normal cases, and falls back to the application for customized failure handling.
 More concretely, an application may use state machine replication to replicate its states, and register \textit{onepipe\_proc\_fail\_callback} which invokes a traditional consensus algorithm~\cite{lamport1998part,raft}.
+Each message is scattered to all replicas.
 When failure occurs, message delivery is stalled, and \sys{} invokes the callbacks in all non-fail processes.
-Finally, after the replicas reach consensus on the states, message delivery is resumed.}
+Restricted failure atomicity ensures that all correct replicas deliver the same sequence of messages.
+If the correct replicas reach a quorum, the callbacks return, and message delivery is resumed. Otherwise, there are too many failed replicas, and the application can choose between consistency and availability. If it chooses consistency and waits for some replicas to recover, the recovered replicas can deliver the same sequence of messages.}
 
 
 \iffalse

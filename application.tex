@@ -171,7 +171,9 @@ Figure~\ref{fig:ycsb-inter-dc} compares the throughput of cross-datacenter workl
 \revise{Now we extend Distributed Atomic Operations (DAO, Sec.\ref{subsec:dao}) to two important classes of distributed transactions: read-only snapshot transactions~\cite{corbett2013spanner} and independent transactions~\cite{eris} (or called one-shot transactions~\cite{kallman2008h}) that involve multiple hosts but the input of each host does not depend on the output of other hosts.
 The two most frequent transactions in TPC-C benchmark (New-Order and Payment)~\cite{tpcc} are independent transactions.
 The major difference between DAO and independent transactions is that the latter often requires replication to ensure durability and fault tolerance.
-Because \sys{} achieves 1-RTT replication, so, the initiator can utilize the method of Eris~\cite{eris}, which scatters operations to all replicas of all transaction participants in one reliable scattering.}
+The TXN initiator utilizes the method of Eris~\cite{eris}, which scatters operations to all replicas of all shards in one reliable scattering.
+So, each TXN can finish in one round-trip (actually two RTTs due to Prepare phase).
+If a host fails, the other replicas of the same shard reach quorum via traditional consensus.}
 
 We benchmark New-Order and Payment TXNs in TPC-C~\cite{tpcc}, which constitute 90\% of TPC-C workload.
 For simplicity, we do not implement non-independent TXNs in TPC-C, which should fall back to traditional concurrency control mechanisms.

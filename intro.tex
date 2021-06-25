@@ -134,13 +134,13 @@ At its core, \sys separates the bookkeeping of order information from message fo
 \sys forwards timestamped packets as usual in the network, and buffers them at the receiver side.
 The key challenge is to let a receiver know that all the packets below a certain timestamp have arrived.
 To this end, we introduce a \emph{barrier} timestamp on each link and switch~\wei{'each link' should be enough here.}, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
-Each switch aggregates barrier information of all the ingress links to derive the barrier for all the egress links. In this way, barriers propagate in the DAG\wei{give full name of DAG here} network along with packet forwarding, and the receiver can deliver the messages with timestamps below the barrier in order.
+Each switch aggregates barrier information of all the ingress links to derive the barrier for all the egress links. In this way, barriers propagate in the DAG \revise{(Directed Acyclic Graph)} network along with packet forwarding, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate hop-by-hop \emph{beacon} packets carrying barrier information.
 
-Regarding packet losses and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered only if both sender and all receivers\wei{all the hosts?} in the scattering do not fail.
-In addition, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions after the messages are sent.~\wei{What are the relationships between this sentence and previous sentence.}
+Regarding packet losses and failures, \sys{} provides a \emph{best effort} service in which lost messages are not retransmitted; and a \emph{reliable} service in which a message is guaranteed to be delivered \revise{if sender and all receivers} in the scattering do not fail.
+\revise{When a host or switch fails}, reliable \sys{} ensures \emph{restricted failure atomicity}: either all or none messages in a scattering are delivered unless a receiver fails permanently or network partitions. %~\wei{What are the relationships between this sentence and previous sentence.}
 Reliable \sys{} uses a two-phase commit (2PC) approach, where the first phase is end-to-end packet loss recovery, and the second phase aggregates \emph{commit barriers} through the network.
-It relies on a highly available network controller to coordinate failure handling.
+It relies on a highly available network controller to coordinate failure handling\revise{, and allows applications to customize failure handling via callbacks.}
 Reliable \sys{} adds one round-trip time (RTT) compared to best effort \sys{}.
 \revise{We will show in Sec.\ref{subsec:application} that best effort \sys{} can achieve replication and read-only distributed atomic operations without the extra RTT of reliable \sys{}.}
 
