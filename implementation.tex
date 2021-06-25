@@ -231,10 +231,9 @@ Compared with the \revise{programmable} chip, switch CPU slacks the barriers bec
 \subsubsection{Delegate Switch Processing to a Host}
 \label{sec:end-host}
 
-If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. The challenge is to maintain the FIFO property on network links, \emph{i.e.}, beacons with barrier timestamps on a network link $L$ must pass through $L$. To this end, we designate an \emph{end-host representative} for each network switch. %The location of the representative is arbitrary and does not need to be unique.
-
+If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. \revise{We designate an \emph{end-host representative} for each network switch. The challenge is that best effort \sys{} requires the barrier timestamp to be the lower bound of future message timestamp on a network link $L$. So, beacons with barrier timestamps on $L$ must pass through $L$.\footnote{Reliable \sys{} does not require this property.}}
 %As Figure~\ref{fig:end-host} shows, 
-For two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the routing path between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
+That is, for two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the routing path between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
 We install tunnel termination rules in each network switch to de-capsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
 
 Beacon packets use one-sided RDMA write to update barriers on representative host.

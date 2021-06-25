@@ -2,7 +2,7 @@
 \label{sec:conclusion}
 
 %The ordering of events and messages is fundamental to many distributed systems.
-We propose a causal and total order communication abstraction, \sys{}, that delivers messages in sender's clock time order with failure atomicity. 
+We propose a causal and total order communication abstraction, \sys{}, that delivers messages in sender's clock time order with \revise{restricted} failure atomicity. 
 \sys{} achieves scalability and efficiency by utilizing programmable data center networks to separate aggregating order information from forwarding data packets.
 \sys{} can simplify and accelerate many applications, and we expect future work to explore more.
 One limitation of \sys{} is that it did not consider Byzantine failure, and we leave the security problems to future work.
