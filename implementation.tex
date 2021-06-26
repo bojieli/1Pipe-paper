@@ -148,7 +148,7 @@ We implement in-network processing at three types of network switches with diffe
 \label{sec:p4}
 %A reconfigurable switching chip can maintain a handful of states $\mathcal{S}$ and process each packet $P$ through the state machine $P', \mathcal{S}' = f(P, \mathcal{S})$. Hence, we can implement the in-network processing on the reconfigurable chip.
 
-We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. Because a Tofino switch has 4 pipelines, it is regarded as 4 ingress and 4 egress switches connected via 16 all-to-all links. Each of the 8 ``switches'' derives barriers independently.
+We implement the in network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. Because a Tofino switch has 4 pipelines, it is regarded as 4 ingress and 4 egress switches connected via 16 all-to-all links. Each of the 8 ``switches'' derives barriers independently.
 \sys{} needs 2 state registers \emph{per input link}, storing the two barriers for best effort and reliable \sys{}, respectively.
 %\sys{} also needs 2 state registers per switch to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
@@ -156,7 +156,7 @@ For each packet, barrier register of the input link is updated in the first stat
 Because each stage can only compute the minimum of two barriers, the switch uses a binary tree of registers with $O(\log N)$ pipeline stages to compute the minimum link barrier $B_{new}$, where $N$ is the number of input links.
 At the final pipeline stage, the barrier field in packet is updated to $B_{new}$.
 The control plane software routinely checks link barriers and reports failure if a link barrier significantly lags behind.
-\revise{The expected delay of best effort \sys{} is base delay + (beacon interval + clock skew).}
+\revise{The expected delay of best effort \sys{} is (base delay + clock skew) when links are fully utilized, or (base delay + beacon interval/2 + clock skew) when most links are idle.}
 
 
 %We implement the in-network processing using P4~\cite{bosshart2014p4} and compile it to Barefoot Tofino~\cite{tofino}. \sys needs 8 state registers per input link and 5 state registers per output link. Each data packet carries three timestamp fields: message timestamp, loss-free barrier and delivery barrier, as well as loss encountered flag (Algorithm~\ref{alg:loss-detection}).
@@ -180,7 +180,7 @@ A thread on the CPU periodically computes the minimum of link barriers and broad
 Computing the minimum barrier takes hundreds of cycles, which is not a bottleneck compared to the cost of broadcast.
 Because data and beacon packets are FIFO in switch queues and on network links, the barrier property is preserved. On receivers, buffered data packets are delivered to the application according to barriers in beacon packets.
 Compared with the \revise{programmable} chip, switch CPU \revise{has higher latency due to CPU processing.}
-\revise{So, the expected delay is base delay + (switch CPU processing delay $\times$ number of hops + beacon interval + clock skew).}
+\revise{So, the expected delay is base delay + (switch CPU processing delay $\times$ number of hops + beacon interval/2 + clock skew).}
 
 \begin{figure*}[t]
 	\begin{minipage}[]{.32\textwidth}
@@ -237,5 +237,5 @@ We install tunnel termination rules in each network switch to de-capsulate one l
 
 Beacon packets use one-sided RDMA write to update barriers on representative host.
 Similar to Sec.\ref{sec:commodity}, minimum barriers are periodically computed and broadcast to downstream representatives.
-\revise{The expected delay is base delay + ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval + clock skew).}
+\revise{The expected delay is base delay + ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew).}
 \revise{Because CPUs on end hosts may have shorter processing delay (via DPDK) than switch CPU (via OS IP stack), host delegation may have shorter overall delay. This is why we use host delegation for evaluations in Sec.\ref{sec:evaluation}.}

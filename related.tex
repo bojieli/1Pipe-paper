@@ -5,7 +5,7 @@
 Critics~\cite{cheriton1994understanding} and proponents~\cite{birman1994response,van1994bother} of CATOCS have long discussed the pros and cons of such a primitive.
 \sys provides a scattering primitive with restricted atomicity, and achieves scalability with in-network computation that incurs little overhead, thus removing two criticisms (can't say together and efficiency).
 Scattering also enables atomic access to a portion (rather than all) of shards.
-Although \sys is not a panacea for ordering problems, it shows effectiveness in applications in Sec.\ref{sec:application}.
+Although \sys is not a panacea for ordering problems, \revise{\textit{e.g.}, it is not sufficient to support serializable general transactions}, it shows effectiveness in applications in Sec.\ref{sec:application}.
 
 %Since the dawn of distributed system research~\cite{lamport1978time}, there has been extensive research in total order communication, mostly providing a multicast or broadcast primitive.
 There has been extensive research on total order broadcast~\cite{defago2004total}.

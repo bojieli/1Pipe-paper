@@ -21,7 +21,7 @@
 \label{subsec:eval-kvs}
 
 
-We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory without replication using C++ \textit{std::unordered\_map}.
+We evaluate a distributed transactional key-value store where each server process stores a portion of KVs in memory using C++ \textit{std::unordered\_map} without replication.
 A transaction (TXN) is composed of multiple independent KV read or write operations.
 %We use the same number of TXN initiator and server processes.
 TXN initiators dispatch KV operations to server processes by hash of key.

@@ -92,7 +92,7 @@ If the correct replicas reach a quorum, the callbacks return, and message delive
 %Message scattering is a common communication pattern in distributed systems, where one end-host sender sends a group of messages to one or more end-host receivers.
 %First, packet losses can occur due to congestion, packet corruption and network switch or link failure.
 %Packet losses and host failures may violate atomicity of message scattering.
-\revise{Production data centers provide multiple paths between two nodes~\cite{greenberg2009vl2,fattree}.} Due to different delays of different paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86}\wei{fix the citation here. it is shown as ?} may take place (Figure~\ref{fig:ordering}).
+\revise{Production data centers provide multiple paths between two nodes~\cite{greenberg2009vl2,fattree}.} Due to different delays of different paths, several categories of ordering hazards~\cite{gharachorloo1990memory,sewell2010x86} may take place (Figure~\ref{fig:ordering}).
 
 \parab{Write after write (WAW).}
 Host $A$ writes data to another host $O$, then sends a notification to host $B$. Send can be considered as a write operation.
