@@ -140,7 +140,7 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 
 \parab{Message delivery latency.}
-Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle}.
+Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle and thus have zero queuing delay}.
 BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
 End host representatives introduce extra forwarding delay from the switch to the end host\revise{, which is $\sim2 \mu$s and contributes $10 \mu$s for the 5-hop topology}.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
@@ -151,8 +151,9 @@ As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typicall
 In Figure~\ref{fig:reorder-loss}, we simulate random message drop in \textit{lib1pipe} receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
 When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
 Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
-Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. With 10 background TCP flows per link, latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
 
+Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. \revise{As Figure~\ref{fig:background_flow} shows,} with 10 background TCP flows per host, the latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
+\revise{A higher oversubscription ratio would also increase latency due to increased buffering at the core of network. In Figure~\ref{fig:oversubscription}, we increase oversubscription ratio of the network, and the delay increases due to congestion and PFC pauses in core network. We believe more advanced congestion control mechanisms~\cite{mittal2018revisiting,li2019hpcc,alizadeh2013pfabric,gao2015phost,perry2015fastpass} can mitigate this problem.}
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
 
@@ -177,6 +178,16 @@ Host, NIC, host link, and ToR switch failures cause processes to disconnect from
 %\caption{CDF of end-to-end delay and reordering delay.}
 %\label{fig:cdf-delay}
 %\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\subfloat[Background flows.\label{fig:background_flow}]
+	{\includegraphics[width=0.22\textwidth]{gnuplot/background_flow_lat.eps}}
+	\hspace{0.01\textwidth}
+	\subfloat[Oversubscription.\label{fig:oversubscription}]
+	{\includegraphics[width=0.22\textwidth]{gnuplot/oversubscription_lat.eps}}
+	\caption{\revise{The impact of queuing delay on \sys{} latency.}}
+\end{figure}
 
 
 \begin{figure}[t]

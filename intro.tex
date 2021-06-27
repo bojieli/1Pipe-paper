@@ -133,7 +133,7 @@ Each receiver delivers messages in non-decreasing timestamp order.
 At its core, \sys separates the bookkeeping of order information from message forwarding.
 \sys forwards timestamped packets as usual in the network, and buffers them at the receiver side.
 The key challenge is to let a receiver know that all the packets below a certain timestamp have arrived.
-To this end, we introduce a \emph{barrier} timestamp on each link and switch~\wei{'each link' should be enough here.}, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
+To this end, we introduce a \emph{barrier} timestamp on \revise{each link}, which is essentially the \emph{lower bound} of the timestamps of all future arrival packets.
 Each switch aggregates barrier information of all the ingress links to derive the barrier for all the egress links. In this way, barriers propagate in the DAG \revise{(Directed Acyclic Graph)} network along with packet forwarding, and the receiver can deliver the messages with timestamps below the barrier in order.
 If some hosts or links are temporarily idle, we periodically generate hop-by-hop \emph{beacon} packets carrying barrier information.
 
@@ -223,7 +223,7 @@ Second, \sys{} scales linearly in TPC-C~\cite{tpcc} benchmark, which outperforms
 Third, by removing fences and enabling replicas to serve reads, \sys{} improves remote data structure performance to 2$\sim$4x.
 Finally, \sys{} reduces Ceph~\cite{weil2006ceph} replication latency by 64\%.
 
-In summary, the contributions of this paper are: (1) a novel abstraction \sys{} that provides causally and totally ordered unicast and scattering with best-effort and reliable semantics; (2) design and implementation of scalable and efficient \sys{} in DCNs; (3) design and evaluation of \sys{} applications: transactional KVS, remote data structure, and replication.
+In summary, the contributions of this paper are: (1) a novel abstraction \sys{} that provides causally and totally ordered unicast and scattering with best-effort and reliable semantics; (2) design and implementation of scalable and efficient \sys{} in DCNs; (3) design and evaluation of \sys{} applications: transactional KVS, \revise{independent transactions,} remote data structure, and replication.
 
 This work does not raise any ethical issues.
 

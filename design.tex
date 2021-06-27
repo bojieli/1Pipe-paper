@@ -70,7 +70,7 @@ The receivers deliver arrival messages in ascending order of their timestamps (t
 \parab{Barrier timestamp.}
 When a receiver delivers a message with timestamp $T$, it must be sure that it has received and delivered all the messages whose timestamps are smaller than $T$.
 A \revise{straightforward} approach is to only deliver messages with non-decreasing timestamps, and drop all out-of-order messages.
-However, since different network paths have different propagation and queuing delays, \revise{this} approach will drop too many messages, \textit{e.g.}, 57\% in an experiment where 8 hosts send to one receiver.~\wei{add reference to the paragraph.}
+However, since different network paths have different propagation and queuing delays, \revise{this} approach will drop too many messages, \textit{e.g.}, \revise{57\% received messages are out-of-order in our experiment where 8 hosts send to one receiver}. %~\wei{add reference to the paragraph.}
 To this end, we introduce the concept of \emph{barrier timestamp}.
 A barrier timestamp is associated with either a link or a node (\textit{i.e.}, a switch or an end host) in the routing graph.
 The barrier timestamp is the lower bound of message timestamps of all \emph{future arrival messages} from the link or at the node.
@@ -176,7 +176,9 @@ In order to detect failures, each switch has a timeout timer per input link. If 
 After removal of the failed link, the barrier timestamp resumes increasing.
 
 \parab{Addition of new hosts and links.}
-For a new host, its timestamp is synchronized to the maximum timestamp of its neighbors \revise{under the same rack}. After a link is added, because a packet on the new link may have a smaller barrier timestamp $R_i$ than the barrier $B_{new}$ of destination switch, the switch updates $B_{new}$ only if $R_i$ is larger than the original $B_{new}$.~\wei{I don't really understand above paragraph. It seems to me that new hosts just need to synchronize clocks with other hosts.}
+For a new host, it synchronizes clock with the time master.
+%For a new host, its timestamp is synchronized to the maximum timestamp of its neighbors \revise{under the same rack}. After a link is added, because a packet on the new link may have a smaller barrier timestamp $R_i$ than the barrier $B_{new}$ of destination switch, the switch updates $B_{new}$ only if $R_i$ is larger than the original $B_{new}$.
+%~\wei{I don't really understand above paragraph. It seems to me that new hosts just need to synchronize clocks with other hosts.}
 
 
 %The choice of $T_{beacon}$ is a trade-off between overhead and reordering delay.

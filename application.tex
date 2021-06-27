@@ -213,7 +213,7 @@ In contrast, with leader-follower replication, to maintain serializability of re
 \subsubsection{Replication in Distributed Storage}
 \label{subsec:ceph}
 
-We apply \sys{} to Ceph~\cite{weil2006ceph} distributed storage. Ceph OSD uses a primary-backup replication scheme, where the backups are also written sequentially. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. Because \sys{} supports 1-RTT replication in non-failure cases (Sec.\ref{sec:replication}), the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 54 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
+We apply \sys{} to a distributed storage system, Ceph~\cite{weil2006ceph}. Ceph OSD uses a primary-backup replication scheme, where the backups are also written sequentially. With 3 replicas, a client waits for 3 disk writes and 6 network messages (3 RTTs) in sequence. Because \sys{} supports 1-RTT replication in non-failure cases (Sec.\ref{sec:replication}), the client can write 3 replicas in parallel, thus the end-to-end write latency is reduced to 1 disk write and 1 RTT. Experiment shows that in an idle system with Intel DC S3700 SSDs, the latency of 4KB random write reduces from $160 \pm 54 \mu$s to $58 \pm 28 \mu$s (64\% reduction).
 
 
 %\subsection{Multiple Round-Trip Transactions}
