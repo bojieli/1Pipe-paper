@@ -67,11 +67,10 @@
 
 
 We implement an \sys{} library, \textit{lib1pipe}, at the end host. The library is built on top of RDMA verbs API.
-%Ideally, we would like to attach timestamps to packets using a programmable NIC.
-%However, with a standard RDMA NIC, 
 \sys{} obtains timestamp from CPU cycle counter and assigns it to messages in software.
 Because RDMA RC buffers messages in different QPs, we cannot ensure timestamp monotonicity on the NIC-to-ToR link.
-So, we use RDMA UD instead.
+\revise{Ideally, we would like to use a SmartNIC and attach timestamps to packets when they egress to the port.
+However, because we only have access to standard RDMA NICs, }we use RDMA UD instead.
 Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
 
 \sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the send API returns fail.
@@ -153,7 +152,8 @@ We implement the in network processing using P4~\cite{bosshart2014p4} and compil
 %\sys{} also needs 2 state registers per switch to store the minimum of per-link barriers.
 %As Figure~\ref{fig:p4} shows, 
 For each packet, barrier register of the input link is updated in the first stateful pipeline stage of the switch.
-Because each stage can only compute the minimum of two barriers, the switch uses a binary tree of registers with $O(\log N)$ pipeline stages to compute the minimum link barrier $B_{new}$, where $N$ is the number of input links.
+Because each stage can only compute the minimum of two barriers, the switch uses a binary tree of registers with $O(\log N)$ pipeline stages to compute the minimum link barrier $B_{new}$, where $N$ is the number of \revise{ports}.
+\revise{For a typical 32 port switch, it would cost 5 stages out of the 16 ingress stages.}
 At the final pipeline stage, the barrier field in packet is updated to $B_{new}$.
 The control plane software routinely checks link barriers and reports failure if a link barrier significantly lags behind.
 \revise{The expected delay of best effort \sys{} is (base delay + clock skew) when links are fully utilized, or (base delay + beacon interval/2 + clock skew) when most links are idle.}
@@ -230,7 +230,7 @@ Compared with the \revise{programmable} chip, switch CPU \revise{has higher late
 \subsubsection{Delegate Switch Processing to a Host}
 \label{sec:end-host}
 
-If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. \revise{We designate an \emph{end-host representative} for each network switch. The challenge is that best effort \sys{} requires the barrier timestamp to be the lower bound of future message timestamp on a network link $L$. So, beacons with barrier timestamps on $L$ must pass through $L$.\footnote{Reliable \sys{} does not require this property.}}
+If the switch vendor does not expose access interfaces to switch CPUs, we can offload the beacon processing to end hosts. \revise{We designate an \emph{end-host representative} for each network switch. The challenge is that best effort \sys{} requires the barrier timestamp to be the lower bound of future message timestamps on a network link $L$. So, beacons with barrier timestamps on $L$ must pass through $L$.}
 %As Figure~\ref{fig:end-host} shows, 
 That is, for two directly connected switches $S_1, S_2$ and their representatives $H_1, H_2$, beacon packets from $H_1$ to $H_2$ need to go through the link $S_1 \rightarrow S_2$. If the routing path between two representatives does not go through $S_1 \rightarrow S_2$, beacon packets needs to detour: they are sent with three layers of IP headers: $H_1 \rightarrow S_1$, $S_1 \rightarrow S_2$, and $S_2 \rightarrow H_2$.
 We install tunnel termination rules in each network switch to de-capsulate one layer of IP header, so the beacon packet will traverse through $H_1 \rightarrow S_1 \rightarrow S_2 \rightarrow H_2$.
