@@ -122,7 +122,7 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \sys{} can achieve total order broadcast.
 Figure~\ref{fig:total-order-tput} compares the scalability of \sys{} with other total order broadcast approaches using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at host NIC~\cite{kaminsky2016design} or programmable switch~\cite{eris}.
 We test an all-to-all traffic pattern where each process broadcasts to all processes.
-\sys{} scales linearly to 512 processes, achieving 5M messages per second per process (\textit{i.e.}, 80M msg/s per host).
+\sys{} scales linearly to 512 processes, achieving 5M \revise{64-byte} messages per second per process (\textit{i.e.}, 80M msg/s per host).
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
 Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead. %\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
 \revise{Programmable} chip and host representative (not shown) deliver the same high throughput because \sys{} decouples message forwarding from barrier propagation.
@@ -154,6 +154,8 @@ Packet loss has little impact on throughput because \sys{} can transfer new mess
 
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. \revise{As Figure~\ref{fig:background_flow} shows,} with 10 background TCP flows per host, the latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
 \revise{A higher oversubscription ratio would also increase latency due to increased buffering at the core of network. In Figure~\ref{fig:oversubscription}, we increase oversubscription ratio of the network, and the delay increases due to congestion and PFC pauses in core network. We believe more advanced congestion control mechanisms~\cite{mittal2018revisiting,li2019hpcc,alizadeh2013pfabric,gao2015phost,perry2015fastpass} can mitigate this problem.}
+
+\revise{Messages much larger than MTU will stall other messages, \textit{e.g.}, an 1~MB message will increase 80~$\mu$s latency of other messages.}
 
 %\textbf{Reordering delay (Y) - background flows per link (X); cluster scale (lines): experimentation.}
 
