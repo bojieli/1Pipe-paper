@@ -28,7 +28,7 @@ Our testbed has 10 Arista 7060CX-32S 100G switches~\cite{arista} and 32 servers,
 \revise{The network has no oversubscription because our traffic pattern is all-to-all.}
 Each server has 2 Xeon E5-2650 v2 CPUs and a Mellanox ConnectX-4 NIC \revise{running RoCEv2~\cite{infinibandrocev2}}.
 We dedicate a CPU core as representative of each switch and NIC to process beacons (Sec.\ref{sec:end-host}). The host representative is directly connected to the switch\revise{, so beacon packets do not need to detour.}
-For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use Barefoot Tofino~\cite{tofino} switches in place of Arista switches.
+For microbenchmarks in Sec.\ref{sec:microbenchmark}, we use \revise{Tofino~\cite{tofino}} switches in place of Arista switches.
 %We use the second testbed in most benchmarks because it has larger scale.
 %We use a testbed of 8 Dell R720/R730 servers and 10 Arista 100G Ethernet switches~\cite{arista} to benchmark the efficiency of \sys. %The topology is similar to Figure~\ref{fig:dcn}.
 %Each server is equipped with two Xeon E5 CPUs and one Mellanox ConnectX-4 NIC. Because we have not found a low latency interface in the switch OS to process beacon packets, we connect one Dell R720 server with Mellanox ConnectX-3 NICs to each of the switches to mimic the switch CPU. %Since the bottleneck in our benchmarks is the CPU instead of the network, there is unlikely to be congestion loss.
@@ -170,6 +170,7 @@ In our testbed, a failure is detected if beacon is not received for 10 beacon in
 In addition to failure detection time, the recovery procedure in Sec.\ref{sec:reliable} requires 6 network diameters plus the time to transmit and process messages.
 Core link and switch failures do not affect connectivity, so, only the controller needs to be involved, and no process is considered to be failed.
 Host, NIC, host link, and ToR switch failures cause processes to disconnect from the system, so, the recovery takes longer because each correct process needs to discard messages from or to them.
+\revise{There is a significant jump for ToR switch because all processes in the rack fail, leading to more failure recovery messages.}
 
 
 %\begin{figure}[t]
