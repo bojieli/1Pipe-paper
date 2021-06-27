@@ -238,4 +238,4 @@ We install tunnel termination rules in each network switch to de-capsulate one l
 Beacon packets use one-sided RDMA write to update barriers on representative host.
 Similar to Sec.\ref{sec:commodity}, minimum barriers are periodically computed and broadcast to downstream representatives.
 \revise{The expected delay is base delay + ((RTT between switch and host + host processing delay) $\times$ number of hops + beacon interval/2 + clock skew).}
-\revise{Because CPUs on end hosts may have shorter processing delay (via DPDK) than switch CPU (via OS IP stack), host delegation may have shorter overall delay. This is why we use host delegation for evaluations in Sec.\ref{sec:evaluation}.}
+\revise{Because CPUs on end hosts may have shorter processing delay (via RDMA) than switch CPU (via OS IP stack), host delegation may have shorter overall delay. This is why we use host delegation for evaluations in Sec.\ref{sec:evaluation}.}

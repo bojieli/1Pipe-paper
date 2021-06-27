@@ -121,10 +121,10 @@ To make simulations faster, each sender only sends one message to a randomly cho
 \parab{Scalability.}
 \sys{} can achieve total order broadcast.
 Figure~\ref{fig:total-order-tput} compares the scalability of \sys{} with other total order broadcast approaches using token~\cite{rajagopalan1989token}, Lamport timestamp~\cite{lamport1978time}, and centralized sequencer at host NIC~\cite{kaminsky2016design} or programmable switch~\cite{eris}.
-We test an all-to-all traffic pattern where each process broadcasts to all processes.
-\sys{} scales linearly to 512 processes, achieving 5M \revise{64-byte} messages per second per process (\textit{i.e.}, 80M msg/s per host).
+We test an all-to-all traffic pattern where each process broadcasts \revise{64-byte messages} to all processes.
+\sys{} scales linearly to 512 processes, achieving 5M messages per second per process (\textit{i.e.}, 80M msg/s per host).
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
-Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead. %\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
+Reliable \sys{} \revise{(\sys{}/R)} has 25\% lower throughput than best effort \sys{} \revise{(\sys{}/BE)} due to 2PC overhead. %\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
 \revise{Programmable} chip and host representative (not shown) deliver the same high throughput because \sys{} decouples message forwarding from barrier propagation.
 
 %\RED{Compare with optimized Lamport timestamp where received timestamps are exchanged per interval. Optimized Lamport timestamp has a trade-off between latency and throughput. e.g. use 50\% throughput for timestamp exchange: 2.5M msg/s, 512 processes, 5K msg/s, interval = 1/5K = 200 us.}
@@ -133,7 +133,7 @@ In contrast, the sequencer is a central bottleneck and introduces extra network 
 The latency soars when throughput of sequencer saturates and congestion appears.
 Token has low throughput because only one process may send at any time.
 We apply a common optimization to Lamport timestamp~\cite{lamport1978time} which exchanges received timestamps per interval rather than per message.
-It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, the interval is as high as 200 $\mu$s due to broadcast.
+It has a trade-off between latency and throughput, \textit{e.g.}, for 512 processes, even if 50\% throughput is used for timestamp exchange, \revise{broadcasting the messages takes 200 $\mu$s}.
 
 
 
@@ -141,15 +141,15 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 \parab{Message delivery latency.}
 Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle and thus have zero queuing delay}.
-BE-\sys{} with \revise{programmable} chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
+\sys{}/BE with \revise{programmable} chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
 End host representatives introduce extra forwarding delay from the switch to the end host\revise{, which is $\sim2 \mu$s and contributes $10 \mu$s for the 5-hop topology}.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
-R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.
-The RTT and host forwarding delay are proportional to network hop count\revise{, which is $\sim10 \mu$s for the 5-hop topology}.
+\revise{As Figure~\ref{fig:reorder-testbed} shows, reliable \sys{} adds an RTT to best effort \sys{}} due to Prepare phase in 2PC.
+The RTT and host forwarding delay are proportional to network hop count.
 
 As Sec.\ref{subsec:abstration} discussed, packet loss rate of links are typically lower than $10^{-8}$, but faulty links may have loss rates above $10^{-6}$.
 In Figure~\ref{fig:reorder-loss}, we simulate random message drop in \textit{lib1pipe} receiver to evaluate how packet loss affects latency in the testbed with 512 processes.
-When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT. So, R-\sys{} is more sensitive to packet loss.
+When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In both BE- and R-\sys{}, a lost beacon packet on any link will stall delivery of barrier until the next beacon, and all receivers need to wait for the worst link. In R-\sys{}, a lost message in prepare phase will trigger retransmission, which will stall the network for an RTT \revise{(and possibly multiple RTTs if retransmissions are lost)}. So, R-\sys{} is more sensitive to packet loss.
 Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
 
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. \revise{As Figure~\ref{fig:background_flow} shows,} with 10 background TCP flows per host, the latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
