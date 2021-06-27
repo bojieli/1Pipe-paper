@@ -10,7 +10,7 @@ We summarize the key findings as follows:
 
 \parab{Scalable throughput.}\sys achieves throughput close to the underlying hardware limit, and scales linearly to 1K hosts.
 
-\parab{Low latency.}With reconfigurable chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
+\parab{Low latency.}With \revise{programmable} chip, \sys adds less than 5$\mu$s to one-way delay for 1K hosts. With switch CPU, \sys adds less than 15$\mu$s delay.
 
 \parab{Low network and CPU overhead.}\sys's beacons only consume 0.3\% link capacity. At switches, beacon packets can be processed by a CPU core.
 
@@ -125,7 +125,7 @@ We test an all-to-all traffic pattern where each process broadcasts to all proce
 \sys{} scales linearly to 512 processes, achieving 5M messages per second per process (\textit{i.e.}, 80M msg/s per host).
 The throughput of \sys is limited by CPU processing and RDMA messaging rate.
 Reliable (R) \sys{} has 25\% lower throughput than best effort (BE) \sys{} due to 2PC overhead. %\footnote{Lamport timestamp and token imply reliability. However, our sequencer implementation only provides best effort delivery.}
-Reconfigurable chip and host representative (not shown) deliver the same high throughput because \sys{} decouples message forwarding from barrier propagation.
+\revise{Programmable} chip and host representative (not shown) deliver the same high throughput because \sys{} decouples message forwarding from barrier propagation.
 
 %\RED{Compare with optimized Lamport timestamp where received timestamps are exchanged per interval. Optimized Lamport timestamp has a trade-off between latency and throughput. e.g. use 50\% throughput for timestamp exchange: 2.5M msg/s, 512 processes, 5K msg/s, interval = 1/5K = 200 us.}
 
@@ -141,7 +141,7 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 \parab{Message delivery latency.}
 Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle and thus have zero queuing delay}.
-BE-\sys{} with reconfigurable chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
+BE-\sys{} with \revise{programmable} chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
 End host representatives introduce extra forwarding delay from the switch to the end host\revise{, which is $\sim2 \mu$s and contributes $10 \mu$s for the 5-hop topology}.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
 R-\sys{} adds an RTT to BE-\sys{} due to Prepare phase in 2PC.

@@ -69,7 +69,7 @@ The egress pipeline pulls packets from queues according to priority, applies hea
 One key property of the switch is that the queuing model ensures \emph{FIFO} property for packets with the same priority, ingress port and egress port. %In addition, packet corruption on input links and buffer overflow inside switches can be detected, and a packet loss counter is incremented per lost packet.
 
 The switch can provide good programmability. First, the CPU can be used to process (a small amount of) packets~\cite{lu2011serverswitch}.
-Second, the switching chip is increasingly reconfigurable in recent years. For example, Tofino chip~\cite{tofino} supports flexible packet parsers and stateful registers. Users can program Tofino using P4~\cite{bosshart2014p4} to achieve \textit{customized stateful per-packet processing}.
+Second, the switching chip is increasingly \revise{programmable} in recent years. For example, Tofino chip~\cite{tofino} supports flexible packet parsers and stateful registers. Users can program Tofino using P4~\cite{bosshart2014p4} to achieve \textit{customized stateful per-packet processing}.
 
 Despite good programmability, the switch typically has limited buffer resource to hold packets. The average per-port packet buffer is typically hundreds of kilobytes~\cite{bai2017congestion,bai2020one} in size.
 %Furthermore, the buffer size per port per Gbps keeps decreasing with the increase of link speed.
