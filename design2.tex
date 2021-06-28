@@ -1,18 +1,18 @@
 \section{Reliable 1Pipe}
 \label{sec:reliable}
 
-Now, we design reliable \sys{} that handles packet loss and failure.
+Now, we \revise{present the design reliable \sys{} that can handle packet loss and failure.}
 When a receiver delivers a message with timestamp $T$, it must make sure that all messages below $T$ are delivered.
 So, if a receiver is unaware of packet loss, it cannot reliably deliver messages according to the barrier timestamp.
-Even if the switch is capable of detecting lost packets, there is still a problem. %because \emph{host failure and packet loss may happen together}.
-For example, host $A$ sends to $B$, then sends to $C$ via a different path. The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes. The packet $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered. Failure to deliver $A \rightarrow B$ and delivery of $A \rightarrow C$ violates reliable ordering property.
+Even if the switch is capable to detect lost packets, there is still a problem. %because \emph{host failure and packet loss may happen together}.
+For example, host $A$ sends to $B$, then sends to $C$ via a different path. The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes.~\wei{I think you want to say three events happen according to the following order: $A \rightarrow B$ is lost; $A \rightarrow C$ arrives; $A$ crashes} The packet $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered. The failure to deliver $A \rightarrow B$ and the delivery of $A \rightarrow C$ violate reliable ordering property.
 Although the probability of simultaneous packet loss and host failure is very low, reliable \sys{} still needs to take this into account.
 
 
 \begin{figure}[t]
 \centering
 	\includegraphics[width=.3\textwidth]{images/2PC.pdf}
-	\caption{Two Phase Commit in reliable \sys{}.}
+	\caption{Two Phase Commit in reliable \sys{}.~\wei{Can we use dashed lines for commit messages?}}
 	\label{fig:2PC}
 \end{figure}
 
@@ -23,17 +23,17 @@ Although the probability of simultaneous packet loss and host failure is very lo
 	\label{fig:failure_recovery}
 \end{figure}
 
-Our key idea is a \emph{Two Phase Commit (2PC)} approach:
+Our key idea is a \emph{Two Phase Commit (2PC)} approach:~\wei{key idea to what? handle packet losses?}
 
 \begin{ecompact}
-\item \textbf{Prepare phase}: Sender puts messages into send buffer, and transmits them with timestamps. Network switches do NOT need to aggregate timestamp barriers. Receivers store the messages in receive buffer, and respond with ACKs. Senders wait for ACKs to detect packet loss, and retransmit messages if packets are lost in-flight.
-\item \textbf{Commit phase}: When a sender collects all ACKs below or equal to $T$, it sends a \emph{commit message} that carries \emph{commit barrier} $T$. The commit message is sent to the neighbor switch rather than the receivers, as the red arrow in Figure~\ref{fig:2PC} shows. Each switch aggregates minimum commit barriers on input links, and produce commit barriers that propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.
+\item \textbf{Prepare phase}: The sender puts messages into a send buffer, and transmits them with timestamps. \revise{Switches along the path do NOT aggregate timestamp barriers for data packets. The receiver stores messages in a receive buffer, and replies with ACKs. The sender uses ACKs to detect and recover packet losses.}
+\item \textbf{Commit phase}: \revise{When a sender collects all the ACKs for data packets with timestamps below or equal to $T$, it sends a \emph{commit message} that carries \emph{commit barrier} $T$.} The commit message is sent to the neighbor switch rather than the receivers, as the red arrow in Figure~\ref{fig:2PC} shows. Each switch aggregates the minimum commit barriers on input links, and produce commit barriers that propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.~\wei{we should mention beacons for commit messages as well.}
 \end{ecompact}
 
 
 
-\parab{Failures of processes, hosts, switches, and links.}
-Like in Sec.~\ref{sec:beacon}, crash failure of a component is detected by its neighbors not hearing any message after a timeout.
+\parab{Failures of processes, hosts, switches, and links.}~\wei{What is the relationship between this paragraph and 2PC approach?}
+Like in Sec.~\ref{sec:beacon}, crash failure of a component is detected by its neighbors using timeout.
 However, a failed component cannot be simply removed as in Sec.~\ref{sec:beacon}, because otherwise, the in-flight messages sent by the failed component cannot be consistently delivered or discarded.
 
 To achieve restricted failure atomicity in Sec.\ref{subsec:abstration}, we use the network controller in data centers \revise{to detect failures via beacon timeout.}
