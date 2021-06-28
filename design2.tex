@@ -1,18 +1,25 @@
 \section{Reliable 1Pipe}
 \label{sec:reliable}
 
-Now, we \revise{present the design reliable \sys{} that can handle packet loss and failure.}
+Now, we \revise{present the design of reliable \sys{} that can handle packet loss and failure.}
+
+\subsection{Handling Packet Loss}
+
 When a receiver delivers a message with timestamp $T$, it must make sure that all messages below $T$ are delivered.
 So, if a receiver is unaware of packet loss, it cannot reliably deliver messages according to the barrier timestamp.
 Even if the switch is capable to detect lost packets, there is still a problem. %because \emph{host failure and packet loss may happen together}.
-For example, host $A$ sends to $B$, then sends to $C$ via a different path. The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes.~\wei{I think you want to say three events happen according to the following order: $A \rightarrow B$ is lost; $A \rightarrow C$ arrives; $A$ crashes} The packet $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered. The failure to deliver $A \rightarrow B$ and the delivery of $A \rightarrow C$ violate reliable ordering property.
-Although the probability of simultaneous packet loss and host failure is very low, reliable \sys{} still needs to take this into account.
+For example, host $A$ sends to $B$, then sends to $C$ via a different path.
+\revise{Three events happen according to the following order: $A \rightarrow B$ is lost; $A \rightarrow C$ arrives; $A$ crashes.}
+%The packet $A \rightarrow B$ is lost on the way. Then, $A$ crashes.~\wei{I think you want to say three events happen according to the following order: $A \rightarrow B$ is lost; $A \rightarrow C$ arrives; $A$ crashes}
+In this case, $A \rightarrow C$ is delivered, while $A \rightarrow B$ cannot be recovered.
+The failure to deliver $A \rightarrow B$ and the delivery of $A \rightarrow C$ violate reliable ordering property.
+%Although the probability of simultaneous packet loss and host failure is very low, reliable \sys{} still needs to take this into account.
 
 
 \begin{figure}[t]
 \centering
 	\includegraphics[width=.3\textwidth]{images/2PC.pdf}
-	\caption{Two Phase Commit in reliable \sys{}.~\wei{Can we use dashed lines for commit messages?}}
+	\caption{Two Phase Commit in reliable \sys{}.}
 	\label{fig:2PC}
 \end{figure}
 
@@ -23,25 +30,25 @@ Although the probability of simultaneous packet loss and host failure is very lo
 	\label{fig:failure_recovery}
 \end{figure}
 
-Our key idea is a \emph{Two Phase Commit (2PC)} approach:~\wei{key idea to what? handle packet losses?}
+Our key idea \revise{to handle packet losses} is a \emph{Two Phase Commit (2PC)} approach: %~\wei{key idea to what? handle packet losses?}
 
 \begin{ecompact}
 \item \textbf{Prepare phase}: The sender puts messages into a send buffer, and transmits them with timestamps. \revise{Switches along the path do NOT aggregate timestamp barriers for data packets. The receiver stores messages in a receive buffer, and replies with ACKs. The sender uses ACKs to detect and recover packet losses.}
-\item \textbf{Commit phase}: \revise{When a sender collects all the ACKs for data packets with timestamps below or equal to $T$, it sends a \emph{commit message} that carries \emph{commit barrier} $T$.} The commit message is sent to the neighbor switch rather than the receivers, as the red arrow in Figure~\ref{fig:2PC} shows. Each switch aggregates the minimum commit barriers on input links, and produce commit barriers that propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$.~\wei{we should mention beacons for commit messages as well.}
+\item \textbf{Commit phase}: \revise{When a sender collects all the ACKs for data packets with timestamps below or equal to $T$, it sends a \emph{commit message} that carries \emph{commit barrier} $T$.} The commit message is sent to the neighbor switch rather than the receivers, as the red arrow in Figure~\ref{fig:2PC} shows. Each switch aggregates the minimum commit barriers on input links, and produce commit barriers that propagate to output links. This timestamp aggregation procedure is exactly the same as Sec.\ref{sec:loss-free}. A receiver delivers messages below or equal to $T$ in receive buffer when it receives a commit barrier $T$. \revise{Similar to best effort \sys{}, commit messages also need periodic beacons on idle links.}
 \end{ecompact}
 
+\subsection{Handling Failure}
 
-
-\parab{Failures of processes, hosts, switches, and links.}~\wei{What is the relationship between this paragraph and 2PC approach?}
+%\parab{Failures of processes, hosts, switches, and links.}~\wei{What is the relationship between this paragraph and 2PC approach?}
 Like in Sec.~\ref{sec:beacon}, crash failure of a component is detected by its neighbors using timeout.
-However, a failed component cannot be simply removed as in Sec.~\ref{sec:beacon}, because otherwise, the in-flight messages sent by the failed component cannot be consistently delivered or discarded.
+However, a failed component cannot be simply removed, because otherwise, the in-flight messages sent by the failed component cannot be consistently delivered or discarded.
 
 To achieve restricted failure atomicity in Sec.\ref{subsec:abstration}, we use the network controller in data centers \revise{to detect failures via beacon timeout.}
 The controller itself is replicated using Paxos~\cite{lamport1998part} or Raft~\cite{raft}, so, it is highly available, and only one controller is active at any time.
 \revise{The controller needs to determine which processes fail and when they fail.
-The former question is easier to answer. \emph{A process that disconnects from controller in routing graph is regarded as failed}. For example, if a host or the only network link from a host fails, all processes on it are disconnected from the data center network, so they are considered to fail simultaneously.	If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack are considered to fail.}
+The former question is easier to answer. \emph{A process that disconnects from controller in routing graph is regarded as failed}. For example, if a host fails, all processes on it are considered as failed. If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, then all processes in the rack fail.}
 
-\revise{The latter question, when processes fail, is harder to answer. The challenge is that we cannot reliably determine the last committed and delivered timestamp of a process.
+\revise{The latter question, when processes fail, is harder to answer. The challenge is that we cannot reliably determine the last committed and last delivered timestamp of a process.
 Because there is a propagation delay from committing a timestamp to delivering the timestamp to receivers, it is possible to find a timestamp $T$ committed by a failed process $P$ but not propagated to any receiver, so that all receivers have received messages from $P$ before $T$ in receive buffer (and hence can deliver them), but no messages after $T$ have been delivered, so they can be discarded.
 \emph{Failure timestamp} of $P$ is defined as such, which is computed as the maximum last commit timestamp reported by all neighbors of $P$. If multiple failures occur simultaneously, we try to find a set of correct nodes in routing graph that separates failed nodes and all correct receivers.
 If such a set cannot be found due to network partition, then we use a greedy algorithm to find a set to separate as many receivers as possible. The non-separable receivers sacrifice atomicity because some messages after $T$ may have been delivered.}

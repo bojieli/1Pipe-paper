@@ -99,7 +99,7 @@ Processes within a host are exposed directly to the Top-of-Rack (ToR) switch(es)
 In future work, the software process of \textit{lib1pipe} may be offloaded to a programmable NIC~\cite{kaufmann2016high,firestone2018azure}, which assigns timestamps to messages on egress pipeline.
 
 The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
-\revise{In a large network, the controller can be distributed to a cluster, each of which communicates with a portion of processes.}
+\revise{In a large network, future work can distribute the controller to a cluster, each of which serves a portion of network.}
 
 %\RED{finding the minimum timestamp in a single (/small) clock cycle, where you have 256 ports, or the potential need to access a register in multiple places in the pipeline (the last point must have been addressed, else the evaluation would have failed).}
 

@@ -155,7 +155,7 @@ If a client sees all checksums \revise{are equal from the responses}, the logs o
 \revise{Otherwise, there must be lost messages to some replica or failure of a client or a replica.}
 \revise{In the case of packet loss, the client simply retransmits the messages since the first rejected one.}
 \revise{In the case of suspected replica failure, the client notifies all replicas (or a cluster manager)} to initiate a failure recovery protocol, which uses a traditional consensus protocol to remove inconsistent log entries and make checksums match.
-\revise{When there is no packet loss and failure, replication only needs 1 RTT. When there is a packet loss (and it is not a tail loss), replication needs 2 RTTs for retransmission.}
+\revise{When there is no packet loss and failure, replication only needs 1 RTT.} %When there is a packet loss (and it is not a tail loss), replication needs 2 RTTs for retransmission.}
 
 %\RED{1 rtt replication -- unreliable \sys{}, add timestamps together (or use a stronger hash function to avoid coincidental conflict), blockchain like approach. When clients see unequal responses, there must be lost messages, and the failure recovery protocol is triggered.}
 
