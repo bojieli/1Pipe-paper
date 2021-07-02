@@ -4,22 +4,23 @@
 \revise{Appendices are supporting material that has not been peer-reviewed.}
 
 \parab{Correctness Analysis.}
-In reliable \sys{}, a message $M$ from sender $S$ to receiver $R$ with timestamp $T$ should be delivered if and only if $S$ commits $T$ and does not recall $M$.
+\revise{In reliable \sys{}, a scattering $M$ from sender $S$ to receivers $R_i$ with timestamp $T$ should be delivered if and only if the $S$ does not fail before $T$ and $S$ has received all ACKs from $R_i$. If $S$ fails before $T$ (\emph{i.e.}, the failure timestamp of $S$ is less than $T$), then $M$ is not committed (or the commit message has not propagated to any receiver, which is regarded as not committed). If any receiver $R_i$ fails before receiving the prepare message of $M$ or sending the ACK message, $S$ should recall $M$.}
 A process has both sender and receiver roles, and they are considered separately.
 
-Next, we analyze each type of failure:
+Next, we analyze \revise{the behavior of message $M: S \rightarrow R$ under} each type of failure:
 \begin{ecompact}
 	\item Packet loss on a fair-loss link: deliver because 2PC retransmits packets.
 	\item $R$ fails before sending ACK in Prepare phase: discard according to Recall step.
 	\item $R$ fails after sending ACK in Prepare phase: \revise{The message is in $R$'s receive buffer. We only ensure atomicity in a fail-recover model because recording the last message that $R$ has delivered is impossible. The controller records failure timestamps of senders and undeliverable recall messages, so that recovered receivers can deliver or discard messages consistently in each scattering.} If $R$ fails permanently, atomicity is violated.
-	\item $S$ fails before sending commit timestamp $T$: discard according to Discard step.
-	\item $S$ fails after sending commit timestamp $T$: deliver if and only if the failure timestamp $T'$ of $S$ is larger or equal to $T$. Failure timestamp is determined by controller, which ensures that $S$ has committed $T'$ but no message after $T'$ is delivered. Controller obtains $T'$ by gathering the maximum failure timestamp from a cut in routing graph that includes $S$ but excludes all receivers. Assuming the production and management networks do not fail simutaneously, such a cut can always be found. Otherwise, the network partition leads to atomicity violation.
-	\item The receiver of another message in the same scattering fails before sending ACK in Prepare phase: because the ACK is not received, discard according to Recall step.
-	\item The receiver of another message in the same scattering fails after sending ACK in Prepare phase: deliver according to 2PC.
+	\item $S$ fails before sending commit timestamp $T$: discard according to Discard step. \revise{For example, when $S$ fails while executing Recall step of $M$ due to previous failure of a receiver, its commit timestamp $T$ must be lower than $M$'s timestamp, so all receivers would discard $M$ due to failure of $S$.}
+	\item $S$ fails after sending commit timestamp $T$: deliver if and only if the failure timestamp $T'$ of $S$ is larger or equal to $T$. Failure timestamp is determined by controller, which ensures that $S$ has committed $T'$ but no message after $T'$ is delivered. Controller obtains $T'$ by gathering the maximum failure timestamp from a cut \finalrevise{in a routing graph} consisting of healthy switches that separates $S$ and all receivers. \revise{If the data center has separate production and management networks, and assuming} they do not fail \finalrevise{simultaneously}, such a cut can always be found. Otherwise, \revise{a network partition may} lead to atomicity violation.
+	\item The receiver $R'$ of another message $M'$ in the same scattering fails before sending ACK in Prepare phase: because the ACK is not received, discard according to Recall step.
+	\item The receiver $R'$ of another message $M'$ in the same scattering fails after sending ACK in Prepare phase: deliver according to 2PC.
 	\item The network path between $S$ and $R$ fails (\textit{e.g.}, due to routing problem), but $S$ and $R$ are reachable from the controller: controller forwards messages between $S$ and $R$.
-	\item The network path between $S$ and $R$ fails, and $S$ or $R$ is unreachable from the controller: the unreachable process is considered as failed. For example, if a host or the only network link from a host fails, all processes on it are disconnected from the network, so they are considered to fail simultaneously.
-	If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, all processes in the rack are considered to fail.
-	\item The network path to $R$ fails before $R$ receives commit barrier $T$: deliver after recovery according to Receiver Recovery.
+	\item The network path between $S$ and $R$ fails, and $S$ or $R$ is unreachable from the controller: the unreachable process is considered as failed. For example, if a host or the only network link from a host fails, all processes on it are disconnected from the network, so they are considered to fail.
+	%If a Top-of-Rack (ToR) switch fails, and hosts in the rack are only connected to one switch, all processes in the rack are considered to fail.
+	\item The network path to $R$ fails after $R$ receives commit barrier $T$: $T$ is already delivered to $R$.
+	\item The network path to $R$ fails before $R$ receives commit barrier $T$: deliver after $R$ recovers according to Receiver Recovery. If $R$ fails permanently, atomicity is violated.
 \end{ecompact}
 
 \iffalse

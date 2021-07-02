@@ -41,10 +41,10 @@ As number of processes increase, YCSB scales not as linearly as uniform, because
 With 512 processes, YCSB has 70\% throughput of uniform both for \sys{} and NonTX.
 In uniform workload that is free of contention, FaRM delivers 50\% throughput of \sys{} because WR and WO TXNs need 3 or 4 RTTs.
 In YCSB workload, FaRM does not scale because it \emph{locks} keys for 2 RTTs during WO/WR TXN commit, and the hot keys block all conflicting TXNs.
-In contrast, \sys{} does not lock keys. Each server processes TXNs on a same key in order.
+In contrast, \sys{} does not lock keys. Each server processes TXNs on \finalrevise{the same} key in order.
 
 In Figure~\ref{fig:kv_latency_ycsb}, we adjust the percentage of write ops and measure latency of RO, WO, and WR TXNs with 512 processes.
-The latency of \sys{} is almost constant because servers process read and write ops on a same key in order. WO and WR use reliable \sys{}, which is slower than RO that uses best effort \sys{}.
+The latency of \sys{} is almost constant because servers process read and write ops on \finalrevise{the same} key in order. WO and WR use reliable \sys{}, which is slower than RO that uses best effort \sys{}.
 For pure RO workload, FaRM has lower latency than \sys{} because it completes in 1 RTT and does not wait for network-wide reorder.
 Non-contended FaRM WO and WR consumes 3 and 4 RTTs, respectively, which is slightly worse than \sys{}.
 However, with high write percentage, FaRM latency skyrockets due to lock contention on hot keys and TXN aborts due to inconsistent read version.
@@ -197,7 +197,7 @@ Finally, we evaluate failure recovery of replicas by disconnecting the physical 
 \label{subsec:data-structure}
 
 \sys{} can remove ordering hazards in remote data structure access (Sec.\ref{subsec:order-hazards}).
-We implement a distributed concurrent hash table that uses a linked list to store key-value pairs (KVs) in a same hash bucket. The hash table is sharded on 16 servers.
+We implement a distributed concurrent hash table that uses a linked list to store key-value pairs (KVs) in \finalrevise{the same} hash bucket. The hash table is sharded on 16 servers.
 Different from Sec.\ref{subsec:eval-kvs} where servers process KV ops, in this section, clients access the remote hash table using RDMA \emph{one-sided} read, write, and CAS.
 The baseline system uses leader-follower replication.
 The workload has 16 parallel clients and uniform keys.

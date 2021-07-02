@@ -36,7 +36,7 @@ As another example, multiple shards of a distributed database generate logs to m
 
 
 As a reaction to this complexity, we propose \sys{}, a communication primitive that provides ``one big pipe'' abstraction in a data center network (DCN). As Figure~\ref{fig:1pipe} shows, messages are sent in groups and serialized in a virtual pipe, which enables different receiver processes to deliver messages from sender processes in a consistent order.
-More precisely, \sys{} resembles Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers; (2) messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. In addition to unicast, \sys{} also supports \emph{scattering}, which groups multiple messages to different receivers at the same position of the total order. Different from traditional multicast, each message in a scattering has distinct content and destination. Users do not need to define multicast channels or groups because the network is a big CATOCS channel.
+More precisely, \sys{} resembles Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}: (1) messages are \emph{totally ordered}, ensuring that they are delivered in the same order to all receivers; (2) messages are delivered obeying the \emph{causal order} in the Lamport \finalrevise{logical clock} sense~\cite{lamport1978time}. In addition to unicast, \sys{} also supports \emph{scattering}, which groups multiple messages to different receivers at the same position of the total order. Different from traditional multicast, each message in a scattering has distinct content and destination. Users do not need to define multicast channels or groups because the network is a big CATOCS channel.
 
 
 \begin{figure}[t]
@@ -68,7 +68,7 @@ More precisely, \sys{} resembles Causally and Totally Ordered Communication Supp
 %More formally, in total order communication, for each pair of hosts $R_i$ and $R_j$ and for each pair of messages $M_x$ and $M_y$ that are delivered to both hosts, $R_i$ is delivered $M_x$ before $M_y$ if and only if $R_j$ is delivered $M_x$ before $M_y$.
 %Ordered communication provides an abstraction where different receivers process messages from senders in a consistent order. This abstraction, sometimes called Causally and Totally Ordered Communication Support (CATOCS)~\cite{cheriton1994understanding}, 
 %In a total order communication system, messages are tagged with monotonic \textit{event timestamps} by the sender. The receiver processes arrival messages based on the timestamp order. In log replication, each replica will process logs in a consistent order, which can be 
-%is an important building block for both strongly consistent and eventually consistent systems. Ordered communication provides the guarantee that messages are delivered obeying the \emph{causal order} in the Lamport logic clock sense~\cite{lamport1978time}. This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered before the other. Moreover, messages are \emph{total order}, ensuing that they are delivered in the same order to all participants. 
+%is an important building block for both strongly consistent and eventually consistent systems. Ordered communication provides the guarantee that messages are delivered obeying the \emph{causal order} in the Lamport \finalrevise{logical clock} sense~\cite{lamport1978time}. This also imply \emph{FIFO}, i.e., if a message is sent after the other, it will also be delivered before the other. Moreover, messages are \emph{total order}, ensuing that they are delivered in the same order to all participants. 
 %The primitive can improve consistency in distributed shared memory, as well as accelerate transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just} and state machine replication~\cite{state-machine-replication}.
 
 
@@ -78,7 +78,7 @@ More precisely, \sys{} resembles Causally and Totally Ordered Communication Supp
 %The ability to \textit{total order} events in a distributed system, \textit{i.e.}, all nodes observe a consistent ordering of all events, can lead to simple and efficient implementation of a wide range of distributed applications, \textit{e.g.}, transaction processing~\cite{ports2015designing, eris}, transactional key-value stores~\cite{ports2015designing, eris}, fault-tolerant consensus~\cite{li2016just}, mutual exclusion~\cite{lamport1978time}, state machine replication~\cite{lamport1978time,lamport1978implementation} and distributed snapshots~\cite{chandy1985distributed}.
 %A total ordering of events indicates that each event can be tagged with a \RED{\textit{logical timestamp}}, and each node observes events in increasing timestamp order (break ties by origin node ID).
 
-%In a networked system, effects of an event propagate via network messages. This means to \textit{scatter} messages from the origin node to a set of receiver nodes. For communication efficiency, an event may not need to be observed by all nodes, and different nodes may receive different messages originated from a same event, so generally it is a \textit{scattering} instead of a \textit{broadcast} or \textit{multicast}. Messages are tagged with the timestamp of the origin event. A node observes an event by receiving the corresponding message. Consequently, from a receiver's perspective, \textit{total ordering of input message timestamps implies total ordering of its observed events}.
+%In a networked system, effects of an event propagate via network messages. This means to \textit{scatter} messages from the origin node to a set of receiver nodes. For communication efficiency, an event may not need to be observed by all nodes, and different nodes may receive different messages originated from \finalrevise{the same} event, so generally it is a \textit{scattering} instead of a \textit{broadcast} or \textit{multicast}. Messages are tagged with the timestamp of the origin event. A node observes an event by receiving the corresponding message. Consequently, from a receiver's perspective, \textit{total ordering of input message timestamps implies total ordering of its observed events}.
 
 %Many efforts have been made to achieve reliable and ordered group communication, namely atomic broadcast and multicast~\cite{defago2004total}.
 %Most existing works are designed for a small-to-medium group of known and trusted hosts, where each client sends the same message to every participant.
@@ -88,14 +88,14 @@ More precisely, \sys{} resembles Causally and Totally Ordered Communication Supp
 
 
 %Since the dawn of distributed system research~\cite{lamport1978time}, many efforts have been made to achieve ordered broadcast and multicast~\cite{defago2004total}.
-%In this paper, we consider a more general form of communication, namely \emph{message scattering}. Message scattering is a common communication pattern where a sender sends (potentially different) messages to multiple receivers. In contrast, identical messages are sent in multicast and broadcast. In a total order message scattering system, different receivers will process scattered messages in a consistent order. Assume $S_1$ scatters $M_1, M'_1$ and $S_2$ scatters $M_2, M'_2$. If $M_1$ is processed before $M_2$ at receiver $A$, then the same processing order should be kept at receiver $B$, \textit{i.e.}, $B$ will process $M'_1$ before $M'_2$.
+%In this paper, we consider a more general form of communication, namely \emph{message scattering}. Message scattering is a common communication pattern where a sender sends (potentially different) messages to multiple receivers. In contrast, identical messages are sent in multicast and broadcast. In a total order message scattering system, different receivers will process scattered messages in a consistent order. Assume $S_1$ scatters $M_1, M'_1$ and $S_2$ scatters $M_2, M'_2$. If $M_1$ is processed before $M_2$ \finalrevise{at a receiver} $A$, then the same processing order should be kept \finalrevise{at a receiver} $B$, \textit{i.e.}, $B$ will process $M'_1$ before $M'_2$.
 %Most total order multicast algorithms can be used to implement total order message scattering with some modifications.
 %However, existing solutions suffer from scalability or efficiency limitations.
 %One line of work leverages logically centralized coordination, \textit{e.g.}, centralized sequencers~\cite{eris}, or tokens to be passed among senders and receivers~\cite{rajagopalan1989token,kim1997total,ekwall2004token}.
 %As a result, it is challenging to scale the system.
 %Another line of work uses fully distributed coordination, \textit{e.g.}, exchange timestamps among receivers before they start to process messages~\cite{lamport1978time,birman1985replication,chandra1996unreliable}.
 %This causes extra network communication overhead and delay, thus degrading system efficiency.
-%An additional limitation comes from the semantics of multicast, where each receiver must get a same sequence of messages. 
+%An additional limitation comes from the semantics of multicast, where each receiver must get \finalrevise{the same} sequence of messages. 
 %Moreover, an additional restriction comes from the semantics of multicast, where all the receivers must receive identical messages.
 
 %In this work, we seek a solution to provide scalable and efficient reliable ordered communication for distributed systems in a data center environment, where the network is regular and switches have generally good programmability .
@@ -104,7 +104,7 @@ More precisely, \sys{} resembles Causally and Totally Ordered Communication Supp
 
 %For instance, web servers send an access log and an error log of each HTTP request to different log collectors. Achieving consistent ordering of requests between access and error logs requires \textit{total-order message scattering} (\sys), which ensures a group of messages to be scattered atomically.
 %Assume $S_1$ scatters access log $A_1$ and error log $E_1$, while $S_2$ scatters $A_2$ and $E_2$. If $A_1$ is processed before $A_2$ at access log collector, then error log collector should process $E_1$ before $E_2$.
-%Logically, a \sys network resembles a FIFO where messages in a same \textit{scattering} are enqueued atomically, and messages are dequeued by receivers in FIFO order.
+%Logically, a \sys network resembles a FIFO where messages in \finalrevise{the same} \textit{scattering} are enqueued atomically, and messages are dequeued by receivers in FIFO order.
 
 %Since the dawn of distributed systems research~\cite{lamport1978time}, there has been considerable amount of literature on total-ordering events and input messages using \textit{total order broadcast}~\cite{defago2004total}.
 %Most total-order broadcast algorithms can be modified to implement total-order message scattering, but they have scalability or efficiency limitations.
@@ -154,7 +154,7 @@ To achieve consensus under failures of hosts, rather than voting, we use the top
 Host failure information is reliably propagated through the network along with delivery barriers (Sec.\ref{sec:host-failure}).
 After failure recovery, a host can rejoin the system (Sec.\ref{sec:failure-recovery}).
 To ensure security, the top-of-rack switches enforce the hosts comply with \sys protocol, so Byzantine failures of hosts can also be detected (Sec.\ref{sec:byzantine}).
-Crash failures of network switches and links would stall the system but not violate correctness.
+Crash failures \finalrevise{of the network} switches and links would stall the system but not violate correctness.
 To ensure liveness, we rely on the centralized SDN controller to resume operation of a largest strongly connected network partition (Sec.\ref{sec:network-failure}).
 \fi
 
@@ -208,7 +208,7 @@ We implement three incarnations of \sys on network devices with different progra
 
 %Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
-%We design and implement \sys with different programming capabilities of network switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
+%We design and implement \sys with different programming capabilities \finalrevise{of the network} switches. Sec.\ref{sec:p4} assumes stateful per-packet processing with data-plane programmable switches. Sec.\ref{sec:commodity} assumes commodity switches with a programmable CPU, which can process control packets but not each and every data packets. In case switch CPUs do not have enough processing capacity, Sec.\ref{sec:end-host} uses end hosts for control plane processing.
 
 We evaluate \sys in a 32-server cluster with 10 switches and 3-layer fat-tree topology.
 \sys{} achieves linearly scalable throughput with 512 processes, achieving 5M messages per second per process (80M msg/s per host).

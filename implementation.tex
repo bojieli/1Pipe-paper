@@ -73,7 +73,7 @@ Because RDMA RC buffers messages in different QPs, we cannot ensure timestamp mo
 However, because we only have access to standard RDMA NICs, }we use RDMA UD instead.
 Each \sys{} message is fragmented into one or more UD packets.%, where \sys{} messages larger than MTU are fragmented into multiple UD packets.
 
-\sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. If send buffer is full, the send API returns fail.
+\sys{} implements end-to-end flow and congestion control in software. When a destination process is first accessed, it establishes a connection with the source process and provisions a receive buffer for it, whose size is the receive window. A packet sequence number (PSN) is used for loss detection and defragmentation. Congestion control follows DCTCP~\cite{alizadeh2010data} where ECN mark is in the UD header. When a scattering is sent by the application, it is stored in a send buffer. \finalrevise{If the send buffer} is full, the send API returns fail.
 \revise{Each destination maintains a send window, which is the minimum of the receive and congestion windows.
 When all messages of a scattering in send buffer are within the send window for the corresponding destination, they are attached with the current timestamp and sent out.}
 This means that when some destinations or network paths of a scattering are congested, it is held back in the send buffer rather than slowing down the entire network.
@@ -92,14 +92,14 @@ We use PAWS~\cite{jacobson1992tcp} to handle the timestamp wrap around.
 %The UD message has the same format as best effort \sys{}.
 %We maintain a receive buffer to reorder messages before delivery and a send buffer to track unACKed messages.
 
-When \textit{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages in receive buffer and deliver them to application threads.
+When \textit{lib1pipe} initializes, it registers to the controller and spawns a polling thread to: (1) generate periodic beacon packets; (2) poll RDMA completion queues and process received packets, including generating end-to-end ACKs and retransmitting lost packets; (3) reorder messages \finalrevise{in the receive buffer} and deliver them to application threads.
 \textit{lib1pipe} uses polling rather than interrupt because RDMA RTT is only $1\sim2 \mu$s, while interrupt would add $\sim10 \mu$s of delay~\cite{yang2012poll}.
 
 Processes within a host are exposed directly to the Top-of-Rack (ToR) switch(es), and the ToR aggregates timestamps of all processes in the rack.
 In future work, the software process of \textit{lib1pipe} may be offloaded to a programmable NIC~\cite{kaufmann2016high,firestone2018azure}, which assigns timestamps to messages on egress pipeline.
 
 The controller is a replicated service that stores routing graph, process information, failure notifications, and undeliverable recall messages in etcd~\cite{etcd}.
-\revise{In a large network, future work can distribute the controller to a cluster, each of which serves a portion of network.}
+\revise{In a large network, future work can distribute the controller to a cluster, each of which serves a portion \finalrevise{of the network}.}
 
 %\RED{finding the minimum timestamp in a single (/small) clock cycle, where you have 256 ports, or the potential need to access a register in multiple places in the pipeline (the last point must have been addressed, else the evaluation would have failed).}
 
@@ -140,7 +140,7 @@ The client may simply report failures to user or implement logging to retry fail
 \subsection{In-Network Processing}
 \label{sec:in-network-processing}
 
-We implement in-network processing at three types of network switches with different programming capabilities.
+We implement in-network processing at three types \finalrevise{of the network} switches with different programming capabilities.
 
 
 \subsubsection{\revise{Programmable} Switching Chip}

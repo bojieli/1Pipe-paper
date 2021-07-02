@@ -2,7 +2,7 @@
 
 %Existing approaches either employ centralized sequencers or tokens, thus suffering from limited scalability, or use distributed consensus protocols, which incurs high overhead in bandwidth and delay, as well being faulty with malicious hosts.
 
-%This paper proposes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in linearizable and serializable order via data center networks. \sys is linearizable as the message delivery order of each host is identical to the wall clock order when the messages are sent.\sys is seralizable as messages in a scattering group are delivered if and only if none of its participants fails.\sys guarantees correctness and liveness under packet losses, Byzantine failures of hosts and crash failures of network switches.\sys is scalable as it distributes work to each switch and end host. At its core, \sys achieves synchrony by separating the bookkeeping of order information from message forwarding.Network switches aggregate order information and detect packet losses, while end hosts reorder and retransmit messages.\sys achieves consensus by leveraging switches to detect and notify host failures.
+%This paper proposes Reliable Ordered Message Scattering (\sys), an efficient and scalable method to scatter groups of messages in linearizable and serializable order via data center networks. \sys is linearizable as the message delivery order of each host is identical to the wall clock order when the messages are sent.\sys is seralizable as messages in a scattering group are delivered if and only if none of its participants fails.\sys guarantees correctness and liveness under packet losses, Byzantine failures of hosts and crash failures \finalrevise{of the network} switches.\sys is scalable as it distributes work to each switch and end host. At its core, \sys achieves synchrony by separating the bookkeeping of order information from message forwarding.Network switches aggregate order information and detect packet losses, while end hosts reorder and retransmit messages.\sys achieves consensus by leveraging switches to detect and notify host failures.
 
 
 This paper proposes \sys{}, a novel communication abstraction that enables different receivers to process messages from senders in a consistent total order.
@@ -12,7 +12,7 @@ More precisely, \sys{} provides both unicast and \emph{scattering} (\textit{i.e.
 
 We propose a scalable and efficient method to implement \sys{} inside data centers. To achieve total order delivery in a scalable manner, \sys separates the bookkeeping of order information from message forwarding, and distributes the work to each switch and host. \sys aggregates order information using in-network computation at switches. This forms the ``control plane'' of the system. On the ``data plane'', \sys forwards messages in the network as usual and reorders them at the receiver based on the order information.
 
-Evaluation on a 32-server testbed shows that \sys achieves scalable throughput (80M msg/s per host) and low latency (10$\mu$s) with little CPU and network overhead.
+Evaluation on a 32-server testbed shows that \sys achieves scalable throughput (80M messages per second per host) and low latency (10$\mu$s) with little CPU and network overhead.
 \sys{} achieves linearly scalable throughput and low latency in transactional key-value store, TPC-C, remote data structures, and replication that outperforms traditional designs by 2$\sim$20x.
 
 \end{abstract}

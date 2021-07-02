@@ -68,7 +68,7 @@ Host & ToR & Leaf & Core & ToR & Leaf & Core \\
 \label{tab:eval-topology}
 \end{table}
 
-We evaluate 5 different system scales in Table~\ref{tab:eval-topology}: testbed consisting of one to three layers of network switches, as well as simulation of three-layer fat-tree topology with 64 or 1024 hosts.
+We evaluate 5 different system scales in Table~\ref{tab:eval-topology}: testbed consisting of one to three layers \finalrevise{of the network} switches, as well as simulation of three-layer fat-tree topology with 64 or 1024 hosts.
 Topologies in Table~\ref{tab:eval-topology}.
 For large-scale experiments, we use NS-3~\cite{henderson2008network} for simulation.
 The link bandwidth, link delay and processing delay are extracted from three-layer testbed experiments.
@@ -140,8 +140,8 @@ It has a trade-off between latency and throughput, \textit{e.g.}, for 512 proces
 
 
 \parab{Message delivery latency.}
-Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle and thus have zero queuing delay}.
-\sys{}/BE with \revise{programmable} chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number of network layers and processes, \revise{which is half of beacon interval plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half of beacon interval plus maximum clock skew}.
+Figure~\ref{fig:reorder-testbed} shows the message delivery latency of \sys{} \revise{when the system is idle and \finalrevise{thus has zero} queuing delay}.
+\sys{}/BE with \revise{programmable} chip delivers the lowest latency overhead compared to the unordered baseline. The average overhead (1.7$\sim$2.3$\mu$s) is almost constant with different number \finalrevise{of the network} layers and processes, \revise{which is half \finalrevise{of the beacon interval} plus average clock skew}. The tail latency overhead \revise{(1.7$\sim$3.3$\mu$s)} is \revise{half \finalrevise{of the beacon interval} plus maximum clock skew}.
 End host representatives introduce extra forwarding delay from the switch to the end host\revise{, which is $\sim2 \mu$s and contributes $10 \mu$s for the 5-hop topology}.
 In our testbed, $\le$8, 16, and $\ge$32 processes have 1, 3, and 5 network hops, respectively.
 Reliable \sys{} adds an RTT \revise{($2\sim10 \mu$s)} to best effort \sys{} due to Prepare phase in 2PC.
@@ -153,7 +153,7 @@ When loss rate is higher than $10^{-5}$, latency of \sys{} starts to grow. In bo
 Packet loss has little impact on throughput because \sys{} can transfer new messages while retransmitting lost packets.
 
 Besides packet loss, queuing delay caused by background traffic can also increase \sys{} latency. \revise{As Figure~\ref{fig:background_flow} shows,} with 10 background TCP flows per host, the latency inflation of BE-\sys{} and R-\sys{} are 30 and 50~$\mu$s, respectively.
-\revise{A higher oversubscription ratio would also increase latency due to increased buffering at the core of network. In Figure~\ref{fig:oversubscription}, we increase oversubscription ratio of the network, and the delay increases due to congestion and PFC pauses in core network. We believe more advanced congestion control mechanisms~\cite{mittal2018revisiting,li2019hpcc,alizadeh2013pfabric,gao2015phost,perry2015fastpass} can mitigate this problem.}
+\revise{A higher oversubscription ratio would also increase latency due to increased buffering at the core \finalrevise{of the network}. In Figure~\ref{fig:oversubscription}, we increase oversubscription ratio of the network, and the delay increases due to congestion and PFC pauses in core network. We believe more advanced congestion control mechanisms~\cite{mittal2018revisiting,li2019hpcc,alizadeh2013pfabric,gao2015phost,perry2015fastpass} can mitigate this problem.}
 
 \revise{Messages much larger than MTU will stall other messages, \textit{e.g.}, an 1~MB message will increase 80~$\mu$s latency of other messages.}
 
@@ -222,13 +222,13 @@ If we can bypass the kernel network stack and process packets efficiently at Ari
 \parab{Network overhead.}
 As Figure~\ref{fig:network-overhead} shows, with high link bandwidth and a reasonable beacon interval (\emph{e.g.}, 3~$\mu$s), beacon traffic is a tiny portion (\emph{e.g.}, 0.3\%) of link bandwidth. Because beacons are hop-by-hop, the overhead is determined by beacon interval and does not increase with system scale.
 
-\parab{\revise{Scalability to larger scale.}}
+\parab{\finalrevise{Scalability to larger networks.}}
 \revise{On the latency perspective, the base and beacon processing delays are proportional to the number of hops in the network, which is typically logarithm to the number of hosts~\cite{fattree,greenberg2009vl2}.
 The clock skew increases due to higher latency between clock master and hosts, and higher probability of bad clocks with high drift rates~\cite{li2020sundial}. We did not analyze the clock skew quantitatively yet.
 For reliable \sys{}, the expected number of packet losses in an RTT is proportional to the number of hosts times the number of hops. For 32K hosts, if all links are healthy (with loss rate $10^{-8}$), the latency increases by $0\sim 3\mu$s compared to loss-free; if all links are sub-healthy (with loss rate $10^{-6}$), the latency increases by $3\sim 17\mu$s.
 On the throughput perspective, the beacon overhead is unrelated to network scale, while the hosts would use larger memory and more CPU cycles to reorder the messages. The memory size is BDP (Bandwidth-Delay Product), and the reordering time is logarithm to BDP.}
 
-\revise{The major scalability problem is failure handling. Failure of any component will stall the entire network. In best effort 1Pipe, failure handling is localized because the fault component is removed by the neighborhood in a 30~$\mu s$-like timeout, so the remaining parts of the network experience a delivery latency inflation. Although this inflated latency is fixed, the frequency of occurrence is proportional to network scale. In reliable 1Pipe, failure handling is coordinated by a centralized controller, which needs to contact all processes in the system, so, the failure recovery delay increases proportionally with system scale, which is 3$\sim$15~$\mu s$ per host. If the scale is very large, we can use a cluster of controllers, each of which communicates with a subset of processes.}
+\revise{The major scalability \finalrevise{challenge} is failure handling. Failure of any component will stall the entire network. In best effort 1Pipe, failure handling is localized because the fault component is removed by the neighborhood in a 30~$\mu s$-like timeout, so the remaining parts of the network experience a delivery latency inflation. Although this inflated latency is fixed, the frequency of occurrence is proportional to network scale. In reliable 1Pipe, failure handling is coordinated by a centralized controller, which needs to contact all processes in the system, so, the failure recovery delay increases proportionally with system scale, which is 3$\sim$15~$\mu s$ per host.}
 
 %Figure~\ref{fig:clock-sync} compares reordering delay of minimax clock synchronization with physical clock synchronization (PTP). Without background traffic, minimax clock synchronization achieves similar accuracy with PTP. In the presence of background TCP traffic, physical clock synchronization leads to high reordering delay, while \sys adapts to variable congestion delay.
 

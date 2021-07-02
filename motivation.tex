@@ -31,15 +31,15 @@
 	onepipe\_exit() \\
 	\hline
 \end{tabular}
-\caption{Programming API of \sys{}. Vec[<dst, msg>] indicates a scattering of messages that have a same timestamp.}
+\caption{Programming API of \sys{}. Vec[<dst, msg>] indicates a scattering of messages that have \finalrevise{the same} timestamp.}
 \label{tab:abstraction}
 \end{table}
 
-As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_send/recv} is a \emph{best effort} service where packet loss is possible. \sys{} guarantees causal and total order properties by buffering messages at the receiver and only delivering them when it receives a barrier timestamp aggregated from the network. So, best effort \sys{} delivers message in 0.5 RTT plus barrier wait time. %\textit{onepipe\_unreliable\_recv} returns all messages with a same timestamp.
+As Table~\ref{tab:abstraction} shows, \sys{} provides two services with different reliability guarantees: first, \textit{onepipe\_unreliable\_send/recv} is a \emph{best effort} service where packet loss is possible. \sys{} guarantees causal and total order properties by buffering messages at the receiver and only delivering them when it receives a barrier timestamp aggregated from the network. So, best effort \sys{} delivers message in 0.5 RTT plus barrier wait time. %\textit{onepipe\_unreliable\_recv} returns all messages with \finalrevise{the same} timestamp.
 Best effort \sys{} detects lost packets via end-to-end ACK, but does not retransmit them. \revise{Modern data centers typically have low network utilization and deploy advanced congestion control mechanisms~\cite{kumar2020swift,hu2020aeolus,mittal2015timely,zhu2015congestion,alizadeh2010data}. \revise{Measurements show that intra-pod packet drop rate is on the order of $10^{-5}$~\cite{guo2015pingmesh}. In RDMA networks with PFC, because congestion loss is eliminated}, packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.}
 %Modern data centers with advanced congestion control~\cite{kumar2020swift,hu2020aeolus,mittal2015timely,zhu2015congestion}~\wei{add DCTCP here} have very low packet loss rates, because congestion loss has been almost eliminated, and losses are mainly due to packet corruption. Packet corruption rate should be below $10^{-8}$ according to IEEE 802.3 standard, and links with corruption rate higher than $10^{-6}$ are considered to be faulty~\cite{zhuo2017understanding}.
 %There have been works~\cite{ports2015designing,eris} that leverage low packet loss rate in data centers.
-So, data center applications can assume that best effort \sys{} is almost reliable but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure of network or remote process. \revise{Loss recovery is up to the application.}
+So, data center applications can assume that best effort \sys{} is almost reliable but should use \textit{onepipe\_send\_fail\_callback} to detect lost packets due to packet corruption or failure \finalrevise{of the network} or remote process. \revise{Loss recovery is up to the application \finalrevise{in this case}.}
 
 Second, \textit{onepipe\_reliable\_send/recv} is a \emph{reliable} service which in addition to ordering, guarantees reliability: \emph{a message is guaranteed to be delivered if sender process, receiver process and the network do not fail}. It retransmits packets in the case of packet losses. In this paper, we only consider crash failures. When a process or network fails, message delivery stalls.
 \sys{} removes in-flight messages from or to the failed process.
@@ -122,13 +122,13 @@ By removing the fence between $A \rightarrow O$ and $A \rightarrow B$, \revise{\
 
 %\RED{Why not let the application provide dependency among messages? Can remove false dependency in \sys{}. isis labeling psync, but cannot improve performance by much (cite ken birman response to understanding the limits)}
 
-If an application needs to process many WAW tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. In contrast, using \sys{}, the application can send dependent messages in pipeline. %so, the throughput is only limited by computation speed and network bandwidth.
+If an application needs to process many WAW tasks \emph{in sequence}, the power of \sys{} is amplified. Using the traditional method, the application needs 1 RTT of idle waiting during each WAW task, so, the throughput is bounded by 1/RTT. In contrast, using \sys{}, the application can send dependent messages \finalrevise{in a pipeline}. %so, the throughput is only limited by computation speed and network bandwidth.
 
 The argument above neglects possible packet losses.
 In best effort \sys{}, there is a small possibility that message $A \rightarrow O$ is lost in flight, so \revise{every object needs to maintain a version, and $B$ needs to check the version of $O$. If it does not match the version in the notification message from $A$}, then $B$ needs to wait for $A$ to retransmit $O$ and re-notify $B$.
 $A$ registers send failure callback and performs rollback recovery when $A$ is notified of a send failure.
 
-If we use reliable \sys{}, \revise{objects no longer need versioning, but the end-to-end latency increases from 2.5 to 3.5 RTTs}. However, $A$ can still send messages in pipeline, and have much higher throughput than the traditional way.
+If we use reliable \sys{}, \revise{objects no longer need versioning, but the end-to-end latency increases from 2.5 to 3.5 RTTs}. However, $A$ can still send messages \finalrevise{in a pipeline}, and have much higher throughput than the traditional way.
 In addition, reliable \sys can preserve causality in failure cases~\cite{birman1994response}: if $A$ fails to write to $O$, message $A \rightarrow B$ will not be delivered, similar to Isis~\cite{birman1984overview}.
 
 Similarly, \revise{\sys{} removes IRIW hazard and improves minimum end-to-end latency from 3 RTTs to 1 RTT by eliminating two fences.} The minimum latency is achieved when $A$ and $B$ initiate read and write simultaneously.
@@ -141,12 +141,12 @@ Compared to weaker memory models, TSO reduces synchronization in concurrent prog
 \subsubsection{1-RTT Replication}
 \label{sec:replication}
 
-%The global timestamp not only gives ordering, but also gives synchrony. Communication operations with a same timestamp are considered to be simultaneous.
+%The global timestamp not only gives ordering, but also gives synchrony. Communication operations with \finalrevise{the same} timestamp are considered to be simultaneous.
 
 Replication is essential for fault tolerance.
 Traditional multi-client replication requires 2 RTTs because client requests must be serialized (\textit{e.g.}, sent to a primary) before sending to replicas~\cite{park2019exploiting}.
 With \sys{}, we can achieve 1-RTT replication without making assumptions on log content, because the network serializes messages.
-A client can directly send a log message to all replicas with a scattering, and each replica orders logs according to the timestamp (ties are broken by the ID of client).
+A client can directly send a log message to all replicas with a scattering, and each replica orders logs according to the timestamp (ties are broken by the \finalrevise{client ID}).
 Because reliable \sys{} has an extra RTT, we use unreliable \sys{}, and handle packet losses \revise{and failures} in a more clever way.
 \revise{First, to ensure ordered delivery of logs between each pair of client and replica, they maintain a sequence number. The replica rejects messages with non-consecutive sequence numbers.}
 Second, to detect inconsistent logs due to packet losses, each replica maintains a checksum of all \revise{previous log messages from all clients}.
@@ -286,7 +286,7 @@ With \sys{}, the quiet period can be set to the real-time clock skew plus networ
 
 %\parab{Total Order.}The message scatterings are total ordered. For any pair of message scatterings $S_1$ and $S_2$, if a message in $S_1$ is delivered before $S_2$ to a receiver, then message in $S_1$ are delivered before $S_2$ to any other receiver that receives messages from both scatterings. 
 
-%\parab{FIFO.}For each pair of message scatterings $S_1$ and $S_2$ with a same sender $H$ and share a same receiver $R$, $S_1$ is delivered before $S_2$ at $R$ if and only if $S_1$ is sent before $S_2$ by $H$.
+%\parab{FIFO.}For each pair of message scatterings $S_1$ and $S_2$ with \finalrevise{the same} sender $H$ and share \finalrevise{the same} receiver $R$, $S_1$ is delivered before $S_2$ at $R$ if and only if $S_1$ is sent before $S_2$ by $H$.
 
 %\parab{Causality.}The total order of message scatterings preserves causality. For a pair of scatterings $S_1$ and $S_2$, if the sender of $S_1$ is a receiver of $S_2$, and $S_2$ is sent after receiving $M \in S_1$, then $S_1$ is ordered before $S_2$.
 
@@ -504,7 +504,7 @@ Further, none of these works tolerate Byzantine host failure.
 Our goal is to build a ordered message scattering service that satisfies the following requirements.
 
 %\textbf{Correctness.}
-%A sender scatters a group of messages with a same timestamp to multiple receivers, called a \textit{scattering}.
+%A sender scatters a group of messages with \finalrevise{the same} timestamp to multiple receivers, called a \textit{scattering}.
 %Timestamps for different scatterings are unique and increasing on each sender.
 %Each receiver delivers messages to applications in timestamp order (break ties by sender ID).
 %Messages in each scattering are delivered by either all or none receivers.
@@ -532,8 +532,8 @@ The system ensures liveness unless network partition occurs.
 
 %\textbf{Adaptive to Delay Variance.}
 %The delay among geographically distributed datacenters can be hundreds of milliseconds.
-%Because commodity NIC hardware is not able to assign a same timestamp to a group of scattered messages, \sys assigns timestamps in software.
+%Because commodity NIC hardware is not able to assign \finalrevise{the same} timestamp to a group of scattered messages, \sys assigns timestamps in software.
 %Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may grow to milliseconds under heavy load.
 %Links with different speeds or congestions also lead to delay variations.
-%The system should dynamically adapt to the variance of network delays to minimize reordering delay.
+%The system should dynamically adapt to the variance \finalrevise{of the network} delays to minimize reordering delay.
 \fi

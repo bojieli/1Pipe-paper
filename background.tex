@@ -87,7 +87,7 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 
 %One limitation of most widely-deployed switching chips is the limited programmability of internal states that are persistent across packets. The Barefoot Tofino switching chip~\cite{tofino} using RMT architecture~\cite{bosshart2013forwarding} supports \textit{stateful per-packet processing} and has high programmability with P4~\cite{bosshart2014p4} language.
 %However, the number of persistent states supported by each switch is only sufficient to have several per-port registers, but not enough to maintain per-packet states. 
-%Furthermore, the buffer size of network switches is less than 1~MB per port~\cite{bai2017congestion}.
+%Furthermore, the buffer size \finalrevise{of the network} switches is less than 1~MB per port~\cite{bai2017congestion}.
 %Therefore, it is hard to implement a strict priority queue large enough for in-network serialization~\cite{sivaraman2016programmable}.
 
 %\subsection{In-Network Computation}
@@ -103,7 +103,7 @@ As a result, it is challenging to buffer many packets at the switches in a data 
 %\textit{Multicast} is an in-network computation to reduce duplication of messages on sender side.
 %\textit{On-switch cache} is also a type of in-network computation to save computation on end hosts and improve load balancing (cite switchKV).
 %A single network switch is a serialization point where \textit{coordination} of directly-connected hosts can take place (cite hardware coordination, Eris).
-%\sys leverages the broadcast, cache and coordination functionalities of network switches to scale total ordering hierarchically.\RED{(leverage broadcast and cache?)}
+%\sys leverages the broadcast, cache and coordination functionalities \finalrevise{of the network} switches to scale total ordering hierarchically.\RED{(leverage broadcast and cache?)}
 
 %\textbf{Consider NIC as a switch, processes connect to data center network via NIC.}
 

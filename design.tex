@@ -9,7 +9,7 @@
 %\vspace{-1em}
 %\end{figure}
 
-Best effort \sys{} provides total order, causal, and FIFO message delivery\revise{, but do not retransmit lost packets and do not provide atomicity}.
+Best effort \sys{} provides total order, causal, and FIFO message delivery\revise{, \finalrevise{but does not retransmit lost packets and does not provide} atomicity}.
 A naive approach \revise{to realize this} is ordering all messages with a centralized sequencer, \revise{which} would be a bottleneck. \revise{Instead, we will introduce how to achieve scalable ordering in the regular DCN topology.}
 %~\wei{Maybe we should mention we assume network does not have any packet losses in this section.}
 
@@ -60,11 +60,11 @@ A naive approach \revise{to realize this} is ordering all messages with a centra
 \label{sec:loss-free}
 
 \parab{Message timestamp.}
-\sys sender assigns a non-decreasing timestamp for each message. Messages in a scattering have a same timestamp.
+\sys sender assigns a non-decreasing timestamp for each message. Messages in a scattering have \finalrevise{the same} timestamp.
 %A set of messages with an identical timestamp forms a scattering, while different scattering are assigned different timestamps.
 Given recent efforts on $\mu$s accurate clock synchronization in data centers~\cite{correll2005design,lee2016globally,geng2018exploiting,li2020sundial}, we synchronize monotonic time of hosts, and use the local clock time as message timestamps.
 Clock skew slows down delivery but does not violate correctness.
-Message timestamp determines the delivery order at receiver.
+Message timestamp determines the delivery order \finalrevise{at a receiver}.
 The receivers deliver arrival messages in ascending order of their timestamps (ties are broken through sender ID).
 
 \parab{Barrier timestamp.}
@@ -85,7 +85,7 @@ If the transport between sender and receiver is FIFO, a receiver can easily figu
 
 %\sys leverages the \emph{barrier timestamp} to provide order information. Before going to the mechanims, we illustrate the barrier timestamp with a simple example.
 
-%In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order at receiver. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
+%In Figure~\ref{fig:barrier}, there are two senders $R$, $W$ and two receivers shard($a$) and shard($b$). $R$ issues a scattering with message $R_a$ and $R_b$ to read data from shard($a$) and shard($b$), respectively. In the meanwhile, $W$ issues a scattering with message $W_a$ and $W_b$ to write data to shard($a$) and shard($b$), respectively. Each sender assigns an identical timestamp for all the messages in a scattering, namely $T_R$ and $T_W$. Each sender assigns monotonically increasing timestamps to different scatterings. Message timestamp determines the processing order \finalrevise{at a receiver}. When shard($a$) receives both $R_a$ and $W_a$, due to monotonic timestamp assignment, shard($a$) knows that it will not receive messages with timestamp $T \le T_R$ from $R$ or $T \le T_W$ from $W$. Further, shard($a$) will not receive messages with timestamp $T \le \min(T_R, T_W)$ from either $R$ or $W$. Hence, shard($a$) can process all messages with timestamp $T \le \min(T_R, T_W)$. In this example, each receiver actually derives a \textit{barrier timestamp}, \textit{e.g.}, $\min(T_R, T_W)$, which is the minimum message timestamp of all possible senders.
 
 \parab{Hierarchical barrier timestamp aggregation.} \revise{\sys exploits the knowledge of the queuing structure of the network, making the lower bound aggregation much more scalable and efficient than if it was implemented at only a logical level.}
 \sys leverages programmable switches to \emph{aggregate} the barrier timestamp information. Given the limited switch buffer resource, \sys does not reorder messages in the network. Instead, \sys forwards messages in the network as usual, but reorders them at the receiver side based on the barrier timestamp information provided by the switch.
@@ -168,10 +168,10 @@ For a beacon generated by the host, the barrier timestamp is the host clock time
 
 \parab{When to send beacons?}
 We introduce a beacon interval $T_{beacon}$. When a host or a switch output link does not observe any message packet for $T_{beacon}$ time, it generates a beacon packet. We should choose a suitable $T_{beacon}$ to \revise{balance bandwidth overhead and system delay}. 
-\revise{The beacons are sent at synchronized times on different hosts, so that when network delays are identical, a switch receives beacons almost simultanenously. If beacons were sent on random times, the switch must wait for the last beacon to come, which increases expected delay of a message by nearly one beacon interval. With synchronized beacons, the expected delay overhead is only half of beacon interval.}
+\revise{The beacons are sent at synchronized times on different hosts, so that when network delays are identical, a switch receives beacons almost \finalrevise{simultaneously}. If beacons were sent on random times, the switch must wait for the last beacon to come, which increases expected delay of a message by nearly one beacon interval. With synchronized beacons, the expected delay overhead is only half \finalrevise{of the beacon interval}.}
 
 \parab{\revise{Handling failures.}} %~\wei{How about switch failures?}
-When a \revise{host, link, or switch} fails, the barrier timestamp of its neighbors stop to increase. 
+When a \revise{host, link, or switch} fails, the barrier timestamp of its neighbors \finalrevise{stop increasing}. 
 In order to detect failures, each switch has a timeout timer per input link. If no beacon or data packet is received for a timeout, \textit{e.g.}, 10 beacon intervals, the input link is considered to be dead and removed from the input link list.
 After removal of the failed link, the barrier timestamp resumes increasing.
 \revise{This failure handling mechanism is decentralized.}
@@ -259,16 +259,16 @@ After removal of the failed link, the barrier timestamp resumes increasing.
 %Due to different propagation delays from the origin of events to the observers, simultaneity of events is relative to observers.
 %From an end-host receiver's perspective, two events should be simultaneous if the messages originated from the events arrive at the receiver simultaneously.
 %In a distributed system, events are timestamped and their effects propagate in the form of packets.
-%On one hand, we hope to timestamp the events so that if two packets originated from two distant events arrive at a receiver simultaneously, these two events should have a same timestamp.
+%On one hand, we hope to timestamp the events so that if two packets originated from two distant events arrive at a receiver simultaneously, these two events should have \finalrevise{the same} timestamp.
 %On the other hand, unlike our physical universe, a distributed system is easier to reason if the ordering of events is globally consistent, \textit{i.e.}, all receivers agree on the timestamps of events.
 
 \parab{Timestamp Assignment.}An immediate question is how to assign message timestamps. Given recent efforts on accurate clock synchronization~\cite{correll2005design,corbett2013spanner,lee2016globally,geng2018exploiting}, a straightforward solution is to use \emph{physical} time. When a host scatters a group of messages, it uses current physical time to initialize message timestamp and barrier timestamp fields of all packets.
 
-However, this approach does not take into account the delay variance of different network paths. Delay variance is caused by the variance of processing delays in OS kernel, queuing delays at the switch and different number of network hops. The delay variance causes straggler problem. Consider two independent messages being sent from two senders to the same receiver at the same physical time. They might arrive at different times due to different network delays. As a result, the earlier message must wait for the later one to be processed together, which increases reordering delay.
+However, this approach does not take into account the delay variance of different network paths. Delay variance is caused by the variance of processing delays in OS kernel, queuing delays at the switch and different number \finalrevise{of the network} hops. The delay variance causes straggler problem. Consider two independent messages being sent from two senders to the same receiver at the same physical time. They might arrive at different times due to different network delays. As a result, the earlier message must wait for the later one to be processed together, which increases reordering delay.
 
 %The next challenge is how to assign timestamps to messages.
 %Clock synchronization in data centers becomes increasingly accurate leveraging NIC timestamps~\cite{correll2005design}, GPS~\cite{corbett2013spanner}, PHY~\cite{lee2016globally} and network effects~\cite{geng2018exploiting}.
-%However, delay variance of network paths makes physical time a suboptimal choice for timestamps.
+%However, delay variance \finalrevise{of the network} paths makes physical time a suboptimal choice for timestamps.
 %Different OS network stacks have more than 100~$\mu$s of processing delay differences, and it may increase to milliseconds under heavy load.
 %Links with different speeds or congestion also lead to delay variations.
 %For example, two messages are transmitted from two senders to the same receiver at the same physical time.
@@ -633,7 +633,7 @@ Loss-free and ACK barriers is an optimization to reduce message delivery latency
 \section{Fault Tolerance}
 \label{sec:failure}
 
-In this section, we first handle crash failure of hosts and discuss failure recovery, then detect Byzantine failure of hosts, finally handle crash failure of network switches and links.
+In this section, we first handle crash failure of hosts and discuss failure recovery, then detect Byzantine failure of hosts, finally handle crash failure \finalrevise{of the network} switches and links.
 
 
 \subsection{Crash Failure of Hosts}
@@ -698,7 +698,7 @@ We trust network switches because they are centrally managed by data center oper
 
 For correctness, the ToR switch should detect the following cases: (a) incorrect source host ID, (b) timestamps and barriers that violate ordering, (c) inconsistent receiver list in a scattering, (d) retransmitted message is different from the initially sent one, and (e) send delivery barrier before receiving all ACKs.
 Cases (a) and (b) can be detected trivially on ToR.
-To detect (c), ToR stores the sequence number, timestamp, message receiver and scattering group of the last message, and checks such fields in a new message if it belongs to a same scattering.
+To detect (c), ToR stores the sequence number, timestamp, message receiver and scattering group of the last message, and checks such fields in a new message if it belongs to \finalrevise{the same} scattering.
 When ToR detects a missing sequence number, forwarding is paused and the sender is notified to retransmit the lost message.
 
 Cases (d) and (e) are much harder to detect.
@@ -740,7 +740,7 @@ Byzantine fault tolerance does not incur additional round-trips or significant n
 \label{sec:network-failure}
 
 \parab{Problem.}
-Failure of network switches and links will stall barriers.
+Failure \finalrevise{of the network} switches and links will stall barriers.
 The correctness is preserved but the system stops making progress.
 
 \parab{Solution.}
@@ -766,7 +766,7 @@ This condition is also sufficient.
 For any receiver $R$ in failed partition $P'$ and a border switch $T$ in resumed network partition $P$, because $R$ is reachable from $T$, the delivery barrier $B$ of $R$ must be less or equal than the delivery barrier $B'$ at $T$.
 When $T$ broadcasts death notice of any host $S$ in $P'$ with timestamp $B'$, messages delivered in $P'$ has timestamp $\le B$.
 So, no host in $P'$ can deliver messages higher than $B'$, and hosts in $P$ will receive death notices at $B'$.
-Two common cases of network partition are resumable: failure of a ToR switch that isolates a rack from the rest of data center, and failure of all bridge links between two clusters.
+Two common cases \finalrevise{of the network} partition are resumable: failure of a ToR switch that isolates a rack from the rest of data center, and failure of all bridge links between two clusters.
 
 To resume a network partition $P$, SDN controller notifies correct border switches in $P$ to broadcast death notices of all hosts outside $P$.
 Then the switches remove failed neighbors and the delivery barrier can resume progress.
@@ -796,12 +796,12 @@ If a receiver fails after delivery barrier has been sent, \sys cannot recall del
 When a host recovers from failure, it needs to join \sys system as a new host.
 Recovering lost messages during failure requires persistence or replication, which incurs high cost. So the best choice is to let applications determine, rather than \sys transport.
 
-Next, we deal with failure of network switches or links.
+Next, we deal with failure \finalrevise{of the network} switches or links.
 If a failure does not block communication between any pair of hosts, it only causes a brief interval of packet losses.
 Otherwise, the sender would timeout in retransmission and \textit{recall} messages from other receivers.
 If a failure disconnects an end host from the network (\textit{e.g.} ToR switch failure), nearby switches would broadcast the host failure.
 %\RED{Q1:should every switch records which host may pass through which input link? so that the switch is able to broadcast (potential) host failure. It seems really difficult. Q2:What if switches hold different opinions about whether a host fails. Is it possible?}
-In the extreme case of network partition, all cross-partition scatterings will fail and scatterings within a partition still proceed with total order.
+In the extreme case \finalrevise{of the network} partition, all cross-partition scatterings will fail and scatterings within a partition still proceed with total order.
 
 %Switches and end hosts detect network link or neighbor node failure when no beacons are received within a timeout interval.
 %Upon detection of failure, it will install a firewall rule to block data packets from the corresponding port and excludes the port from barrier aggregation and clock synchronization.
@@ -889,7 +889,7 @@ Each shard is composed of one unique DC and all inter-DC traffic originating fro
 Therefore, each inter-DC link is logically split to $N$ logical links, each carrying traffic originating from one DC.
 The partitioning can be implemented by tagging each packet with an origin DC ID.
 In this way, each switch in inter-DC WAN is logically split into $N$ switches, and at most $N$ beacon messages per inter-DC link are needed in each beacon interval.
-Because the routes in each shard originate from a same DC, they form a DAG and are loop-free by our definition.\RED{(confused, loop-free logical shard leads to what?)}
+Because the routes in each shard originate from \finalrevise{the same} DC, they form a DAG and are loop-free by our definition.\RED{(confused, loop-free logical shard leads to what?)}
 Note that loop-free only affects liveness and is not required by correctness, therefore temporary routing loops will only stall message delivery until the loop disappears.
 
 Typically, transit traffic of a DC only goes through border switches, analogous to ``international zones'' in an airport.
