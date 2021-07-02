@@ -5,9 +5,8 @@
 
 \parab{Correctness Analysis.}
 \revise{In reliable \sys{}, a scattering $M$ from sender $S$ to receivers $R_i$ with timestamp $T$ should be delivered if and only if the $S$ does not fail before $T$ and $S$ has received all ACKs from $R_i$. If $S$ fails before $T$ (\emph{i.e.}, the failure timestamp of $S$ is less than $T$), then $M$ is not committed (or the commit message has not propagated to any receiver, which is regarded as not committed). If any receiver $R_i$ fails before receiving the prepare message of $M$ or sending the ACK message, $S$ should recall $M$.}
-A process has both sender and receiver roles, and they are considered separately.
 
-Next, we analyze \revise{the behavior of message $M: S \rightarrow R$ under} each type of failure:
+\revise{Now, we analyze the behavior of message $M: S \rightarrow R$ under each type of failure. A process has both sender and receiver roles, and they are considered separately.}
 \begin{ecompact}
 	\item Packet loss on a fair-loss link: deliver because 2PC retransmits packets.
 	\item $R$ fails before sending ACK in Prepare phase: discard according to Recall step.
